@@ -1,0 +1,10 @@
+{
+  "appId": "com.smartsaude.app",
+  "appName": "SmartSaude",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "capacitor"
+  }
+}

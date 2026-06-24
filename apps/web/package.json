@@ -1,0 +1,40 @@
+{
+  "name": "@smartsaude/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "cap:sync": "npm run build && cap sync",
+    "cap:setup": "cap add android && cap add ios && cap sync",
+    "cap:build:android": "npm run build && cap sync android && cap build android",
+    "cap:build:ios": "npm run build && cap sync ios && cap build ios",
+    "cap:android": "cap open android",
+    "cap:ios": "cap open ios",
+    "typecheck": "tsc -b --pretty false",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@smartsaude/shared": "*",
+    "@capacitor/core": "^7.0.0",
+    "@react-three/drei": "^10.0.0",
+    "@react-three/fiber": "^9.1.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.174.0",
+    "vite": "^6.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/ios": "^7.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.174.0",
+    "typescript": "^5.8.0"
+  }
+}

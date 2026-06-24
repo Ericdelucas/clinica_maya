@@ -1,0 +1,30 @@
+{
+  "name": "@smartsaude/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "dev": "wait-on http://localhost:5173 && cross-env SMARTSAUDE_RENDERER_URL=http://localhost:5173 electron .",
+    "build": "electron-builder --win",
+    "typecheck": "tsc -p tsconfig.json",
+    "clean": "node -e \"require('fs').rmSync('release',{recursive:true,force:true})\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "cross-env": "^7.0.3",
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.0",
+    "typescript": "^5.8.0",
+    "wait-on": "^8.0.0"
+  },
+  "build": {
+    "appId": "com.smartsaude.desktop",
+    "productName": "SmartSaúde",
+    "directories": { "output": "release" },
+    "files": ["main.cjs", "preload.cjs", "app-version.json", "package.json"],
+    "extraResources": [
+      { "from": "../web/dist", "to": "web" }
+    ],
+    "win": { "target": "nsis" }
+  }
+}
