@@ -1,125 +1,132 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
-import AuthLayout from "@/components/AuthLayout";
-import GoogleIcon from "@/components/GoogleIcon";
+import React, { useState } from 'react';
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+const QUICK_LOGINS = {
+  admin: {
+    email: 'mayayyamamoto@gmail.com',
+    password: '1234',
+  },
+  patient: {
+    email: 'ericdelucass@gmail.com',
+    password: 'coelhinhoE123',
+  },
+};
+
+export default function Login({ onLoginSuccess }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
     setLoading(true);
+
     try {
-      await base44.auth.loginViaEmailPassword(email, password);
-      window.location.href = "/";
+      const result = await onLoginSuccess?.({ email, password });
+      if (result?.ok === false) {
+        setError('Email ou senha invalidos.');
+      }
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      console.error('Erro no login:', err);
+      setError('Nao foi possivel entrar agora.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", "/");
+  const handleQuickLogin = async (role) => {
+    setError('');
+    setLoading(true);
+
+    const account = role === 'patient' ? QUICK_LOGINS.patient : QUICK_LOGINS.admin;
+    const quickEmail = account.email;
+    const quickPassword = account.password;
+
+    setEmail(quickEmail);
+    setPassword(quickPassword);
+
+    try {
+      const result = await onLoginSuccess?.({ email: quickEmail, password: quickPassword });
+      if (result?.ok === false) {
+        setError('Email ou senha invalidos.');
+      }
+    } catch (err) {
+      console.error('Erro no login rapido:', err);
+      setError('Nao foi possivel entrar agora.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <AuthLayout
-      icon={LogIn}
-      title="Welcome back"
-      subtitle="Log in to your account"
-      footer={
-        <>
-          Don't have an account?{" "}
-          <Link to="/register" className="text-primary font-medium hover:underline">
-            Create one
-          </Link>
-        </>
-      }
-    >
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
-        onClick={handleGoogle}
-      >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
-      </Button>
-
-      <div className="relative mb-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
-        </div>
+    <main className="maya-login-page">
+      <div className="maya-login-logo">
+        <span>maya</span>
+        <small>yamamoto rpg</small>
       </div>
+      <h1 className="maya-login-welcome">Bem Vindo(a)!</h1>
 
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
-        </div>
-      )}
+      <section className="maya-login-panel">
+        <h2>Login</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
+        <form className="maya-login-form" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="email" className="sr-only">Usuario</label>
+            <input
               id="email"
               type="email"
               autoComplete="email"
-              autoFocus
-              placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 h-12"
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Usuario"
               required
             />
           </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
-            </Link>
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
+
+          <div>
+            <label htmlFor="password" className="sr-only">Senha</label>
+            <input
               id="password"
               type="password"
               autoComplete="current-password"
-              placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 h-12"
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Senha"
               required
             />
           </div>
-        </div>
-        <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Logging in...
-            </>
-          ) : (
-            "Log in"
-          )}
-        </Button>
-      </form>
-    </AuthLayout>
+
+          <label className="maya-check-row">
+            <input type="checkbox" />
+            <span>Li e aceito os Termos de Uso e a Politica de Privacidade.</span>
+          </label>
+
+          <label className="maya-check-row">
+            <input type="checkbox" />
+            <span>Autorizo o uso dos meus dados para acompanhamento fisioterapeutico.</span>
+          </label>
+
+          {error && <p className="maya-form-error">{error}</p>}
+
+          <button type="submit" disabled={loading}>
+            {loading ? 'Entrando...' : 'Entrar'}
+          </button>
+
+          <div className="maya-login-role-actions">
+            <button type="button" onClick={() => handleQuickLogin('admin')} disabled={loading}>
+              Entrar como profissional
+            </button>
+            <button type="button" onClick={() => handleQuickLogin('patient')} disabled={loading}>
+              Entrar como paciente
+            </button>
+          </div>
+
+          <p className="maya-login-hint">
+            Profissional: mayayyamamoto@gmail.com / 1234. Paciente: ericdelucass@gmail.com / coelhinhoE123.
+          </p>
+        </form>
+      </section>
+    </main>
   );
 }

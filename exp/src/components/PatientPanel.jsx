@@ -2,19 +2,25 @@ import React from 'react';
 
 export default function PatientPanel({ hotspots }) {
   return (
-    <div className="w-full p-6">
-      <h2 className="text-white font-bold text-lg mb-1">Exercícios de Apoio</h2>
-      <p className="text-xs mb-4" style={{ color: '#5555aa' }}>Clique em qualquer articulação no boneco para ver o vídeo de exercício.</p>
-      <div className="space-y-2">
-        {hotspots.map(hs => (
+    <div className="maya-panel-scroll">
+      <h2 className="maya-panel-title">Boneco 3D do paciente</h2>
+      <p className="maya-panel-copy">
+        Clique em um ponto vermelho no boneco ou em uma articulacao da lista para abrir o video orientado pela profissional.
+      </p>
+
+      <p className="maya-panel-label">Videos por articulacao</p>
+      <div className="maya-list">
+        {hotspots.map((hotspot) => (
           <button
-            key={hs.id}
-            onClick={() => hs.youtubeUrl && window.open(hs.youtubeUrl, '_blank')}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:bg-white/5"
-            style={{ border: '1px solid #1e1e30' }}
+            key={hotspot.id}
+            type="button"
+            className="maya-list-item"
+            onClick={() => hotspot.youtubeUrl && window.open(hotspot.youtubeUrl, '_blank', 'noopener,noreferrer')}
           >
-            <div className="w-2 h-2 rounded-full shrink-0" style={{ background: '#ff0022' }} />
-            <span className="text-sm text-gray-300">{hs.name}</span>
+            <strong>{hotspot.name}</strong>
+            <span style={{ display: 'block', marginTop: 4, color: '#7f86ad', fontSize: 12 }}>
+              {hotspot.youtubeUrl ? 'Abrir video de apoio' : 'Video ainda nao cadastrado'}
+            </span>
           </button>
         ))}
       </div>

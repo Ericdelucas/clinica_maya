@@ -92,3 +92,1687 @@
     @apply bg-background text-foreground font-body;
   }
 }
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  background: #080911;
+  color: #f8fafc;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.maya-loading-screen,
+.maya-login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 25% 20%, rgba(42, 87, 255, 0.2), transparent 32%),
+    linear-gradient(135deg, #070812 0%, #10101d 100%);
+}
+
+.maya-loader {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(255, 255, 255, 0.14);
+  border-top-color: #4f8cff;
+  border-radius: 50%;
+  animation: maya-spin 0.8s linear infinite;
+}
+
+@keyframes maya-spin {
+  to { transform: rotate(360deg); }
+}
+
+.maya-login-panel {
+  width: min(420px, 100%);
+  padding: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(15, 16, 28, 0.95);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+}
+
+.maya-brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.maya-brand-lockup.compact {
+  margin-bottom: 0;
+}
+
+.maya-logo-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #e11d48;
+  color: #fff;
+  font-weight: 800;
+}
+
+.maya-brand-lockup h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.maya-brand-lockup p {
+  margin: 4px 0 0;
+  color: #8b91b6;
+  font-size: 13px;
+}
+
+.maya-login-form,
+.maya-panel-form {
+  display: grid;
+  gap: 16px;
+}
+
+.maya-login-form label,
+.maya-panel-label {
+  display: block;
+  margin-bottom: 7px;
+  color: #a5accf;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.maya-login-form input,
+.maya-input,
+.maya-textarea,
+.maya-file-input {
+  width: 100%;
+  border: 1px solid #2b3049;
+  border-radius: 8px;
+  background: #0b0d18;
+  color: #f8fafc;
+  outline: none;
+}
+
+.maya-login-form input,
+.maya-input,
+.maya-file-input {
+  min-height: 44px;
+  padding: 0 13px;
+}
+
+.maya-textarea {
+  min-height: 112px;
+  padding: 12px 13px;
+  resize: vertical;
+}
+
+.maya-login-form input:focus,
+.maya-input:focus,
+.maya-textarea:focus,
+.maya-file-input:focus {
+  border-color: #4f8cff;
+  box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.16);
+}
+
+.maya-login-form button,
+.maya-primary-button,
+.maya-danger-button,
+.maya-ghost-button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 16px;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.maya-login-form button,
+.maya-primary-button {
+  background: #2563eb;
+}
+
+.maya-danger-button {
+  background: #e11d48;
+}
+
+.maya-ghost-button {
+  min-height: 34px;
+  background: #1a1e31;
+  color: #dbe3ff;
+}
+
+.maya-login-form button:disabled,
+.maya-primary-button:disabled,
+.maya-danger-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.maya-login-hint {
+  margin: 0;
+  color: #7f86ad;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.maya-form-error,
+.maya-panel-error {
+  margin: 0;
+  color: #fb7185;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.maya-form-success {
+  margin: 0;
+  color: #4ade80;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.maya-sync-message {
+  margin: 0 0 14px;
+  border: 1px solid #24283d;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #0b0d18;
+  color: #a5accf;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.maya-shell {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #080911;
+}
+
+.maya-topbar {
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  border-bottom: 1px solid #1a1d2d;
+  background: #0d0f1b;
+}
+
+.maya-user-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #a5accf;
+  font-size: 13px;
+}
+
+.maya-user-box strong {
+  color: #fff;
+}
+
+.maya-user-box button {
+  min-height: 34px;
+  border: 1px solid #2b3049;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #151827;
+  color: #fff;
+  cursor: pointer;
+}
+
+.maya-workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 60%) minmax(360px, 40%);
+}
+
+.maya-professional-home,
+.maya-calendar-page,
+.maya-vision-page,
+.maya-documents-page {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 32px;
+  background:
+    linear-gradient(180deg, rgba(37, 99, 235, 0.08), transparent 38%),
+    #080911;
+}
+
+.maya-professional-heading {
+  max-width: 720px;
+  margin-bottom: 24px;
+}
+
+.maya-professional-heading p,
+.maya-view-toolbar p {
+  margin: 0 0 6px;
+  color: #8b91b6;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.maya-professional-heading h2,
+.maya-view-toolbar h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+.maya-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 360px));
+  gap: 18px;
+}
+
+.maya-feature-card {
+  min-height: 210px;
+  display: grid;
+  align-content: end;
+  gap: 10px;
+  border: 1px solid #24283d;
+  border-radius: 8px;
+  padding: 22px;
+  background:
+    linear-gradient(145deg, rgba(37, 99, 235, 0.16), rgba(225, 29, 72, 0.1)),
+    #0d0f1b;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.maya-feature-card:hover {
+  border-color: rgba(79, 140, 255, 0.7);
+  transform: translateY(-1px);
+}
+
+.maya-feature-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #e11d48;
+  color: #fff;
+  font-weight: 900;
+}
+
+.maya-feature-card strong {
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.maya-feature-card small {
+  max-width: 260px;
+  color: #a5accf;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.maya-view-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.maya-calendar-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.maya-vision-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 18px;
+  align-items: start;
+}
+
+.maya-vision-stage {
+  position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid #24283d;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(37, 99, 235, 0.16), transparent 42%),
+    #05060c;
+}
+
+.maya-vision-video,
+.maya-vision-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.maya-vision-video {
+  transform: scaleX(-1);
+}
+
+.maya-vision-canvas {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.maya-vision-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.maya-vision-settings {
+  display: grid;
+  grid-template-columns: 1fr 0.75fr 0.9fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.maya-vision-settings label {
+  display: grid;
+  gap: 7px;
+  color: #a5accf;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.maya-vision-badge {
+  display: inline-grid;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #1a1e31;
+  color: #dbe3ff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.maya-vision-badge.ok {
+  background: rgba(74, 222, 128, 0.16);
+  color: #86efac;
+}
+
+.maya-vision-badge.warn {
+  background: rgba(250, 204, 21, 0.16);
+  color: #fde68a;
+}
+
+.maya-vision-badge.urgent {
+  background: rgba(251, 113, 133, 0.18);
+  color: #fb7185;
+}
+
+.maya-vision-metrics {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.maya-vision-metrics span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #8b91b6;
+  font-size: 13px;
+}
+
+.maya-vision-metrics strong {
+  color: #fff;
+}
+
+.maya-vision-debug {
+  max-height: 220px;
+  overflow: auto;
+  margin: 0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #05060c;
+  color: #a5accf;
+  font-size: 11px;
+}
+
+.maya-documents-form {
+  max-width: 980px;
+  display: grid;
+  gap: 16px;
+}
+
+.maya-question-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.maya-question-grid label,
+.maya-wide-label {
+  display: grid;
+  gap: 7px;
+  color: #a5accf;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.maya-question-grid strong {
+  color: #fff;
+  font-size: 13px;
+}
+
+.maya-wide-label {
+  margin-top: 14px;
+}
+
+.maya-professional-data-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.maya-table-list {
+  display: grid;
+  gap: 10px;
+}
+
+.maya-table-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid #24283d;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0b0d18;
+}
+
+.maya-table-row > div {
+  display: grid;
+  gap: 4px;
+}
+
+.maya-table-row strong,
+.maya-preexam-card strong {
+  color: #fff;
+  font-size: 14px;
+}
+
+.maya-table-row span,
+.maya-table-row small,
+.maya-preexam-card span {
+  color: #8b91b6;
+  font-size: 12px;
+}
+
+.maya-table-row .maya-primary-button,
+.maya-table-row .maya-danger-button {
+  display: inline-grid;
+  min-height: 34px;
+  place-items: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.maya-preexam-card {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #24283d;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0b0d18;
+}
+
+.maya-calendar-shell {
+  display: grid;
+  grid-template-columns: 72px minmax(720px, 1fr);
+  border: 1px solid #24283d;
+  border-radius: 8px;
+  overflow: auto;
+  background: #0d0f1b;
+}
+
+.maya-calendar-hours {
+  display: grid;
+  grid-template-rows: repeat(10, 72px);
+  padding-top: 42px;
+  border-right: 1px solid #24283d;
+  color: #7f86ad;
+  font-size: 12px;
+}
+
+.maya-calendar-hours button {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 12px;
+  background: transparent;
+  color: #7f86ad;
+  text-align: left;
+  cursor: pointer;
+}
+
+.maya-calendar-hours button:hover {
+  background: rgba(37, 99, 235, 0.12);
+  color: #dbe3ff;
+}
+
+.maya-calendar-grid {
+  min-width: 720px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(96px, 1fr));
+}
+
+.maya-calendar-grid > strong {
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-right: 1px solid #24283d;
+  border-bottom: 1px solid #24283d;
+  color: #dbe3ff;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.maya-calendar-day {
+  min-height: 112px;
+  padding: 8px;
+  border: 0;
+  border-right: 1px solid #24283d;
+  border-bottom: 1px solid #24283d;
+  background: #10121d;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.maya-calendar-day:hover {
+  background: #151a2c;
+}
+
+.maya-calendar-day.empty,
+.maya-calendar-day.empty:hover {
+  background: #0b0d18;
+  cursor: default;
+  opacity: 0.55;
+}
+
+.maya-calendar-day > span {
+  display: block;
+  margin-bottom: 7px;
+  color: #8b91b6;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.maya-calendar-day.has-event {
+  background: #12172a;
+}
+
+.maya-calendar-event {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  margin-bottom: 6px;
+  border: 0;
+  border-left: 3px solid #2563eb;
+  border-radius: 6px;
+  padding: 7px 8px;
+  background: rgba(37, 99, 235, 0.18);
+  color: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+}
+
+.maya-calendar-event:hover {
+  background: rgba(37, 99, 235, 0.32);
+}
+
+.maya-calendar-event b,
+.maya-calendar-event small {
+  color: #a5accf;
+  font-size: 11px;
+}
+
+.maya-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(3, 4, 9, 0.72);
+}
+
+.maya-calendar-modal {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 14px;
+  border: 1px solid #24283d;
+  border-radius: 8px;
+  padding: 20px;
+  background: #10121d;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
+}
+
+.maya-modal-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.maya-modal-heading h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+}
+
+.maya-modal-heading p {
+  margin: 4px 0 0;
+  color: #8b91b6;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.maya-icon-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #2b3049;
+  border-radius: 8px;
+  background: #151827;
+  color: #fff;
+  cursor: pointer;
+}
+
+.maya-calendar-modal label {
+  display: grid;
+  gap: 7px;
+  color: #a5accf;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.maya-calendar-modal input,
+.maya-calendar-modal select,
+.maya-calendar-modal textarea {
+  width: 100%;
+  border: 1px solid #2b3049;
+  border-radius: 8px;
+  background: #0b0d18;
+  color: #f8fafc;
+  outline: none;
+}
+
+.maya-calendar-modal input,
+.maya-calendar-modal select {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.maya-calendar-modal textarea {
+  min-height: 86px;
+  padding: 11px 12px;
+  resize: vertical;
+}
+
+.maya-calendar-modal input:focus,
+.maya-calendar-modal select:focus,
+.maya-calendar-modal textarea:focus {
+  border-color: #4f8cff;
+  box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.16);
+}
+
+.maya-calendar-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.maya-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.maya-canvas-column {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: radial-gradient(ellipse at 50% 35%, #1b1d2f 0%, #0b0c16 66%, #06070d 100%);
+}
+
+.maya-canvas-column canvas {
+  display: block;
+}
+
+.maya-back-float {
+  position: absolute;
+  z-index: 2;
+  right: 18px;
+  top: 18px;
+  min-height: 34px;
+  border: 1px solid #2b3049;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: rgba(13, 15, 27, 0.86);
+  color: #fff;
+  cursor: pointer;
+}
+
+.maya-canvas-state {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  color: #9aa3cc;
+}
+
+.maya-canvas-pill {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  max-width: calc(100% - 36px);
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: #a5accf;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.maya-canvas-pill span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #e11d48;
+  box-shadow: 0 0 10px #e11d48;
+}
+
+.maya-side-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-left: 1px solid #1a1d2d;
+  background: #10121d;
+}
+
+.maya-panel-scroll {
+  height: 100%;
+  overflow: auto;
+  padding: 24px;
+}
+
+.maya-panel-title {
+  margin: 0 0 6px;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.maya-panel-copy {
+  margin: 0 0 18px;
+  color: #8b91b6;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.maya-panel-card,
+.maya-list-item {
+  border: 1px solid #24283d;
+  border-radius: 8px;
+  background: #0b0d18;
+}
+
+.maya-panel-card {
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.maya-list {
+  display: grid;
+  gap: 10px;
+}
+
+.maya-list-item {
+  width: 100%;
+  padding: 13px 14px;
+  color: #d7def8;
+  text-align: left;
+  cursor: pointer;
+}
+
+.maya-list-item.active {
+  border-color: rgba(225, 29, 72, 0.55);
+  background: rgba(225, 29, 72, 0.08);
+}
+
+@media (max-width: 900px) {
+  .maya-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: 58vh 42vh;
+  }
+
+  .maya-professional-home,
+  .maya-calendar-page {
+    padding: 20px;
+  }
+
+  .maya-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .maya-vision-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .maya-vision-stage {
+    min-height: 420px;
+  }
+
+  .maya-vision-settings {
+    grid-template-columns: 1fr;
+  }
+
+  .maya-professional-data-layout,
+  .maya-question-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .maya-table-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .maya-view-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .maya-side-panel {
+    border-left: 0;
+    border-top: 1px solid #1a1d2d;
+  }
+
+  .maya-user-box span {
+    display: none;
+  }
+}
+
+/* Figma mobile visual pass */
+:root {
+  --maya-ui-blue: #66bfd0;
+  --maya-ui-blue-dark: #0f8ba4;
+  --maya-ui-ink: #073746;
+  --maya-ui-muted: #7d9098;
+  --maya-ui-surface: #f7f7f7;
+  --maya-ui-card: #ffffff;
+  --maya-ui-line: #d9d9d9;
+  --maya-ui-danger: #ff8f98;
+}
+
+html,
+body,
+#root {
+  background: #f8fbfc;
+  color: var(--maya-ui-ink);
+}
+
+.maya-loading-screen {
+  background: var(--maya-ui-blue);
+}
+
+.maya-login-page {
+  width: min(100%, 430px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 16px 11px 28px;
+  place-items: start center;
+  align-content: start;
+  background: var(--maya-ui-blue);
+  border: 1px solid var(--maya-ui-danger);
+  border-radius: 8px;
+  color: #111;
+}
+
+.maya-login-logo,
+.maya-logo-mark {
+  width: 74px;
+  height: 74px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: #1192aa;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+.maya-login-logo {
+  margin-top: 0;
+  align-content: center;
+  gap: 0;
+}
+
+.maya-login-logo span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.maya-login-logo small {
+  display: block;
+  margin-top: -12px;
+  font-size: 8px;
+  font-weight: 600;
+}
+
+.maya-login-welcome {
+  width: 100%;
+  margin: 11px 0 12px;
+  text-align: center;
+  color: #111;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.maya-login-panel {
+  width: 100%;
+  padding: 26px 16px 10px;
+  border: 0;
+  border-radius: 11px;
+  background: #f5f5f5;
+  box-shadow: none;
+}
+
+.maya-login-panel h2 {
+  margin: 0 0 16px;
+  color: #111;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.maya-login-form {
+  gap: 10px;
+}
+
+.maya-login-form input,
+.maya-input,
+.maya-textarea,
+.maya-file-input,
+.maya-panel-form select,
+.maya-calendar-modal input,
+.maya-calendar-modal select,
+.maya-calendar-modal textarea {
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: #d9d9d9;
+  color: #111;
+}
+
+.maya-login-form input,
+.maya-input,
+.maya-file-input {
+  min-height: 37px;
+  padding: 0 9px;
+}
+
+.maya-login-form input::placeholder,
+.maya-input::placeholder,
+.maya-textarea::placeholder {
+  color: #8e8e8e;
+}
+
+.maya-forgot-link,
+.maya-login-form .maya-forgot-link {
+  min-height: auto;
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #009dca;
+  font-size: 9px;
+  font-weight: 700;
+  text-align: left;
+  box-shadow: none;
+}
+
+.maya-check-row {
+  display: grid;
+  grid-template-columns: 13px 1fr;
+  align-items: flex-start;
+  gap: 5px;
+  color: #111;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.maya-check-row input {
+  width: 12px;
+  min-height: 12px;
+  height: 12px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #555;
+  background: #fff;
+}
+
+.maya-login-form button[type="submit"],
+.maya-primary-button,
+.maya-register-callout button {
+  min-height: 37px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--maya-ui-blue);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.maya-login-form button[type="submit"]:hover,
+.maya-primary-button:hover,
+.maya-register-callout button:hover {
+  background: #54b4c7;
+  transform: none;
+}
+
+.maya-login-hint {
+  margin: 0;
+  color: #53737d;
+  font-size: 9px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.maya-register-callout {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 0 25px;
+  color: #1591ab;
+  text-align: center;
+  font-size: 13px;
+}
+
+.maya-register-callout button {
+  width: 100%;
+}
+
+.maya-shell {
+  width: min(100%, 430px);
+  min-height: 100vh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #f3f3f3;
+  border: 1px solid var(--maya-ui-danger);
+  border-radius: 8px;
+  color: var(--maya-ui-ink);
+}
+
+.maya-topbar {
+  min-height: 92px;
+  padding: 7px 12px 18px;
+  align-items: flex-start;
+  border: 0;
+  background:
+    radial-gradient(120% 70% at 50% -20%, #8ed0dc 0%, var(--maya-ui-blue) 62%, transparent 63%),
+    var(--maya-ui-blue);
+  color: var(--maya-ui-ink);
+}
+
+.maya-brand-lockup.compact {
+  gap: 8px;
+}
+
+.maya-brand-lockup.compact .maya-logo-mark {
+  width: 72px;
+  height: 72px;
+  margin: 0;
+  font-size: 0;
+}
+
+.maya-brand-lockup.compact .maya-logo-mark::before {
+  content: "maya";
+  font-size: 18px;
+  color: #fff;
+}
+
+.maya-brand-lockup h1 {
+  color: var(--maya-ui-ink);
+  font-family: var(--font-heading);
+  font-size: 15px;
+}
+
+.maya-brand-lockup p,
+.maya-view-toolbar p,
+.maya-feature-card small,
+.maya-panel-copy {
+  color: #587780;
+}
+
+.maya-user-box {
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--maya-ui-ink);
+}
+
+.maya-user-box strong {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #fff;
+  color: transparent;
+  box-shadow: 0 2px 8px rgba(16, 67, 82, 0.14);
+}
+
+.maya-user-box strong::before {
+  content: "";
+  width: 25px;
+  height: 25px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 30%, #eaded1 0 28%, transparent 29%),
+    linear-gradient(#c8a995 0 0) center 78% / 18px 10px no-repeat,
+    #f8efe8;
+}
+
+.maya-user-box button {
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(5, 88, 108, 0.24);
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--maya-ui-ink);
+}
+
+.maya-professional-home,
+.maya-calendar-page,
+.maya-vision-page,
+.maya-documents-page,
+.maya-professional-data-page,
+.maya-patients-page {
+  min-height: calc(100vh - 92px);
+  padding: 22px 13px 38px;
+  background: #f3f3f3;
+}
+
+.maya-professional-heading {
+  margin: 0 0 24px;
+  color: var(--maya-ui-ink);
+}
+
+.maya-professional-heading p {
+  margin: 0;
+  color: #0796ba;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.maya-professional-heading h2 {
+  max-width: 230px;
+  margin: 0;
+  color: #0796ba;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  line-height: 1.1;
+  font-weight: 600;
+}
+
+.maya-feature-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 26px;
+}
+
+.maya-feature-card {
+  min-height: 95px;
+  padding: 14px 10px 11px;
+  align-items: center;
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  text-align: center;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.22);
+}
+
+.maya-feature-card:hover {
+  border-color: #b8e3ec;
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.maya-feature-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 0;
+  background: transparent;
+  color: #098bc0;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+.maya-feature-card strong {
+  color: #111;
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.maya-feature-card small {
+  display: none;
+}
+
+.maya-view-toolbar {
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.maya-view-toolbar h2 {
+  color: var(--maya-ui-ink);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  text-align: center;
+}
+
+.maya-ghost-button,
+.maya-danger-button {
+  border-radius: 999px;
+  border-color: #cfdde1;
+  background: #fff;
+  color: var(--maya-ui-ink);
+  box-shadow: none;
+}
+
+.maya-calendar-toolbar-actions {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 3px;
+}
+
+.maya-calendar-toolbar-actions .maya-ghost-button,
+.maya-calendar-toolbar-actions .maya-primary-button {
+  min-height: 32px;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.maya-calendar-shell {
+  display: block;
+  padding: 11px 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.maya-calendar-hours {
+  display: none;
+}
+
+.maya-calendar-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+}
+
+.maya-calendar-grid > strong {
+  min-height: 24px;
+  border-bottom: 1px solid #d9d9d9;
+  color: #0090b0;
+  font-size: 11px;
+  text-align: center;
+}
+
+.maya-calendar-day {
+  min-height: 42px;
+  padding: 5px 2px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #202020;
+  text-align: center;
+}
+
+.maya-calendar-day.empty {
+  background: #fff;
+}
+
+.maya-calendar-day > span:first-child {
+  width: 25px;
+  height: 25px;
+  display: inline-grid;
+  place-items: center;
+  margin: 0 auto;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.maya-calendar-day.has-event > span:first-child {
+  background: #f6a4b2;
+}
+
+.maya-calendar-event {
+  display: none;
+}
+
+.maya-panel-card,
+.maya-list-item,
+.maya-table-row,
+.maya-patient-card,
+.maya-record-card,
+.maya-document-card {
+  border: 1px solid #dedede;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  box-shadow: none;
+}
+
+.maya-panel-title,
+.maya-modal-heading h3,
+.maya-calendar-modal label,
+.maya-panel-label {
+  color: var(--maya-ui-ink);
+}
+
+.maya-side-panel {
+  border-left: 0;
+  border-top: 1px solid #d7d7d7;
+  background: #f7f7f7;
+}
+
+.maya-workspace {
+  grid-template-columns: 1fr;
+  grid-template-rows: 58vh 42vh;
+}
+
+.maya-panel-scroll {
+  padding: 16px;
+}
+
+.maya-canvas-column {
+  background: radial-gradient(ellipse at 50% 35%, #283043 0%, #101827 66%, #070a12 100%);
+}
+
+.maya-patients-page .maya-input,
+.maya-professional-data-page .maya-input {
+  border-radius: 999px;
+  background: #fff;
+}
+
+.maya-table-row {
+  align-items: center;
+  gap: 10px;
+}
+
+.maya-table-row::before {
+  content: "";
+  width: 9px;
+  align-self: stretch;
+  border-radius: 8px 0 0 8px;
+  background: var(--maya-ui-blue);
+}
+
+.maya-modal-backdrop {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.maya-calendar-modal {
+  width: min(390px, calc(100% - 24px));
+  border: 1px solid #d7d7d7;
+  border-radius: 12px;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 18px 45px rgba(9, 72, 88, 0.18);
+}
+
+.maya-icon-button {
+  border: 1px solid #d7d7d7;
+  background: #fff;
+  color: var(--maya-ui-ink);
+}
+
+.maya-professional-data-layout,
+.maya-question-grid,
+.maya-vision-layout,
+.maya-vision-settings {
+  grid-template-columns: 1fr;
+}
+
+.maya-vision-stage {
+  min-height: 320px;
+}
+
+/* Desktop correction: keep the Figma colors, but use the whole computer screen. */
+.maya-login-page {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  padding: 42px 24px;
+  place-items: center;
+  align-content: center;
+  border: 0;
+  border-radius: 0;
+}
+
+.maya-login-panel {
+  width: min(460px, calc(100vw - 48px));
+  padding: 28px;
+  box-shadow: 0 18px 40px rgba(8, 77, 95, 0.16);
+}
+
+.maya-login-role-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.maya-login-role-actions button {
+  min-height: 38px;
+  border: 1px solid rgba(9, 139, 166, 0.28);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--maya-ui-blue-dark);
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.maya-login-role-actions button:hover {
+  background: #edfaff;
+}
+
+.maya-shell {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.maya-topbar {
+  min-height: 78px;
+  padding: 10px 28px;
+  align-items: center;
+}
+
+.maya-professional-home,
+.maya-calendar-page,
+.maya-vision-page,
+.maya-documents-page,
+.maya-professional-data-page,
+.maya-patients-page {
+  min-height: calc(100vh - 78px);
+  padding: 32px;
+}
+
+.maya-professional-heading {
+  max-width: 780px;
+  margin-bottom: 28px;
+}
+
+.maya-professional-heading p {
+  font-size: 20px;
+}
+
+.maya-professional-heading h2 {
+  max-width: 680px;
+  font-size: 28px;
+}
+
+.maya-feature-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 280px));
+  gap: 18px;
+}
+
+.maya-feature-card {
+  min-height: 150px;
+  align-content: center;
+  padding: 22px;
+}
+
+.maya-feature-card small {
+  display: block;
+  max-width: 220px;
+  margin: 0 auto;
+  font-size: 12px;
+}
+
+.maya-workspace {
+  grid-template-columns: minmax(0, 60%) minmax(360px, 40%);
+  grid-template-rows: none;
+}
+
+.maya-side-panel {
+  border-top: 0;
+  border-left: 1px solid #d7d7d7;
+}
+
+.maya-calendar-shell {
+  display: grid;
+  grid-template-columns: 72px minmax(720px, 1fr);
+  overflow: auto;
+}
+
+.maya-calendar-hours {
+  display: grid;
+}
+
+.maya-calendar-grid {
+  min-width: 720px;
+  grid-template-columns: repeat(7, minmax(96px, 1fr));
+}
+
+.maya-calendar-day {
+  min-height: 112px;
+  padding: 8px;
+  text-align: left;
+}
+
+.maya-calendar-event {
+  display: grid;
+}
+
+.maya-professional-data-layout {
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+}
+
+.maya-question-grid,
+.maya-vision-settings {
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+.maya-vision-layout {
+  grid-template-columns: minmax(0, 1fr) 380px;
+}
+
+.maya-vision-stage {
+  min-height: 520px;
+}
+
+@media (max-width: 760px) {
+  .maya-login-role-actions,
+  .maya-workspace,
+  .maya-professional-data-layout,
+  .maya-question-grid,
+  .maya-vision-layout,
+  .maya-vision-settings {
+    grid-template-columns: 1fr;
+  }
+
+  .maya-workspace {
+    grid-template-rows: 58vh 42vh;
+  }
+
+  .maya-side-panel {
+    border-left: 0;
+    border-top: 1px solid #d7d7d7;
+  }
+
+  .maya-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
