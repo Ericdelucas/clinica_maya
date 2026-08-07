@@ -17,6 +17,51 @@ function normalizeAnamnesis(raw, pacienteId) {
   };
 }
 
+function isoToBrDate(iso) {
+  const match = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return '';
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+function brDateToIso(br) {
+  const match = String(br || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return '';
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1900 || year > 2100) {
+    return '';
+  }
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year
+    || date.getMonth() !== month - 1
+    || date.getDate() !== day
+  ) {
+    return '';
+  }
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/** Máscara DD/MM/AAAA — deixa digitar o dia completo antes de ir para o mês */
+function maskBrDate(value) {
+  const digits = String(value || '').replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function parseDecimal(value) {
+  if (value === '' || value == null) return null;
+  const normalized = String(value).trim().replace(',', '.');
+  const number = Number(normalized);
+  return Number.isFinite(number) ? number : null;
+}
+
+function FieldHint({ children }) {
+  return <p className="field-hint">Ex.: {children}</p>;
+}
+
 export default function AnamnesisPanel({
   profile,
   demoMode = false,
@@ -26,6 +71,7 @@ export default function AnamnesisPanel({
 }) {
   const pacienteId = forcedPacienteId || profile.id;
   const [form, setForm] = useState(() => emptyAnamnesis(pacienteId));
+  const [birthDateText, setBirthDateText] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -42,10 +88,12 @@ export default function AnamnesisPanel({
         if (demoMode) {
           const data = readDemoAnamnesis(pacienteId);
           if (!active) return;
-          setForm(normalizeAnamnesis({
+          const next = normalizeAnamnesis({
             ...data,
             full_name: data.full_name || patientName || profile.full_name || '',
-          }, pacienteId));
+          }, pacienteId);
+          setForm(next);
+          setBirthDateText(isoToBrDate(next.birth_date));
           return;
         }
 
@@ -59,11 +107,13 @@ export default function AnamnesisPanel({
         if (loadError) throw loadError;
 
         if (!active) return;
-        setForm(normalizeAnamnesis({
+        const next = normalizeAnamnesis({
           ...(data || {}),
           full_name: data?.full_name || patientName || profile.full_name || '',
           media: data?.media || [],
-        }, pacienteId));
+        }, pacienteId);
+        setForm(next);
+        setBirthDateText(isoToBrDate(next.birth_date));
       } catch (err) {
         if (active) setError(err?.message || 'Falha ao carregar anamnese.');
       } finally {
@@ -78,8 +128,8 @@ export default function AnamnesisPanel({
   }, [demoMode, pacienteId, patientName, profile.full_name]);
 
   const bmi = useMemo(() => {
-    const weight = Number(form.weight_kg);
-    const heightCm = Number(form.height_cm);
+    const weight = parseDecimal(form.weight_kg);
+    const heightCm = parseDecimal(form.height_cm);
     if (!weight || !heightCm) return null;
     const heightM = heightCm / 100;
     return (weight / (heightM * heightM)).toFixed(1);
@@ -87,6 +137,17 @@ export default function AnamnesisPanel({
 
   function updateField(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function handleBirthDateChange(value) {
+    const masked = maskBrDate(value);
+    setBirthDateText(masked);
+    if (masked.length === 10) {
+      const iso = brDateToIso(masked);
+      updateField('birth_date', iso || '');
+      return;
+    }
+    updateField('birth_date', '');
   }
 
   async function uploadMediaFiles(files) {
@@ -144,12 +205,20 @@ export default function AnamnesisPanel({
     setError('');
 
     try {
+      if (birthDateText && birthDateText.length > 0 && birthDateText.length < 10) {
+        throw new Error('Complete a data de nascimento no formato 22/10/2005.');
+      }
+      if (birthDateText.length === 10 && !brDateToIso(birthDateText)) {
+        throw new Error('Data de nascimento inválida. Use o formato 22/10/2005.');
+      }
+
       const newMedia = await uploadMediaFiles(mediaFiles);
       const payload = {
         ...form,
         paciente_id: pacienteId,
-        weight_kg: form.weight_kg === '' ? null : Number(form.weight_kg),
-        height_cm: form.height_cm === '' ? null : Number(form.height_cm),
+        birth_date: brDateToIso(birthDateText) || form.birth_date || null,
+        weight_kg: parseDecimal(form.weight_kg),
+        height_cm: parseDecimal(form.height_cm),
         media: [...(form.media || []), ...newMedia],
         updated_at: new Date().toISOString(),
       };
@@ -157,6 +226,7 @@ export default function AnamnesisPanel({
       if (demoMode) {
         const saved = writeDemoAnamnesis(pacienteId, payload);
         setForm(normalizeAnamnesis(saved, pacienteId));
+        setBirthDateText(isoToBrDate(saved.birth_date));
       } else {
         const supabase = getSupabaseClient();
         const { error: upsertError } = await supabase
@@ -164,6 +234,7 @@ export default function AnamnesisPanel({
           .upsert(payload, { onConflict: 'paciente_id' });
         if (upsertError) throw upsertError;
         setForm(normalizeAnamnesis(payload, pacienteId));
+        setBirthDateText(isoToBrDate(payload.birth_date));
       }
 
       setMediaFiles([]);
@@ -189,10 +260,12 @@ export default function AnamnesisPanel({
 
       <div className="field">
         <label htmlFor="full_name">Nome completo</label>
+        <FieldHint>Maria Oliveira da Silva</FieldHint>
         <input
           id="full_name"
           value={form.full_name}
           disabled={readOnly}
+          placeholder="Maria Oliveira da Silva"
           onChange={(event) => updateField('full_name', event.target.value)}
           required={!readOnly}
         />
@@ -201,18 +274,27 @@ export default function AnamnesisPanel({
       <div className="field-row">
         <div className="field">
           <label htmlFor="birth_date">Data de nascimento</label>
+          <FieldHint>22/10/2005</FieldHint>
           <input
             id="birth_date"
-            type="date"
-            value={form.birth_date || ''}
+            type="text"
+            inputMode="numeric"
+            autoComplete="bday"
+            placeholder="DD/MM/AAAA"
+            maxLength={10}
+            value={birthDateText}
             disabled={readOnly}
-            onChange={(event) => updateField('birth_date', event.target.value)}
+            onChange={(event) => handleBirthDateChange(event.target.value)}
           />
         </div>
         <div className="field">
           <label htmlFor="phone">Telefone</label>
+          <FieldHint>(11) 98888-7777</FieldHint>
           <input
             id="phone"
+            type="tel"
+            inputMode="tel"
+            placeholder="(11) 98888-7777"
             value={form.phone || ''}
             disabled={readOnly}
             onChange={(event) => updateField('phone', event.target.value)}
@@ -223,11 +305,12 @@ export default function AnamnesisPanel({
       <div className="field-row">
         <div className="field">
           <label htmlFor="weight_kg">Peso (kg)</label>
+          <FieldHint>72,5 — use vírgula para decimais</FieldHint>
           <input
             id="weight_kg"
-            type="number"
-            min="1"
-            step="0.1"
+            type="text"
+            inputMode="decimal"
+            placeholder="72,5"
             value={form.weight_kg ?? ''}
             disabled={readOnly}
             onChange={(event) => updateField('weight_kg', event.target.value)}
@@ -235,11 +318,12 @@ export default function AnamnesisPanel({
         </div>
         <div className="field">
           <label htmlFor="height_cm">Altura (cm)</label>
+          <FieldHint>170 ou 170,5</FieldHint>
           <input
             id="height_cm"
-            type="number"
-            min="30"
-            step="0.1"
+            type="text"
+            inputMode="decimal"
+            placeholder="170"
             value={form.height_cm ?? ''}
             disabled={readOnly}
             onChange={(event) => updateField('height_cm', event.target.value)}
@@ -252,6 +336,7 @@ export default function AnamnesisPanel({
       <div className="field-row">
         <div className="field">
           <label htmlFor="blood_type">Tipo sanguíneo</label>
+          <FieldHint>O+</FieldHint>
           <select
             id="blood_type"
             value={form.blood_type || ''}
@@ -266,6 +351,7 @@ export default function AnamnesisPanel({
         </div>
         <div className="field">
           <label htmlFor="smokes">Fuma?</label>
+          <FieldHint>Não / Sim / Ex-fumante</FieldHint>
           <select
             id="smokes"
             value={form.smokes || 'nao'}
@@ -282,6 +368,7 @@ export default function AnamnesisPanel({
       <div className="field-row">
         <div className="field">
           <label htmlFor="drinks_alcohol">Consome álcool?</label>
+          <FieldHint>Socialmente</FieldHint>
           <select
             id="drinks_alcohol"
             value={form.drinks_alcohol || 'nao'}
@@ -295,11 +382,12 @@ export default function AnamnesisPanel({
         </div>
         <div className="field">
           <label htmlFor="physical_activity">Atividade física</label>
+          <FieldHint>caminhada 3x por semana</FieldHint>
           <input
             id="physical_activity"
             value={form.physical_activity || ''}
             disabled={readOnly}
-            placeholder="Ex.: caminhada 3x/semana"
+            placeholder="caminhada 3x por semana"
             onChange={(event) => updateField('physical_activity', event.target.value)}
           />
         </div>
@@ -307,72 +395,84 @@ export default function AnamnesisPanel({
 
       <div className="field">
         <label htmlFor="health_conditions">Problemas de saúde</label>
+        <FieldHint>hipertensão, diabetes, hérnia de disco</FieldHint>
         <textarea
           id="health_conditions"
           value={form.health_conditions || ''}
           disabled={readOnly}
-          placeholder="Hipertensão, diabetes, hérnia de disco…"
+          placeholder="hipertensão, diabetes, hérnia de disco"
           onChange={(event) => updateField('health_conditions', event.target.value)}
         />
       </div>
 
       <div className="field">
         <label htmlFor="allergies">Alergias</label>
+        <FieldHint>dipirona, pólen — ou “nenhuma”</FieldHint>
         <textarea
           id="allergies"
           value={form.allergies || ''}
           disabled={readOnly}
+          placeholder="dipirona, pólen — ou nenhuma"
           onChange={(event) => updateField('allergies', event.target.value)}
         />
       </div>
 
       <div className="field">
         <label htmlFor="medications">Medicamentos em uso</label>
+        <FieldHint>losartana 50 mg 1x ao dia</FieldHint>
         <textarea
           id="medications"
           value={form.medications || ''}
           disabled={readOnly}
+          placeholder="losartana 50 mg 1x ao dia"
           onChange={(event) => updateField('medications', event.target.value)}
         />
       </div>
 
       <div className="field">
         <label htmlFor="surgeries">Cirurgias anteriores</label>
+        <FieldHint>apendicectomia em 2018 — ou “nenhuma”</FieldHint>
         <textarea
           id="surgeries"
           value={form.surgeries || ''}
           disabled={readOnly}
+          placeholder="apendicectomia em 2018 — ou nenhuma"
           onChange={(event) => updateField('surgeries', event.target.value)}
         />
       </div>
 
       <div className="field">
         <label htmlFor="pain_areas">Áreas de dor / limitação</label>
+        <FieldHint>joelho direito, lombar</FieldHint>
         <textarea
           id="pain_areas"
           value={form.pain_areas || ''}
           disabled={readOnly}
-          placeholder="Joelho direito, lombar…"
+          placeholder="joelho direito, lombar"
           onChange={(event) => updateField('pain_areas', event.target.value)}
         />
       </div>
 
       <div className="field">
         <label htmlFor="chief_complaint">Queixa principal</label>
+        <FieldHint>dor ao subir escadas há 2 meses</FieldHint>
         <textarea
           id="chief_complaint"
           value={form.chief_complaint || ''}
           disabled={readOnly}
+          placeholder="dor ao subir escadas há 2 meses"
           onChange={(event) => updateField('chief_complaint', event.target.value)}
         />
       </div>
 
       <div className="field">
         <label htmlFor="notes">Observações</label>
+        <FieldHint>prefiro atendimento pela manhã</FieldHint>
         <textarea
           id="notes"
           value={form.notes || ''}
           disabled={readOnly}
+          placeholder="prefiro atendimento pela manhã"
           onChange={(event) => updateField('notes', event.target.value)}
         />
       </div>
@@ -380,6 +480,7 @@ export default function AnamnesisPanel({
       {!readOnly ? (
         <div className="field">
           <label htmlFor="mediaFiles">Foto ou vídeo (câmera / arquivo)</label>
+          <FieldHint>foto do joelho ou vídeo curto do movimento</FieldHint>
           <input
             id="mediaFiles"
             className="file-input"

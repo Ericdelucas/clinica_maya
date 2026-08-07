@@ -28,19 +28,13 @@ const SEED_PATIENTS = [
     full_name: 'Paciente Demo',
     created_at: '2026-07-01T12:00:00.000Z',
   },
-  {
-    id: 'demo-patient-2',
-    email: 'ana.silva@demo.local',
-    full_name: 'Ana Silva',
-    created_at: '2026-07-10T12:00:00.000Z',
-  },
-  {
-    id: 'demo-patient-3',
-    email: 'joao.santos@demo.local',
-    full_name: 'João Santos',
-    created_at: '2026-07-15T12:00:00.000Z',
-  },
 ];
+
+/** Pacientes fictícios removidos do demo — limpa localStorage antigo */
+const REMOVED_DEMO_PATIENT_IDS = new Set([
+  'demo-patient-2',
+  'demo-patient-3',
+]);
 
 export function emptyAnamnesis(pacienteId = '') {
   return {
@@ -149,8 +143,14 @@ export function readDemoPatients() {
   try {
     const raw = localStorage.getItem(DEMO_PATIENTS_KEY);
     const stored = raw ? JSON.parse(raw) : [];
+    const cleaned = stored.filter((patient) => !REMOVED_DEMO_PATIENT_IDS.has(patient.id));
+    if (cleaned.length !== stored.length) {
+      localStorage.setItem(DEMO_PATIENTS_KEY, JSON.stringify(cleaned));
+    }
+
     const byId = new Map();
-    [...SEED_PATIENTS, ...stored].forEach((patient) => {
+    [...SEED_PATIENTS, ...cleaned].forEach((patient) => {
+      if (REMOVED_DEMO_PATIENT_IDS.has(patient.id)) return;
       byId.set(patient.id, patient);
     });
     return Array.from(byId.values()).sort((a, b) =>

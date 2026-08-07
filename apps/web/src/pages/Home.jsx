@@ -34,6 +34,8 @@ export default function Home({ profile, onLogout, demoMode = false }) {
   const [loadingHotspots, setLoadingHotspots] = useState(true);
   const [hotspotsError, setHotspotsError] = useState('');
   const [mobileView, setMobileView] = useState('mannequin');
+  const [toast, setToast] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const loadHotspots = useCallback(async () => {
     setLoadingHotspots(true);
@@ -58,7 +60,7 @@ export default function Home({ profile, onLogout, demoMode = false }) {
       if (error) throw error;
       setHotspots(mergeHotspots(data));
     } catch (err) {
-      setHotspotsError(err?.message || 'Não foi possível carregar os hotspots.');
+      setHotspotsError(err?.message || 'Não foi possível carregar as articulações.');
       setHotspots(mergeHotspots([]));
     } finally {
       setLoadingHotspots(false);
@@ -69,6 +71,12 @@ export default function Home({ profile, onLogout, demoMode = false }) {
     void loadHotspots();
   }, [loadHotspots]);
 
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = window.setTimeout(() => setToast(''), 2800);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
   function focusArticulation(hotspot) {
     setSelectedId(hotspot.id);
     setFocusArticulationKey((current) => current + 1);
@@ -77,16 +85,17 @@ export default function Home({ profile, onLogout, demoMode = false }) {
 
   function handleSelectHotspot(hotspot) {
     if (isAdmin) {
-      // Profissional: bolinha abre a aba Articulações para editar o link
       focusArticulation(hotspot);
       return;
     }
 
-    // Paciente: bolinha abre direto o YouTube cadastrado
     const url = hotspot.video_url?.trim();
     if (url) {
       window.open(url, '_blank', 'noopener,noreferrer');
+      return;
     }
+
+    setToast('Ainda não há vídeo cadastrado para esta articulação.');
   }
 
   async function handleSaveHotspot(hotspotId, videoUrl) {
@@ -124,7 +133,7 @@ export default function Home({ profile, onLogout, demoMode = false }) {
     <div className={`dashboard ${isMobile ? 'is-mobile' : 'is-desktop'}`}>
       <header className="topbar">
         <div className="topbar-brand">
-          <span>M</span>
+          <span className="brand-orb">maya</span>
           <div className="topbar-brand-text">
             <strong>Clínica Maya</strong>
             {isMobile ? (
@@ -132,13 +141,40 @@ export default function Home({ profile, onLogout, demoMode = false }) {
             ) : null}
           </div>
         </div>
+
         <div className="topbar-meta">
-          {!isMobile ? <span className="topbar-user">{profile.full_name || profile.email}</span> : null}
+          {!isMobile ? (
+            <span className="topbar-user">{profile.full_name || profile.email}</span>
+          ) : null}
           <span className="role-badge">{isAdmin ? 'Profissional' : 'Paciente'}</span>
-          {demoMode && !isMobile ? <span className="role-badge">Demo</span> : null}
-          <button type="button" className="btn btn-ghost btn-compact" onClick={onLogout}>
-            Sair
-          </button>
+          {demoMode && !isMobile ? <span className="role-badge soft">Demo</span> : null}
+
+          <div className="profile-menu">
+            <button
+              type="button"
+              className="avatar-btn"
+              aria-expanded={menuOpen}
+              aria-label="Menu do perfil"
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {(profile.full_name || profile.email || '?').slice(0, 1).toUpperCase()}
+            </button>
+            {menuOpen ? (
+              <div className="profile-dropdown">
+                <p>{profile.full_name || profile.email}</p>
+                <button
+                  type="button"
+                  className="dropdown-logout"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onLogout();
+                  }}
+                >
+                  Sair
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -167,8 +203,8 @@ export default function Home({ profile, onLogout, demoMode = false }) {
             <div className="canvas-hint">
               {isAdmin
                 ? (isMobile
-                  ? 'Toque na bolinha para editar o link na aba Articulações'
-                  : 'Clique na bolinha para editar o link · Use Abrir vídeo no painel')
+                  ? 'Gire o boneco · Toque na bolinha para editar o link'
+                  : 'Arraste para girar · Clique na bolinha para editar o link')
                 : (isMobile
                   ? 'Gire com o dedo · Toque na bolinha para abrir o vídeo'
                   : 'Arraste para girar · Clique na bolinha para abrir o YouTube')}
@@ -182,7 +218,7 @@ export default function Home({ profile, onLogout, demoMode = false }) {
               }}
               dpr={isMobile ? [1, 1.5] : [1, 1.75]}
             >
-              <color attach="background" args={['#eef5fb']} />
+              <color attach="background" args={['#eef6f8']} />
               <ambientLight intensity={0.85} />
               <directionalLight
                 castShadow={!isMobile}
@@ -191,7 +227,7 @@ export default function Home({ profile, onLogout, demoMode = false }) {
                 shadow-mapSize-width={1024}
                 shadow-mapSize-height={1024}
               />
-              <hemisphereLight intensity={0.45} groundColor="#dbeafe" />
+              <hemisphereLight intensity={0.45} groundColor="#d9eef3" />
               <Suspense fallback={null}>
                 <WoodenMannequin
                   hotspots={hotspots}
@@ -256,6 +292,8 @@ export default function Home({ profile, onLogout, demoMode = false }) {
           </aside>
         ) : null}
       </div>
+
+      {toast ? <div className="toast">{toast}</div> : null}
     </div>
   );
 }

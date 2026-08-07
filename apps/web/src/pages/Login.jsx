@@ -54,66 +54,67 @@ export default function Login({ demoMode = false, onDemoLogin }) {
 
   return (
     <div className="login-page">
-      <div className="login-card">
-        <div className="login-brand">
-          <div className="login-brand-mark">M</div>
-          <div>
-            <h1>Clínica Maya</h1>
-            <p style={{ margin: '0.15rem 0 0', color: '#5a738c', fontSize: '0.9rem' }}>
-              Fisioterapia interativa
-            </p>
-          </div>
+      <div className="login-shell">
+        <header className="login-hero">
+          <div className="brand-orb brand-orb-lg">maya</div>
+          <p>Fisioterapia com acompanhamento visual</p>
+        </header>
+
+        <div className="login-card">
+          <h1>Bem-vindo(a)!</h1>
+          <p className="login-lead">
+            {demoMode
+              ? 'Ambiente de demonstração. Entre como profissional ou paciente.'
+              : 'Acesso exclusivo para profissionais e pacientes cadastrados pela clínica.'}
+          </p>
+
+          {demoMode ? (
+            <div className="login-demo-actions">
+              <button type="button" className="btn btn-primary" onClick={() => enterAs('admin')}>
+                Sou profissional
+              </button>
+              <button type="button" className="btn btn-ghost" onClick={() => enterAs('patient')}>
+                Sou paciente
+              </button>
+            </div>
+          ) : null}
+
+          <form className="login-form" onSubmit={(event) => void handleSubmit(event)}>
+            <div className="field">
+              <label htmlFor="email">Usuário</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                placeholder="seu e-mail"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="password">Senha</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                placeholder="sua senha"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </div>
+
+            {error ? <p className="form-error">{error}</p> : null}
+
+            <button className="btn btn-primary btn-block" type="submit" disabled={submitting}>
+              {submitting ? 'Entrando…' : 'Entrar'}
+            </button>
+          </form>
         </div>
-        <p>
-          {demoMode
-            ? 'Ambiente de demonstração. Escolha um perfil para explorar o painel.'
-            : 'Acesso exclusivo para profissionais e pacientes cadastrados pela clínica.'}
-        </p>
-
-        {demoMode ? (
-          <div className="login-demo-actions">
-            <button type="button" className="btn btn-primary" onClick={() => enterAs('admin')}>
-              Sou profissional
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={() => enterAs('patient')}>
-              Sou paciente
-            </button>
-          </div>
-        ) : null}
-
-        <form className="login-form" onSubmit={(event) => void handleSubmit(event)}>
-          <div className="field">
-            <label htmlFor="email">E-mail</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="password">Senha</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </div>
-
-          {error ? <p className="form-error">{error}</p> : null}
-
-          <button className="btn btn-primary" type="submit" disabled={submitting}>
-            {submitting ? 'Entrando…' : 'Entrar na clínica'}
-          </button>
-        </form>
       </div>
     </div>
   );

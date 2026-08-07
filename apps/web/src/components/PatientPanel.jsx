@@ -152,7 +152,7 @@ export default function PatientPanel({ profile, demoMode = false }) {
       <div>
         <h2>Portal do Paciente</h2>
         <p className="panel-lead">
-          Preencha sua ficha clínica, envie exames e toque nas esferas vermelhas do manequim para ver orientações.
+          Preencha sua ficha clínica, envie exames e toque nas bolinhas vermelhas do manequim 3D para ver orientações.
         </p>
       </div>
 
@@ -188,7 +188,7 @@ export default function PatientPanel({ profile, demoMode = false }) {
         <section className="panel-section">
           <h3>Como usar o manequim</h3>
           <p className="muted">
-            Gire o boneco com o dedo ou mouse e toque nas esferas vermelhas para abrir o vídeo
+            Gire o boneco com o dedo ou mouse e toque nas bolinhas vermelhas para abrir o vídeo
             de exercício da articulação cadastrado pela profissional.
           </p>
         </section>
@@ -200,26 +200,28 @@ export default function PatientPanel({ profile, demoMode = false }) {
             <h3>Envio de exames</h3>
             <p className="muted">Anexe PDF ou imagem e, se quiser, descreva observações para a clínica.</p>
 
-            <div className="field">
-              <label htmlFor="examFile">Arquivo</label>
-              <input
-                id="examFile"
-                className="file-input"
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-                onChange={(event) => setFile(event.target.files?.[0] || null)}
-              />
-            </div>
+          <div className="field">
+            <label htmlFor="examFile">Arquivo</label>
+            <p className="field-hint">Ex.: raio-x.pdf ou foto do exame em PNG/JPEG</p>
+            <input
+              id="examFile"
+              className="file-input"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+              onChange={(event) => setFile(event.target.files?.[0] || null)}
+            />
+          </div>
 
-            <div className="field">
-              <label htmlFor="examNotes">Observações</label>
-              <textarea
-                id="examNotes"
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                placeholder="Ex.: exame de joelho direito, realizado em…"
-              />
-            </div>
+          <div className="field">
+            <label htmlFor="examNotes">Observações</label>
+            <p className="field-hint">Ex.: exame de joelho direito, realizado em 10/03/2026</p>
+            <textarea
+              id="examNotes"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="exame de joelho direito, realizado em 10/03/2026"
+            />
+          </div>
 
             {status === 'uploadError' ? <p className="form-error">{message}</p> : null}
             {status === 'uploadSuccess' ? <p className="form-success">{message}</p> : null}
