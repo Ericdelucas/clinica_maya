@@ -1,36 +1,63 @@
-# SmartSaúde
+# Clínica Maya
 
-Monorepo do ecossistema multiplataforma para clínicas de fisioterapia.
+Plataforma fisioterapêutica com manequim anatômico 3D, painel da profissional e portal do paciente (Supabase Auth + Postgres + Storage).
 
-## Workspaces
+## Stack
 
-- `packages/shared`: domínio, DTOs e portas agnósticas de plataforma.
-- `apps/web`: aplicação React/Vite e renderer compartilhado com Capacitor/Electron.
-- `apps/desktop`: host Electron para Windows.
+- React + Vite + React Three Fiber
+- Supabase (Auth, Postgres, Storage, Edge Functions)
+- PWA (instalável no celular)
 
-## Primeiros comandos
+## Setup
 
 ```sh
 npm install
-npm run version:inject
-npm run typecheck
-npm run dev:web
-npm run dev:desktop
+cp apps/web/.env.example apps/web/.env.local
 ```
 
-Para criar os projetos nativos após a instalação:
+Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` em `apps/web/.env.local`.
+
+### Banco e function
+
+1. Aplique as migrations em `supabase/migrations/` no projeto Supabase.
+2. Faça deploy da Edge Function `create-patient`:
 
 ```sh
-npm exec --workspace @smartsaude/web cap add android
-npm exec --workspace @smartsaude/web cap add ios
-npm run cap:sync --workspace @smartsaude/web
+supabase functions deploy create-patient
 ```
 
-O projeto iOS exige macOS/Xcode para compilação e execução.
+3. Crie o usuário admin no Dashboard (Authentication) e insira o perfil:
 
-Copie `apps/web/.env.example` para `apps/web/.env` e preencha a URL e a chave
-anônima do Supabase antes de iniciar a aplicação. O bucket privado esperado para
-as fotos clínicas é `fotos-clinicas`.
+```sql
+insert into public.profiles (id, email, full_name, role)
+values ('<uuid-do-auth-user>', 'maya@clinica.com', 'Maya', 'admin');
+```
 
-Na aplicação web, acrescente `?outdated=1` à URL para visualizar o bloqueio de
-atualização obrigatória do `VersionGuard`.
+## Desenvolvimento
+
+```sh
+npm run dev
+```
+
+Abre em `http://localhost:5173`.
+
+## Uso no celular (site responsivo)
+
+O produto é web-first: funciona no navegador do computador e do celular.
+
+```sh
+npm run dev
+```
+
+- Computador: layout lado a lado (manequim + painel)
+- Celular: abas **Manequim 3D** / **Painel**, toque nas esferas, formulários adaptados
+
+No celular (mesma Wi‑Fi), abra o endereço `Network` que o Vite mostrar (ex.: `http://192.168.x.x:5173`).
+
+No Android/iPhone, use “Adicionar à tela inicial” do navegador para atalho tipo app (PWA).
+
+## Regras de acesso
+
+- Sem cadastro público.
+- Pacientes são criados apenas pela profissional (aba “Cadastrar Paciente”).
+- A interface segue `profiles.role` (`admin` | `patient`).

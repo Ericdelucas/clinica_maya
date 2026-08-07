@@ -1,0 +1,210 @@
+const DEMO_SESSION_KEY = 'clinica-maya-demo-session';
+const DEMO_HOTSPOTS_KEY = 'clinica-maya-demo-hotspots';
+const DEMO_DOCS_KEY = 'clinica-maya-demo-documents';
+const DEMO_PATIENTS_KEY = 'clinica-maya-demo-patients';
+const DEMO_ANAMNESIS_KEY = 'clinica-maya-demo-anamnesis';
+
+export const DEMO_ACCOUNTS = {
+  admin: {
+    id: 'demo-admin',
+    email: 'maya@demo.local',
+    password: 'maya123',
+    full_name: 'Maya',
+    role: 'admin',
+  },
+  patient: {
+    id: 'demo-patient',
+    email: 'paciente@demo.local',
+    password: 'paciente123',
+    full_name: 'Paciente Demo',
+    role: 'patient',
+  },
+};
+
+const SEED_PATIENTS = [
+  {
+    id: 'demo-patient',
+    email: 'paciente@demo.local',
+    full_name: 'Paciente Demo',
+    created_at: '2026-07-01T12:00:00.000Z',
+  },
+  {
+    id: 'demo-patient-2',
+    email: 'ana.silva@demo.local',
+    full_name: 'Ana Silva',
+    created_at: '2026-07-10T12:00:00.000Z',
+  },
+  {
+    id: 'demo-patient-3',
+    email: 'joao.santos@demo.local',
+    full_name: 'João Santos',
+    created_at: '2026-07-15T12:00:00.000Z',
+  },
+];
+
+export function emptyAnamnesis(pacienteId = '') {
+  return {
+    paciente_id: pacienteId,
+    full_name: '',
+    birth_date: '',
+    phone: '',
+    weight_kg: '',
+    height_cm: '',
+    blood_type: '',
+    allergies: '',
+    medications: '',
+    health_conditions: '',
+    surgeries: '',
+    smokes: 'nao',
+    drinks_alcohol: 'nao',
+    physical_activity: '',
+    pain_areas: '',
+    chief_complaint: '',
+    notes: '',
+    media: [],
+    updated_at: null,
+  };
+}
+
+export function readDemoSession() {
+  try {
+    const raw = localStorage.getItem(DEMO_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeDemoSession(profile) {
+  localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(profile));
+}
+
+export function clearDemoSession() {
+  localStorage.removeItem(DEMO_SESSION_KEY);
+}
+
+export function authenticateDemo(email, password) {
+  const normalized = String(email || '').trim().toLowerCase();
+  const accounts = Object.values(DEMO_ACCOUNTS);
+  const match = accounts.find(
+    (account) => account.email === normalized && account.password === password,
+  );
+  if (!match) return null;
+  const { password: _ignored, ...profile } = match;
+  return profile;
+}
+
+export function readDemoHotspotUrls() {
+  try {
+    const raw = localStorage.getItem(DEMO_HOTSPOTS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function writeDemoHotspotUrl(hotspotId, videoUrl) {
+  const current = readDemoHotspotUrls();
+  current[hotspotId] = videoUrl;
+  localStorage.setItem(DEMO_HOTSPOTS_KEY, JSON.stringify(current));
+}
+
+export function readDemoDocuments() {
+  try {
+    const raw = localStorage.getItem(DEMO_DOCS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeDemoDocument(doc) {
+  const current = readDemoDocuments();
+  current.unshift({
+    professional_note: '',
+    file_name: '',
+    file_type: '',
+    ...doc,
+  });
+  localStorage.setItem(DEMO_DOCS_KEY, JSON.stringify(current));
+  return current;
+}
+
+export function updateDemoDocument(docId, patch) {
+  const current = readDemoDocuments();
+  const next = current.map((doc) =>
+    doc.id === docId ? { ...doc, ...patch } : doc,
+  );
+  localStorage.setItem(DEMO_DOCS_KEY, JSON.stringify(next));
+  return next;
+}
+
+export function deleteDemoDocument(docId) {
+  const next = readDemoDocuments().filter((doc) => doc.id !== docId);
+  localStorage.setItem(DEMO_DOCS_KEY, JSON.stringify(next));
+  return next;
+}
+
+export function readDemoPatients() {
+  try {
+    const raw = localStorage.getItem(DEMO_PATIENTS_KEY);
+    const stored = raw ? JSON.parse(raw) : [];
+    const byId = new Map();
+    [...SEED_PATIENTS, ...stored].forEach((patient) => {
+      byId.set(patient.id, patient);
+    });
+    return Array.from(byId.values()).sort((a, b) =>
+      String(b.created_at).localeCompare(String(a.created_at)),
+    );
+  } catch {
+    return [...SEED_PATIENTS];
+  }
+}
+
+export function writeDemoPatient(patient) {
+  const raw = localStorage.getItem(DEMO_PATIENTS_KEY);
+  const stored = raw ? JSON.parse(raw) : [];
+  const next = [patient, ...stored.filter((item) => item.id !== patient.id)];
+  localStorage.setItem(DEMO_PATIENTS_KEY, JSON.stringify(next));
+  return readDemoPatients();
+}
+
+function readAnamnesisMap() {
+  try {
+    const raw = localStorage.getItem(DEMO_ANAMNESIS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function readDemoAnamnesis(pacienteId) {
+  const map = readAnamnesisMap();
+  return map[pacienteId] || emptyAnamnesis(pacienteId);
+}
+
+export function writeDemoAnamnesis(pacienteId, payload) {
+  const map = readAnamnesisMap();
+  const next = {
+    ...emptyAnamnesis(pacienteId),
+    ...payload,
+    paciente_id: pacienteId,
+    updated_at: new Date().toISOString(),
+  };
+  map[pacienteId] = next;
+  localStorage.setItem(DEMO_ANAMNESIS_KEY, JSON.stringify(map));
+  return next;
+}
+
+export function listDemoAnamnesis() {
+  return readAnamnesisMap();
+}
+
+export async function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Falha ao ler o arquivo.'));
+    reader.readAsDataURL(file);
+  });
+}

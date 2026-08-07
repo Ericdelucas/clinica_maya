@@ -1,30 +1,20 @@
 {
-  "name": "smartsaude",
-  "version": "0.1.0",
+  "name": "clinica-maya",
+  "version": "1.0.0",
   "private": true,
-  "description": "Ecossistema multiplataforma SmartSaúde",
+  "description": "Clínica Maya — plataforma fisioterapêutica interativa",
   "workspaces": [
-    "packages/*",
     "apps/*"
   ],
   "scripts": {
-    "version:inject": "tsc pipeline/inject-version.ts --outDir pipeline/.compiled --module commonjs --target ES2022 --moduleResolution node --esModuleInterop --skipLibCheck && node pipeline/.compiled/inject-version.js",
-    "prebuild": "npm run version:inject",
-    "predev:web": "npm run build --workspace @smartsaude/shared",
-    "dev:web": "npm run dev --workspace @smartsaude/web",
-    "dev:desktop": "concurrently -k \"npm run dev:web\" \"npm run dev --workspace @smartsaude/desktop\"",
-    "build": "npm run build --workspace @smartsaude/shared && npm run build --workspace @smartsaude/web && npm run build --workspace @smartsaude/desktop",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present"
+    "dev": "npm run dev --workspace @clinica-maya/web",
+    "dev:web": "npm run dev --workspace @clinica-maya/web",
+    "build": "npm run build --workspace @clinica-maya/web",
+    "preview": "npm run preview --workspace @clinica-maya/web",
+    "apk": "npm run apk:debug --workspace @clinica-maya/web && npm run apk:copy --workspace @clinica-maya/web"
   },
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=10.0.0"
-  },
-  "config": {
-    "versionBase": "0.01"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.0"
   }
 }

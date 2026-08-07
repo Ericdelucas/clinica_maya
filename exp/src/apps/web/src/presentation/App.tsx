@@ -1,4 +1,5 @@
 import {
+  type ICalendarioRepository,
   SupabaseCalendarioRepository,
   type AnatomicalNode,
 } from "@smartsaude/shared";
@@ -6,6 +7,7 @@ import { AnatomicalCanvas } from "../components/AnatomicalModel";
 import { ClinicCalendar } from "../components/Calendar";
 import { VersionGuard } from "../components/Common";
 import { MockAppVersionValidator } from "../mocks/MockAppVersionValidator";
+import { MockCalendarioRepository } from "../mocks/MockCalendarioRepository";
 import { APP_VERSION } from "../generated/appVersion";
 import styles from "./App.module.css";
 
@@ -13,7 +15,12 @@ const simulateOutdated = new URLSearchParams(window.location.search).has("outdat
 const versionValidator = new MockAppVersionValidator(
   simulateOutdated ? "1.00.000" : APP_VERSION,
 );
-const calendarRepository = new SupabaseCalendarioRepository();
+const hasSupabaseConfig =
+  Boolean(import.meta.env.VITE_SUPABASE_URL) &&
+  Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY);
+const calendarRepository: ICalendarioRepository = hasSupabaseConfig
+  ? new SupabaseCalendarioRepository()
+  : new MockCalendarioRepository();
 
 const anatomicalNodes: readonly AnatomicalNode[] = [
   {
