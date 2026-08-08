@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: clinica-maya
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
