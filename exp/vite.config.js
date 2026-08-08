@@ -16,5 +16,8 @@ export default defineConfig(({ mode }) => {
       'process.env.VITE_SUPABASE_URL': JSON.stringify(environment.VITE_SUPABASE_URL),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(environment.VITE_SUPABASE_ANON_KEY),
     },
+    build: {
+      outDir: 'dist',
+    },
   };
 });

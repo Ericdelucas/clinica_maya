@@ -5,6 +5,11 @@ import path from 'node:path';
 
 export default defineConfig({
   base: './',
+  build: {
+    // Render publica a pasta dist na raiz do repositório
+    outDir: path.resolve(__dirname, '../../dist'),
+    emptyOutDir: true,
+  },
   plugins: [
     react(),
     VitePWA({
