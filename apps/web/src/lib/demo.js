@@ -104,7 +104,12 @@ export function writeDemoHotspotUrls(urls) {
 
 export function writeDemoHotspotUrl(hotspotId, videoUrl) {
   const current = readDemoHotspotUrls();
-  current[hotspotId] = videoUrl;
+  const trimmed = String(videoUrl || '').trim();
+  if (trimmed) {
+    current[hotspotId] = trimmed;
+  } else {
+    delete current[hotspotId];
+  }
   localStorage.setItem(DEMO_HOTSPOTS_KEY, JSON.stringify(current));
   return current;
 }
@@ -134,6 +139,29 @@ export function decodeHotspotSharePayload(encoded) {
   }
 }
 
+/** Mantém ?links= na barra de endereço para o link do site já carregar os vídeos */
+export function syncHotspotShareToLocation(urls = readDemoHotspotUrls()) {
+  const params = new URLSearchParams(window.location.search);
+  const encoded = encodeHotspotSharePayload(urls);
+
+  if (encoded) {
+    params.set('links', encoded);
+  } else {
+    params.delete('links');
+  }
+
+  const query = params.toString();
+  const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+  window.history.replaceState({}, '', nextUrl);
+  return encoded ? `${window.location.origin}${nextUrl}` : `${window.location.origin}${window.location.pathname}`;
+}
+
+export function buildHotspotShareUrl(urls = readDemoHotspotUrls()) {
+  const encoded = encodeHotspotSharePayload(urls);
+  if (!encoded) return '';
+  return `${window.location.origin}${window.location.pathname}?links=${encoded}`;
+}
+
 export function applyHotspotShareFromLocation(search = window.location.search) {
   const params = new URLSearchParams(search);
   const payload = params.get('links');
@@ -147,11 +175,8 @@ export function applyHotspotShareFromLocation(search = window.location.search) {
     ...urls,
   };
   writeDemoHotspotUrls(merged);
-
-  params.delete('links');
-  const query = params.toString();
-  const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
-  window.history.replaceState({}, '', nextUrl);
+  // Mantém ?links= na URL para quem copiar/compartilhar a página (ex.: LinkedIn)
+  syncHotspotShareToLocation(merged);
   return merged;
 }
 

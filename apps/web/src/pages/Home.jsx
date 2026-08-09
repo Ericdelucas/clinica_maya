@@ -7,6 +7,7 @@ import WoodenMannequin from '../components/WoodenMannequin.jsx';
 import {
   applyHotspotShareFromLocation,
   readDemoHotspotUrls,
+  syncHotspotShareToLocation,
   writeDemoHotspotUrl,
 } from '../lib/demo.js';
 import { HOTSPOT_DEFAULTS } from '../lib/hotspots.js';
@@ -110,7 +111,9 @@ export default function Home({ profile, onLogout, demoMode = false }) {
 
   async function handleSaveHotspot(hotspotId, videoUrl) {
     if (demoMode) {
-      writeDemoHotspotUrl(hotspotId, videoUrl.trim());
+      const urls = writeDemoHotspotUrl(hotspotId, videoUrl.trim());
+      // Atualiza a URL da página para quem compartilhar o link do site já ver os vídeos
+      syncHotspotShareToLocation(urls);
     } else {
       const supabase = getSupabaseClient();
       const { error } = await supabase
