@@ -275,6 +275,23 @@ a {
   font-size: 0.9rem;
 }
 
+.rules-help {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.rules-help pre {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 14px;
+  background: #1f2937;
+  color: #e5e7eb;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
 .form-success {
   margin: 0;
   padding: 0.65rem 0.8rem;

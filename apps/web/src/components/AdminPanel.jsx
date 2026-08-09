@@ -8,6 +8,10 @@ import {
   updateDemoDocument,
   writeDemoPatient,
 } from '../lib/demo.js';
+import {
+  describeFirebaseError,
+  FIRESTORE_OPEN_RULES,
+} from '../lib/clinicalHotspots.js';
 import { HOTSPOT_DEFAULTS, isValidYoutubeUrl } from '../lib/hotspots.js';
 import { getSupabaseClient } from '../lib/supabase.js';
 
@@ -185,7 +189,7 @@ export default function AdminPanel({
       await onSaveHotspot(selectedHotspot.id, videoUrl);
       setSaveMessage('Vídeo atualizado com sucesso no banco de dados!');
     } catch (err) {
-      setSaveError(err?.message || 'Não foi possível salvar no banco.');
+      setSaveError(describeFirebaseError(err));
     } finally {
       setSaving(false);
     }
@@ -421,6 +425,25 @@ export default function AdminPanel({
             </div>
 
             {saveError ? <p className="form-error">{saveError}</p> : null}
+            {saveError && /permission|recusou|regras/i.test(saveError) ? (
+              <div className="rules-help">
+                <pre>{FIRESTORE_OPEN_RULES}</pre>
+                <button
+                  className="btn btn-ghost"
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(FIRESTORE_OPEN_RULES);
+                      setSaveMessage('Regras copiadas. Cole no Firebase e clique em Publicar.');
+                    } catch {
+                      window.prompt('Copie as regras e publique no Firestore:', FIRESTORE_OPEN_RULES);
+                    }
+                  }}
+                >
+                  Copiar regras do Firestore
+                </button>
+              </div>
+            ) : null}
             {saveMessage ? <p className="form-success">{saveMessage}</p> : null}
 
             <div className="action-row">

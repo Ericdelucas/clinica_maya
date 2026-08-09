@@ -3,12 +3,26 @@ import { db, ensureFirebaseSession } from './firebase.js';
 
 const COLLECTION = 'clinical_hotspots';
 
+export const FIRESTORE_OPEN_RULES = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /clinical_hotspots/{hotspotId} {
+      allow read, write: if true;
+    }
+  }
+}`;
+
 export function describeFirebaseError(error) {
   const code = String(error?.code || '');
   const message = String(error?.message || '');
+  const combined = `${code} ${message}`.toLowerCase();
 
-  if (code.includes('permission-denied') || message.toLowerCase().includes('permission')) {
-    return 'O Firebase bloqueou a gravação. No Console do Firebase (projeto maya-4a18e): Firestore → Regras, publique as regras de clinical_hotspots e, em Authentication, ative o login anônimo.';
+  if (
+    combined.includes('permission')
+    || combined.includes('insufficient')
+    || combined.includes('missing or insufficient')
+  ) {
+    return 'O Firebase recusou o salvamento (regras fechadas). Abra console.firebase.google.com → projeto maya-4a18e → Firestore Database → Regras, cole o bloco abaixo e clique em Publicar.';
   }
 
   if (code.includes('unavailable') || message.toLowerCase().includes('offline')) {
