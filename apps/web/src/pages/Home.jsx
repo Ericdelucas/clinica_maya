@@ -85,10 +85,16 @@ export default function Home({ profile, onLogout, demoMode = false }) {
 
   async function handleSaveHotspot(hotspotId, videoUrl) {
     const current = hotspots.find((item) => item.id === hotspotId);
-    await updateClinicalHotspotVideo(hotspotId, videoUrl.trim(), {
+    const trimmed = videoUrl.trim();
+    await updateClinicalHotspotVideo(hotspotId, trimmed, {
       label: current?.label,
       region: current?.region,
     });
+    setHotspots((items) =>
+      items.map((item) =>
+        item.id === hotspotId ? { ...item, video_url: trimmed } : item,
+      ),
+    );
   }
 
   const selectedHotspot = hotspots.find((item) => item.id === selectedId) || null;
@@ -248,6 +254,7 @@ export default function Home({ profile, onLogout, demoMode = false }) {
                 hotspots={hotspots}
                 selectedHotspot={selectedHotspot}
                 focusArticulationKey={focusArticulationKey}
+                hotspotsError={hotspotsError}
                 onSelectHotspot={focusArticulation}
                 onSaveHotspot={handleSaveHotspot}
               />

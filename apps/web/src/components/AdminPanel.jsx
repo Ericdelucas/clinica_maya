@@ -24,6 +24,7 @@ export default function AdminPanel({
   onSelectHotspot,
   focusArticulationKey = 0,
   demoMode = false,
+  hotspotsError = '',
 }) {
   const [tab, setTab] = useState('patients');
   const [videoUrl, setVideoUrl] = useState('');
@@ -281,9 +282,13 @@ export default function AdminPanel({
   }
 
   function openCurrentVideo() {
-    const url = selectedHotspot?.video_url?.trim();
+    const url = videoUrl.trim() || selectedHotspot?.video_url?.trim();
     if (!url) {
-      setSaveError('Esta articulação ainda não tem link de YouTube.');
+      setSaveError('Cole a URL do YouTube e clique em Salvar Alteração.');
+      return;
+    }
+    if (!isValidYoutubeUrl(url)) {
+      setSaveError('Informe uma URL válida do YouTube.');
       return;
     }
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -377,6 +382,7 @@ export default function AdminPanel({
           <p className="muted">
             O link é gravado no Firestore e aparece na hora no celular do paciente.
           </p>
+          {hotspotsError ? <p className="form-error">{hotspotsError}</p> : null}
 
           <div className="joint-grid">
             {articulationList.map((item) => (
