@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   clearDemoSession,
-  readDemoSession,
 } from './lib/demo.js';
 import { getSupabaseClient, isSupabaseConfigured } from './lib/supabase.js';
 import Login from './pages/Login.jsx';
@@ -24,11 +23,10 @@ export default function App() {
 
   useEffect(() => {
     if (demoMode) {
-      const demoProfile = readDemoSession();
-      if (demoProfile) {
-        setSession({ user: { id: demoProfile.id } });
-        setProfile(demoProfile);
-      }
+      // Sempre começa na tela de login; não restaura sessão anterior.
+      clearDemoSession();
+      setSession(null);
+      setProfile(null);
       setBootstrapping(false);
       return undefined;
     }

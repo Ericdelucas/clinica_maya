@@ -17,15 +17,37 @@ export const HOTSPOT_DEFAULTS = [
   { id: 'tornozelo_e', label: 'Tornozelo Esquerdo', region: 'Membros Inferiores', position: [-0.24, -0.72, 0] },
 ];
 
+export function extractYoutubeVideoId(value) {
+  try {
+    const parsed = new URL(String(value || '').trim());
+    if (parsed.hostname.includes('youtu.be')) {
+      return parsed.pathname.split('/').filter(Boolean)[0] || '';
+    }
+    if (parsed.searchParams.get('v')) {
+      return parsed.searchParams.get('v') || '';
+    }
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    const marker = parts.findIndex((part) => part === 'embed' || part === 'shorts' || part === 'live');
+    if (marker >= 0 && parts[marker + 1]) {
+      return parts[marker + 1];
+    }
+    return '';
+  } catch {
+    return '';
+  }
+}
+
 export function isValidYoutubeUrl(value) {
   if (!value || typeof value !== 'string') return false;
   const trimmed = value.trim();
   if (!trimmed) return false;
   try {
     const parsed = new URL(trimmed);
+    const isYoutubeHost = parsed.hostname.includes('youtube.com') || parsed.hostname.includes('youtu.be');
     return (
-      (parsed.hostname.includes('youtube.com') || parsed.hostname.includes('youtu.be'))
+      isYoutubeHost
       && (parsed.protocol === 'https:' || parsed.protocol === 'http:')
+      && Boolean(extractYoutubeVideoId(trimmed))
     );
   } catch {
     return false;

@@ -1,0 +1,10 @@
+---
+description: Nunca fazer git commit nem git push sem pedido explícito
+alwaysApply: true
+---
+
+# Sem commit/push automático
+
+- Nunca rode `git commit` nem `git push` (nem force push) a menos que o usuário peça **explicitamente** nesta mensagem.
+- Mesmo após concluir uma correção, pare no código local. O usuário revisa e sobe o que quiser.
+- Não ofereça commit/push de forma proativa.

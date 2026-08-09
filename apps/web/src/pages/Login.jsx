@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   DEMO_ACCOUNTS,
   authenticateDemo,
-  writeDemoSession,
 } from '../lib/demo.js';
 import { getSupabaseClient } from '../lib/supabase.js';
 
@@ -24,7 +23,6 @@ export default function Login({ demoMode = false, onDemoLogin }) {
           setError('Use maya@demo.local / maya123 ou paciente@demo.local / paciente123');
           return;
         }
-        writeDemoSession(profile);
         onDemoLogin?.(profile);
         return;
       }
@@ -48,7 +46,6 @@ export default function Login({ demoMode = false, onDemoLogin }) {
   function enterAs(role) {
     const account = DEMO_ACCOUNTS[role];
     const { password: _ignored, ...profile } = account;
-    writeDemoSession(profile);
     onDemoLogin?.(profile);
   }
 

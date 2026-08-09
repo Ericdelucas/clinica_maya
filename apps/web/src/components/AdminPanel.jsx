@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import AnamnesisPanel from './AnamnesisPanel.jsx';
 import {
-  buildHotspotShareUrl,
   deleteDemoDocument,
   listDemoAnamnesis,
   readDemoDocuments,
-  readDemoHotspotUrls,
   readDemoPatients,
-  syncHotspotShareToLocation,
   updateDemoDocument,
   writeDemoPatient,
 } from '../lib/demo.js';
@@ -187,7 +184,7 @@ export default function AdminPanel({
       await onSaveHotspot(selectedHotspot.id, videoUrl);
       setSaveMessage(
         demoMode
-          ? 'Link salvo. A URL da página já foi atualizada — copie “Copiar link para compartilhar” e envie para a outra pessoa.'
+          ? 'Link salvo. Qualquer aparelho que abrir o site e entrar vai ver este vídeo.'
           : 'Alteração salva com sucesso.',
       );
     } catch (err) {
@@ -296,34 +293,6 @@ export default function AdminPanel({
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 
-  async function handleCopyShareLink() {
-    setSaveMessage('');
-    setSaveError('');
-
-    const fromList = Object.fromEntries(
-      articulationList
-        .filter((item) => String(item.video_url || '').trim())
-        .map((item) => [item.id, String(item.video_url).trim()]),
-    );
-    const urls = { ...readDemoHotspotUrls(), ...fromList };
-
-    if (!Object.keys(urls).length) {
-      setSaveError('Salve pelo menos um link de YouTube antes de compartilhar.');
-      return;
-    }
-
-    syncHotspotShareToLocation(urls);
-    const shareUrl = buildHotspotShareUrl(urls);
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setSaveMessage('Link copiado! Envie esse link (WhatsApp/LinkedIn) para a outra pessoa abrir.');
-    } catch {
-      window.prompt('Copie este link e envie para a outra pessoa:', shareUrl);
-      setSaveMessage('Link gerado. Cole e envie para a outra pessoa.');
-    }
-  }
-
   return (
     <div className="panel">
       <div>
@@ -410,10 +379,8 @@ export default function AdminPanel({
           </p>
 
           {demoMode ? (
-            <p className="form-error">
-              Modo demo: ao salvar, a barra de endereço ganha os links. Use
-              “Copiar link para compartilhar” (ou copie a URL da página) e mande
-              para a outra pessoa — senão ela não vê o vídeo.
+            <p className="muted">
+              Ao salvar, o vídeo fica disponível em qualquer aparelho que abrir este site.
             </p>
           ) : null}
 
@@ -468,15 +435,6 @@ export default function AdminPanel({
               <button className="btn btn-primary" type="submit" disabled={!selectedHotspot || saving}>
                 {saving ? 'Salvando…' : 'Salvar link'}
               </button>
-              {demoMode ? (
-                <button
-                  className="btn btn-ghost"
-                  type="button"
-                  onClick={() => void handleCopyShareLink()}
-                >
-                  Copiar link para compartilhar
-                </button>
-              ) : null}
             </div>
           </form>
         </div>

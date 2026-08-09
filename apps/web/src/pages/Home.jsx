@@ -6,11 +6,9 @@ import PatientPanel from '../components/PatientPanel.jsx';
 import WoodenMannequin from '../components/WoodenMannequin.jsx';
 import {
   applyHotspotShareFromLocation,
-  readDemoHotspotUrls,
-  syncHotspotShareToLocation,
-  writeDemoHotspotUrl,
 } from '../lib/demo.js';
 import { HOTSPOT_DEFAULTS } from '../lib/hotspots.js';
+import { hydrateSharedHotspotUrls, saveSharedHotspotUrl } from '../lib/sharedHotspots.js';
 import { getSupabaseClient } from '../lib/supabase.js';
 import { useIsMobile } from '../lib/useIsMobile.js';
 
@@ -48,7 +46,8 @@ export default function Home({ profile, onLogout, demoMode = false }) {
 
     try {
       if (demoMode) {
-        const urls = readDemoHotspotUrls();
+        applyHotspotShareFromLocation();
+        const urls = await hydrateSharedHotspotUrls();
         const rows = HOTSPOT_DEFAULTS.map((item) => ({
           ...item,
           video_url: urls[item.id] || '',
@@ -73,14 +72,8 @@ export default function Home({ profile, onLogout, demoMode = false }) {
   }, [demoMode]);
 
   useEffect(() => {
-    if (demoMode) {
-      const imported = applyHotspotShareFromLocation();
-      if (imported) {
-        setToast('Links de exercícios sincronizados neste aparelho.');
-      }
-    }
     void loadHotspots();
-  }, [demoMode, loadHotspots]);
+  }, [loadHotspots]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -111,9 +104,7 @@ export default function Home({ profile, onLogout, demoMode = false }) {
 
   async function handleSaveHotspot(hotspotId, videoUrl) {
     if (demoMode) {
-      const urls = writeDemoHotspotUrl(hotspotId, videoUrl.trim());
-      // Atualiza a URL da página para quem compartilhar o link do site já ver os vídeos
-      syncHotspotShareToLocation(urls);
+      await saveSharedHotspotUrl(hotspotId, videoUrl.trim());
     } else {
       const supabase = getSupabaseClient();
       const { error } = await supabase
