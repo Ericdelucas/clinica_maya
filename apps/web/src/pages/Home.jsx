@@ -4,7 +4,11 @@ import { Suspense, useCallback, useEffect, useState } from 'react';
 import AdminPanel from '../components/AdminPanel.jsx';
 import PatientPanel from '../components/PatientPanel.jsx';
 import WoodenMannequin from '../components/WoodenMannequin.jsx';
-import { readDemoHotspotUrls, writeDemoHotspotUrl } from '../lib/demo.js';
+import {
+  applyHotspotShareFromLocation,
+  readDemoHotspotUrls,
+  writeDemoHotspotUrl,
+} from '../lib/demo.js';
 import { HOTSPOT_DEFAULTS } from '../lib/hotspots.js';
 import { getSupabaseClient } from '../lib/supabase.js';
 import { useIsMobile } from '../lib/useIsMobile.js';
@@ -68,12 +72,18 @@ export default function Home({ profile, onLogout, demoMode = false }) {
   }, [demoMode]);
 
   useEffect(() => {
+    if (demoMode) {
+      const imported = applyHotspotShareFromLocation();
+      if (imported) {
+        setToast('Links de exercícios sincronizados neste aparelho.');
+      }
+    }
     void loadHotspots();
-  }, [loadHotspots]);
+  }, [demoMode, loadHotspots]);
 
   useEffect(() => {
     if (!toast) return undefined;
-    const timer = window.setTimeout(() => setToast(''), 2800);
+    const timer = window.setTimeout(() => setToast(''), 3200);
     return () => window.clearTimeout(timer);
   }, [toast]);
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AnamnesisPanel from './AnamnesisPanel.jsx';
 import {
   deleteDemoDocument,
+  encodeHotspotSharePayload,
   listDemoAnamnesis,
   readDemoDocuments,
   readDemoPatients,
@@ -182,7 +183,11 @@ export default function AdminPanel({
     setSaving(true);
     try {
       await onSaveHotspot(selectedHotspot.id, videoUrl);
-      setSaveMessage('Alteração salva com sucesso.');
+      setSaveMessage(
+        demoMode
+          ? 'Link salvo neste computador. Use “Copiar link para compartilhar” para a outra pessoa ver.'
+          : 'Alteração salva com sucesso.',
+      );
     } catch (err) {
       setSaveError(err?.message || 'Não foi possível salvar no banco.');
     } finally {
@@ -289,6 +294,32 @@ export default function AdminPanel({
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 
+  async function handleCopyShareLink() {
+    setSaveMessage('');
+    setSaveError('');
+
+    const urls = Object.fromEntries(
+      articulationList
+        .filter((item) => String(item.video_url || '').trim())
+        .map((item) => [item.id, String(item.video_url).trim()]),
+    );
+
+    if (!Object.keys(urls).length) {
+      setSaveError('Salve pelo menos um link de YouTube antes de compartilhar.');
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}${window.location.pathname}?links=${encodeHotspotSharePayload(urls)}`;
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setSaveMessage('Link de sincronização copiado! Envie para a outra pessoa abrir no navegador dela.');
+    } catch {
+      window.prompt('Copie este link e envie para a outra pessoa:', shareUrl);
+      setSaveMessage('Link gerado. Cole e envie para a outra pessoa.');
+    }
+  }
+
   return (
     <div className="panel">
       <div>
@@ -374,6 +405,13 @@ export default function AdminPanel({
             Clique na bolinha vermelha do boneco ou escolha na lista. Depois abra o vídeo ou edite o link.
           </p>
 
+          {demoMode ? (
+            <p className="form-error">
+              Modo demo: o link fica só neste computador. Depois de salvar, use
+              “Copiar link para compartilhar” e mande esse link para a outra pessoa abrir.
+            </p>
+          ) : null}
+
           <div className="joint-grid">
             {articulationList.map((item) => (
               <button
@@ -425,6 +463,15 @@ export default function AdminPanel({
               <button className="btn btn-primary" type="submit" disabled={!selectedHotspot || saving}>
                 {saving ? 'Salvando…' : 'Salvar link'}
               </button>
+              {demoMode ? (
+                <button
+                  className="btn btn-ghost"
+                  type="button"
+                  onClick={() => void handleCopyShareLink()}
+                >
+                  Copiar link para compartilhar
+                </button>
+              ) : null}
             </div>
           </form>
         </div>
