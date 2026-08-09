@@ -5,11 +5,12 @@ import AdminPanel from '../components/AdminPanel.jsx';
 import PatientPanel from '../components/PatientPanel.jsx';
 import WoodenMannequin from '../components/WoodenMannequin.jsx';
 import {
-  applyHotspotShareFromLocation,
-} from '../lib/demo.js';
+  fetchClinicalHotspots,
+  subscribeClinicalHotspots,
+  updateClinicalHotspotVideo,
+} from '../lib/clinicalHotspots.js';
 import { HOTSPOT_DEFAULTS } from '../lib/hotspots.js';
-import { hydrateSharedHotspotUrls, saveSharedHotspotUrl } from '../lib/sharedHotspots.js';
-import { getSupabaseClient } from '../lib/supabase.js';
+import { isSupabaseConfigured } from '../lib/supabase.js';
 import { useIsMobile } from '../lib/useIsMobile.js';
 
 function mergeHotspots(rows) {
@@ -21,7 +22,6 @@ function mergeHotspots(rows) {
       id: fallback.id,
       label: row?.label || fallback.label,
       region: row?.region || fallback.region,
-      // Posição sempre do mesh (evita hotspots desalinhados vindos do banco)
       position: fallback.position,
       video_url: row?.video_url || '',
     };
@@ -45,34 +45,41 @@ export default function Home({ profile, onLogout, demoMode = false }) {
     setHotspotsError('');
 
     try {
-      if (demoMode) {
-        applyHotspotShareFromLocation();
-        const urls = await hydrateSharedHotspotUrls();
-        const rows = HOTSPOT_DEFAULTS.map((item) => ({
-          ...item,
-          video_url: urls[item.id] || '',
-        }));
-        setHotspots(mergeHotspots(rows));
-        return;
-      }
-
-      const supabase = getSupabaseClient();
-      const { data, error } = await supabase
-        .from('clinical_hotspots')
-        .select('id, label, region, position, video_url');
-
-      if (error) throw error;
+      const data = await fetchClinicalHotspots();
       setHotspots(mergeHotspots(data));
     } catch (err) {
-      setHotspotsError(err?.message || 'Não foi possível carregar as articulações.');
+      setHotspotsError(err?.message || 'Não foi possível carregar as articulações do banco.');
       setHotspots(mergeHotspots([]));
     } finally {
       setLoadingHotspots(false);
     }
-  }, [demoMode]);
+  }, []);
 
   useEffect(() => {
     void loadHotspots();
+  }, [loadHotspots]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return undefined;
+
+    const unsubscribe = subscribeClinicalHotspots(() => {
+      void loadHotspots();
+    });
+
+    function refreshIfVisible() {
+      if (document.visibilityState === 'visible') {
+        void loadHotspots();
+      }
+    }
+
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    window.addEventListener('focus', refreshIfVisible);
+
+    return () => {
+      unsubscribe();
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+      window.removeEventListener('focus', refreshIfVisible);
+    };
   }, [loadHotspots]);
 
   useEffect(() => {
@@ -103,30 +110,9 @@ export default function Home({ profile, onLogout, demoMode = false }) {
   }
 
   async function handleSaveHotspot(hotspotId, videoUrl) {
-    if (demoMode) {
-      await saveSharedHotspotUrl(hotspotId, videoUrl.trim());
-    } else {
-      const supabase = getSupabaseClient();
-      const { error } = await supabase
-        .from('clinical_hotspots')
-        .update({
-          video_url: videoUrl.trim(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', hotspotId);
-
-      if (error) {
-        throw error;
-      }
-    }
-
-    setHotspots((current) =>
-      current.map((item) =>
-        item.id === hotspotId
-          ? { ...item, video_url: videoUrl.trim() }
-          : item,
-      ),
-    );
+    await updateClinicalHotspotVideo(hotspotId, videoUrl.trim());
+    const data = await fetchClinicalHotspots();
+    setHotspots(mergeHotspots(data));
   }
 
   const selectedHotspot = hotspots.find((item) => item.id === selectedId) || null;

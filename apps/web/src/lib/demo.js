@@ -1,5 +1,4 @@
 const DEMO_SESSION_KEY = 'clinica-maya-demo-session';
-const DEMO_HOTSPOTS_KEY = 'clinica-maya-demo-hotspots';
 const DEMO_DOCS_KEY = 'clinica-maya-demo-documents';
 const DEMO_PATIENTS_KEY = 'clinica-maya-demo-patients';
 const DEMO_ANAMNESIS_KEY = 'clinica-maya-demo-anamnesis';
@@ -86,78 +85,6 @@ export function authenticateDemo(email, password) {
   if (!match) return null;
   const { password: _ignored, ...profile } = match;
   return profile;
-}
-
-export function readDemoHotspotUrls() {
-  try {
-    const raw = localStorage.getItem(DEMO_HOTSPOTS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-export function writeDemoHotspotUrls(urls) {
-  localStorage.setItem(DEMO_HOTSPOTS_KEY, JSON.stringify(urls || {}));
-  return readDemoHotspotUrls();
-}
-
-export function writeDemoHotspotUrl(hotspotId, videoUrl) {
-  const current = readDemoHotspotUrls();
-  const trimmed = String(videoUrl || '').trim();
-  if (trimmed) {
-    current[hotspotId] = trimmed;
-  } else {
-    delete current[hotspotId];
-  }
-  localStorage.setItem(DEMO_HOTSPOTS_KEY, JSON.stringify(current));
-  return current;
-}
-
-/** Compacta o mapa de links para compartilhar entre aparelhos no modo demo */
-export function encodeHotspotSharePayload(urls) {
-  const cleaned = Object.fromEntries(
-    Object.entries(urls || {}).filter(([, value]) => String(value || '').trim()),
-  );
-  const json = JSON.stringify(cleaned);
-  const base64 = btoa(unescape(encodeURIComponent(json)));
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-}
-
-export function decodeHotspotSharePayload(encoded) {
-  try {
-    const base64 = String(encoded || '')
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-    const json = decodeURIComponent(escape(atob(padded)));
-    const parsed = JSON.parse(json);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-export function applyHotspotShareFromLocation(search = window.location.search) {
-  const params = new URLSearchParams(search);
-  const payload = params.get('links');
-  if (!payload) return null;
-
-  const urls = decodeHotspotSharePayload(payload);
-  if (!urls) return null;
-
-  const merged = {
-    ...readDemoHotspotUrls(),
-    ...urls,
-  };
-  writeDemoHotspotUrls(merged);
-
-  params.delete('links');
-  const query = params.toString();
-  const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
-  window.history.replaceState({}, '', nextUrl);
-  return merged;
 }
 
 export function readDemoDocuments() {

@@ -182,11 +182,7 @@ export default function AdminPanel({
     setSaving(true);
     try {
       await onSaveHotspot(selectedHotspot.id, videoUrl);
-      setSaveMessage(
-        demoMode
-          ? 'Link salvo. Qualquer aparelho que abrir o site e entrar vai ver este vídeo.'
-          : 'Alteração salva com sucesso.',
-      );
+      setSaveMessage('Vídeo atualizado com sucesso no banco de dados!');
     } catch (err) {
       setSaveError(err?.message || 'Não foi possível salvar no banco.');
     } finally {
@@ -379,8 +375,9 @@ export default function AdminPanel({
           </p>
 
           {demoMode ? (
-            <p className="muted">
-              Ao salvar, o vídeo fica disponível em qualquer aparelho que abrir este site.
+            <p className="form-error">
+              Sem Supabase o vídeo não sincroniza. Configure VITE_SUPABASE_URL e
+              VITE_SUPABASE_ANON_KEY no Render (build) e em apps/web/.env.local.
             </p>
           ) : null}
 
@@ -432,8 +429,8 @@ export default function AdminPanel({
               >
                 Abrir vídeo
               </button>
-              <button className="btn btn-primary" type="submit" disabled={!selectedHotspot || saving}>
-                {saving ? 'Salvando…' : 'Salvar link'}
+              <button className="btn btn-primary" type="submit" disabled={!selectedHotspot || saving || demoMode}>
+                {saving ? 'Salvando no banco...' : 'Salvar Alteração'}
               </button>
             </div>
           </form>
