@@ -374,12 +374,9 @@ export default function AdminPanel({
             Clique na bolinha vermelha do boneco ou escolha na lista. Depois abra o vídeo ou edite o link.
           </p>
 
-          {demoMode ? (
-            <p className="form-error">
-              Sem Supabase o vídeo não sincroniza. Configure VITE_SUPABASE_URL e
-              VITE_SUPABASE_ANON_KEY no Render (build) e em apps/web/.env.local.
-            </p>
-          ) : null}
+          <p className="muted">
+            O link é gravado no Firestore e aparece na hora no celular do paciente.
+          </p>
 
           <div className="joint-grid">
             {articulationList.map((item) => (
@@ -429,7 +426,7 @@ export default function AdminPanel({
               >
                 Abrir vídeo
               </button>
-              <button className="btn btn-primary" type="submit" disabled={!selectedHotspot || saving || demoMode}>
+              <button className="btn btn-primary" type="submit" disabled={!selectedHotspot || saving}>
                 {saving ? 'Salvando no banco...' : 'Salvar Alteração'}
               </button>
             </div>

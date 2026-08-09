@@ -1,48 +1,33 @@
-import { getSupabaseClient } from './supabase.js';
+import { collection, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db } from './firebase.js';
 
-export async function fetchClinicalHotspots() {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('clinical_hotspots')
-    .select('id, label, region, position, video_url');
+const COLLECTION = 'clinical_hotspots';
 
-  if (error) throw error;
-  return data || [];
-}
-
-export async function updateClinicalHotspotVideo(hotspotId, videoUrl) {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('clinical_hotspots')
-    .update({
-      video_url: String(videoUrl || '').trim(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', hotspotId)
-    .select('id, video_url')
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) {
-    throw new Error('Nenhuma articulação foi atualizada no banco. Confirme o ID e o perfil admin.');
-  }
-  return data;
-}
-
-export function subscribeClinicalHotspots(onChange) {
-  const supabase = getSupabaseClient();
-  const channel = supabase
-    .channel('clinical-hotspots-sync')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'clinical_hotspots' },
-      () => {
-        onChange();
-      },
-    )
-    .subscribe();
-
-  return () => {
-    void supabase.removeChannel(channel);
+export async function updateClinicalHotspotVideo(hotspotId, videoUrl, meta = {}) {
+  const payload = {
+    video_url: String(videoUrl || '').trim(),
+    updated_at: new Date().toISOString(),
   };
+
+  if (meta.label) payload.label = meta.label;
+  if (meta.region) payload.region = meta.region;
+
+  await setDoc(doc(db, COLLECTION, hotspotId), payload, { merge: true });
+  return { id: hotspotId, ...payload };
+}
+
+export function subscribeClinicalHotspots(onChange, onError) {
+  return onSnapshot(
+    collection(db, COLLECTION),
+    (snapshot) => {
+      const rows = snapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }));
+      onChange(rows);
+    },
+    (error) => {
+      onError?.(error);
+    },
+  );
 }

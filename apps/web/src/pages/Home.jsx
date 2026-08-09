@@ -1,16 +1,14 @@
 import { Canvas } from '@react-three/fiber';
 import { ContactShadows, OrbitControls } from '@react-three/drei';
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import AdminPanel from '../components/AdminPanel.jsx';
 import PatientPanel from '../components/PatientPanel.jsx';
 import WoodenMannequin from '../components/WoodenMannequin.jsx';
 import {
-  fetchClinicalHotspots,
   subscribeClinicalHotspots,
   updateClinicalHotspotVideo,
 } from '../lib/clinicalHotspots.js';
 import { HOTSPOT_DEFAULTS } from '../lib/hotspots.js';
-import { isSupabaseConfigured } from '../lib/supabase.js';
 import { useIsMobile } from '../lib/useIsMobile.js';
 
 function mergeHotspots(rows) {
@@ -40,47 +38,23 @@ export default function Home({ profile, onLogout, demoMode = false }) {
   const [toast, setToast] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const loadHotspots = useCallback(async () => {
+  useEffect(() => {
     setLoadingHotspots(true);
-    setHotspotsError('');
+    const unsubscribe = subscribeClinicalHotspots(
+      (rows) => {
+        setHotspots(mergeHotspots(rows));
+        setHotspotsError('');
+        setLoadingHotspots(false);
+      },
+      (err) => {
+        setHotspotsError(err?.message || 'Não foi possível carregar as articulações do Firestore.');
+        setHotspots(mergeHotspots([]));
+        setLoadingHotspots(false);
+      },
+    );
 
-    try {
-      const data = await fetchClinicalHotspots();
-      setHotspots(mergeHotspots(data));
-    } catch (err) {
-      setHotspotsError(err?.message || 'Não foi possível carregar as articulações do banco.');
-      setHotspots(mergeHotspots([]));
-    } finally {
-      setLoadingHotspots(false);
-    }
+    return () => unsubscribe();
   }, []);
-
-  useEffect(() => {
-    void loadHotspots();
-  }, [loadHotspots]);
-
-  useEffect(() => {
-    if (!isSupabaseConfigured()) return undefined;
-
-    const unsubscribe = subscribeClinicalHotspots(() => {
-      void loadHotspots();
-    });
-
-    function refreshIfVisible() {
-      if (document.visibilityState === 'visible') {
-        void loadHotspots();
-      }
-    }
-
-    document.addEventListener('visibilitychange', refreshIfVisible);
-    window.addEventListener('focus', refreshIfVisible);
-
-    return () => {
-      unsubscribe();
-      document.removeEventListener('visibilitychange', refreshIfVisible);
-      window.removeEventListener('focus', refreshIfVisible);
-    };
-  }, [loadHotspots]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -110,9 +84,11 @@ export default function Home({ profile, onLogout, demoMode = false }) {
   }
 
   async function handleSaveHotspot(hotspotId, videoUrl) {
-    await updateClinicalHotspotVideo(hotspotId, videoUrl.trim());
-    const data = await fetchClinicalHotspots();
-    setHotspots(mergeHotspots(data));
+    const current = hotspots.find((item) => item.id === hotspotId);
+    await updateClinicalHotspotVideo(hotspotId, videoUrl.trim(), {
+      label: current?.label,
+      region: current?.region,
+    });
   }
 
   const selectedHotspot = hotspots.find((item) => item.id === selectedId) || null;
@@ -274,7 +250,6 @@ export default function Home({ profile, onLogout, demoMode = false }) {
                 focusArticulationKey={focusArticulationKey}
                 onSelectHotspot={focusArticulation}
                 onSaveHotspot={handleSaveHotspot}
-                onRefreshHotspots={loadHotspots}
               />
             ) : (
               <PatientPanel profile={profile} demoMode={demoMode} />
