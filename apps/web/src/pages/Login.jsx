@@ -53,8 +53,8 @@ export default function Login({ demoMode = false, onDemoLogin }) {
     <div className="login-page">
       <div className="login-shell">
         <header className="login-hero">
-          <div className="brand-orb brand-orb-lg">maya</div>
-          <p>Fisioterapia com acompanhamento visual</p>
+          <div className="brand-orb brand-orb-lg">RPG</div>
+          <p>RPG.Mayêutica — fisioterapia com acompanhamento visual</p>
         </header>
 
         <div className="login-card">

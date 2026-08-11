@@ -25,10 +25,15 @@ export default function AdminPanel({
   selectedHotspot,
   hotspots = [],
   onSaveHotspot,
+  onClearHotspot,
   onSelectHotspot,
   focusArticulationKey = 0,
   demoMode = false,
   hotspotsError = '',
+  videoPatientId = '',
+  videoPatientName = '',
+  openMannequinHint = 0,
+  onOpenPatientMannequin,
 }) {
   const [tab, setTab] = useState('patients');
   const [videoUrl, setVideoUrl] = useState('');
@@ -58,10 +63,10 @@ export default function AdminPanel({
   const articulationList = hotspots.length ? hotspots : HOTSPOT_DEFAULTS;
 
   useEffect(() => {
-    if (focusArticulationKey > 0) {
+    if (focusArticulationKey > 0 || openMannequinHint > 0) {
       setTab('hotspot');
     }
-  }, [focusArticulationKey]);
+  }, [focusArticulationKey, openMannequinHint]);
 
   useEffect(() => {
     setVideoUrl(selectedHotspot?.video_url || '');
@@ -179,6 +184,11 @@ export default function AdminPanel({
       return;
     }
 
+    if (!videoPatientId) {
+      setSaveError('Abra o boneco de um paciente em Pacientes → Ver boneco.');
+      return;
+    }
+
     if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl)) {
       setSaveError('Informe uma URL válida do YouTube.');
       return;
@@ -188,6 +198,46 @@ export default function AdminPanel({
     try {
       await onSaveHotspot(selectedHotspot.id, videoUrl);
       setSaveMessage('Vídeo atualizado com sucesso no banco de dados!');
+    } catch (err) {
+      setSaveError(describeFirebaseError(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleClearHotspot() {
+    setSaveMessage('');
+    setSaveError('');
+
+    if (!selectedHotspot) {
+      setSaveError('Selecione uma articulação no manequim ou na lista.');
+      return;
+    }
+
+    if (!videoPatientId) {
+      setSaveError('Abra o boneco de um paciente em Pacientes → Ver boneco.');
+      return;
+    }
+
+    if (!selectedHotspot.video_url && !videoUrl.trim()) {
+      setSaveError('Esta articulação já está sem vídeo.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Apagar o vídeo de "${selectedHotspot.label}" neste paciente?\n\nO link some do Firebase e do boneco. Não afeta outros pacientes.`,
+    );
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      if (onClearHotspot) {
+        await onClearHotspot(selectedHotspot.id);
+      } else {
+        await onSaveHotspot(selectedHotspot.id, '');
+      }
+      setVideoUrl('');
+      setSaveMessage('Vídeo apagado. O link antigo foi removido do banco.');
     } catch (err) {
       setSaveError(describeFirebaseError(err));
     } finally {
@@ -303,7 +353,7 @@ export default function AdminPanel({
       <div>
         <h2>Painel da Profissional</h2>
         <p className="panel-lead">
-          Gerencie pacientes, exames, observações e os links do manequim 3D.
+          Em Pacientes, clique em Ver boneco para editar os vídeos só daquele paciente (RPG.Mayêutica).
         </p>
       </div>
 
@@ -325,6 +375,9 @@ export default function AdminPanel({
       {tab === 'patients' ? (
         <section className="panel-section">
           <h3>Lista de pacientes</h3>
+          <p className="muted">
+            Cada paciente tem o próprio boneco e os próprios vídeos. Abra o boneco dele para editar.
+          </p>
           <div className="field">
             <label htmlFor="patientSearch">Buscar</label>
             <input
@@ -342,19 +395,34 @@ export default function AdminPanel({
           <ul className="patient-list">
             {filteredPatients.map((patient) => (
               <li key={patient.id}>
-                <button
-                  type="button"
-                  className={`patient-card ${selectedPatientId === patient.id ? 'active' : ''}`}
-                  onClick={() => setSelectedPatientId(patient.id)}
-                >
-                  <strong>{patient.full_name || 'Sem nome'}</strong>
-                  <span className="muted">{patient.email}</span>
-                  <div className="chip-row">
-                    <span className="chip">
-                      {patient.hasAnamnesis ? 'Ficha preenchida' : 'Sem ficha'}
-                    </span>
-                  </div>
-                </button>
+                <div className={`patient-card ${selectedPatientId === patient.id ? 'active' : ''} ${videoPatientId === patient.id ? 'mannequin-active' : ''}`}>
+                  <button
+                    type="button"
+                    className="patient-card-main"
+                    onClick={() => setSelectedPatientId(patient.id)}
+                  >
+                    <strong>{patient.full_name || 'Sem nome'}</strong>
+                    <span className="muted">{patient.email}</span>
+                    <div className="chip-row">
+                      <span className="chip">
+                        {patient.hasAnamnesis ? 'Ficha preenchida' : 'Sem ficha'}
+                      </span>
+                      {videoPatientId === patient.id ? (
+                        <span className="chip chip-accent">Boneco aberto</span>
+                      ) : null}
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary patient-mannequin-btn"
+                    onClick={() => {
+                      setSelectedPatientId(patient.id);
+                      onOpenPatientMannequin?.(patient);
+                    }}
+                  >
+                    Ver boneco
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -378,14 +446,17 @@ export default function AdminPanel({
 
       {tab === 'hotspot' ? (
         <div className="panel-section">
-          <h3>Articulações e links</h3>
-          <p className="muted">
-            Clique na bolinha vermelha do boneco ou escolha na lista. Depois abra o vídeo ou edite o link.
-          </p>
-
-          <p className="muted">
-            O link é gravado no Firestore e aparece na hora no celular do paciente.
-          </p>
+          <h3>Vídeos deste paciente</h3>
+          {videoPatientId ? (
+            <p className="muted">
+              Editando o boneco de <strong>{videoPatientName || 'paciente'}</strong>.
+              Os links valem só para ele.
+            </p>
+          ) : (
+            <p className="form-error">
+              Ainda não há boneco aberto. Vá em Pacientes e clique em Ver boneco.
+            </p>
+          )}
           {hotspotsError ? <p className="form-error">{hotspotsError}</p> : null}
 
           <div className="joint-grid">
@@ -395,6 +466,7 @@ export default function AdminPanel({
                 type="button"
                 className={`joint-chip ${selectedHotspot?.id === item.id ? 'active' : ''}`}
                 onClick={() => onSelectHotspot?.(item)}
+                disabled={!videoPatientId}
               >
                 <strong>{item.label}</strong>
                 <span>{item.video_url ? 'Com link' : 'Sem link'}</span>
@@ -420,7 +492,7 @@ export default function AdminPanel({
                 placeholder="https://www.youtube.com/watch?v=..."
                 value={videoUrl}
                 onChange={(event) => setVideoUrl(event.target.value)}
-                disabled={!selectedHotspot || saving}
+                disabled={!selectedHotspot || saving || !videoPatientId}
               />
             </div>
 
@@ -455,7 +527,24 @@ export default function AdminPanel({
               >
                 Abrir vídeo
               </button>
-              <button className="btn btn-primary" type="submit" disabled={!selectedHotspot || saving}>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                disabled={
+                  !selectedHotspot
+                  || saving
+                  || !videoPatientId
+                  || (!selectedHotspot?.video_url && !videoUrl.trim())
+                }
+                onClick={() => void handleClearHotspot()}
+              >
+                Apagar vídeo
+              </button>
+              <button
+                className="btn btn-primary"
+                type="submit"
+                disabled={!selectedHotspot || saving || !videoPatientId}
+              >
                 {saving ? 'Salvando no banco...' : 'Salvar Alteração'}
               </button>
             </div>

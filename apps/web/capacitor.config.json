@@ -1,6 +1,6 @@
 {
   "appId": "com.clinicamaya.app",
-  "appName": "Clínica Maya",
+  "appName": "RPG.Mayêutica",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

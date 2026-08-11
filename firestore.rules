@@ -4,5 +4,11 @@ service cloud.firestore {
     match /clinical_hotspots/{hotspotId} {
       allow read, write: if true;
     }
+    match /patient_hotspots/{patientId} {
+      allow read, write: if true;
+      match /joints/{hotspotId} {
+        allow read, write: if true;
+      }
+    }
   }
 }

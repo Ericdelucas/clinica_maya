@@ -117,7 +117,7 @@ export default function App() {
   }
 
   if (bootstrapping) {
-    return <div className="app-loading">Carregando Clínica Maya…</div>;
+    return <div className="app-loading">Carregando RPG.Mayêutica…</div>;
   }
 
   if (!session) {

@@ -718,7 +718,7 @@ a {
 .patient-card {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.55rem;
   width: 100%;
   text-align: left;
   background: #fff;
@@ -726,6 +726,43 @@ a {
   border-radius: 18px;
   padding: 0.9rem;
   color: inherit;
+}
+
+.patient-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.patient-mannequin-btn {
+  align-self: stretch;
+}
+
+.patient-card.mannequin-active {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 3px rgba(79, 154, 171, 0.28);
+}
+
+.chip-accent {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.patient-mannequin-banner {
+  margin: 0.35rem 1rem 0;
+  padding: 0.55rem 0.9rem;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
 .patient-card:hover,

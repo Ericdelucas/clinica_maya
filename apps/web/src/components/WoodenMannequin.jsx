@@ -71,8 +71,11 @@ function TaperedBody({ position, height, topRadius, bottomRadius, depthScale, co
 
 /** Âncoras fixas no mesh — evita hotspots flutuando fora do corpo */
 const MESH_ALIGNED_POSITIONS = {
+  pescoco_posterior: [0, 1.52, -0.145],
   coluna_cervical: [0, 1.40, -0.148],
   coluna_lombar: [0, 0.95, -0.108],
+  lombo_sacra: [0, 0.58, -0.12],
+  epigastrio: [0, 1.08, 0.145],
 };
 
 function HotspotSphere({ hotspot, selected, onSelect }) {
@@ -83,7 +86,12 @@ function HotspotSphere({ hotspot, selected, onSelect }) {
     return [x, y, z];
   }, [hotspot.id, hotspot.position]);
 
-  const radius = hotspot.id.startsWith('coluna_') ? 0.07 : 0.078;
+  const radius = (
+    hotspot.id.startsWith('coluna_')
+    || hotspot.id === 'pescoco_posterior'
+    || hotspot.id === 'lombo_sacra'
+    || hotspot.id === 'epigastrio'
+  ) ? 0.07 : 0.078;
 
   return (
     <mesh

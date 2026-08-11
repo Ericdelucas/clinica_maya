@@ -27,9 +27,27 @@ const SEED_PATIENTS = [
     full_name: 'Paciente Demo',
     created_at: '2026-07-01T12:00:00.000Z',
   },
+  {
+    id: 'demo-carla',
+    email: 'carla.mendes@demo.local',
+    full_name: 'Carla Mendes',
+    created_at: '2026-07-12T12:00:00.000Z',
+  },
+  {
+    id: 'demo-ricardo',
+    email: 'ricardo.alves@demo.local',
+    full_name: 'Ricardo Alves',
+    created_at: '2026-07-18T12:00:00.000Z',
+  },
+  {
+    id: 'demo-sofia',
+    email: 'sofia.nogueira@demo.local',
+    full_name: 'Sofia Nogueira',
+    created_at: '2026-07-22T12:00:00.000Z',
+  },
 ];
 
-/** Pacientes fictícios removidos do demo — limpa localStorage antigo */
+/** Pacientes antigos removidos do demo — limpa localStorage antigo */
 const REMOVED_DEMO_PATIENT_IDS = new Set([
   'demo-patient-2',
   'demo-patient-3',
@@ -41,15 +59,10 @@ export function emptyAnamnesis(pacienteId = '') {
     full_name: '',
     birth_date: '',
     phone: '',
-    weight_kg: '',
-    height_cm: '',
-    blood_type: '',
-    allergies: '',
     medications: '',
     health_conditions: '',
     surgeries: '',
-    smokes: 'nao',
-    drinks_alcohol: 'nao',
+    psychotherapy: 'nao',
     physical_activity: '',
     pain_areas: '',
     chief_complaint: '',

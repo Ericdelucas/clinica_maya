@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   emptyAnamnesis,
   fileToDataUrl,
@@ -49,13 +49,6 @@ function maskBrDate(value) {
   if (digits.length <= 2) return digits;
   if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-}
-
-function parseDecimal(value) {
-  if (value === '' || value == null) return null;
-  const normalized = String(value).trim().replace(',', '.');
-  const number = Number(normalized);
-  return Number.isFinite(number) ? number : null;
 }
 
 function FieldHint({ children }) {
@@ -126,14 +119,6 @@ export default function AnamnesisPanel({
       active = false;
     };
   }, [demoMode, pacienteId, patientName, profile.full_name]);
-
-  const bmi = useMemo(() => {
-    const weight = parseDecimal(form.weight_kg);
-    const heightCm = parseDecimal(form.height_cm);
-    if (!weight || !heightCm) return null;
-    const heightM = heightCm / 100;
-    return (weight / (heightM * heightM)).toFixed(1);
-  }, [form.weight_kg, form.height_cm]);
 
   function updateField(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -217,8 +202,6 @@ export default function AnamnesisPanel({
         ...form,
         paciente_id: pacienteId,
         birth_date: brDateToIso(birthDateText) || form.birth_date || null,
-        weight_kg: parseDecimal(form.weight_kg),
-        height_cm: parseDecimal(form.height_cm),
         media: [...(form.media || []), ...newMedia],
         updated_at: new Date().toISOString(),
       };
@@ -255,7 +238,7 @@ export default function AnamnesisPanel({
     <form className="panel-section" onSubmit={(event) => void handleSubmit(event)}>
       <h3>{readOnly ? 'Ficha clínica do paciente' : 'Minha ficha clínica'}</h3>
       <p className="muted">
-        Dados que a fisioterapeuta precisa conhecer: medidas, hábitos, queixas e mídia (foto ou vídeo).
+        Dados essenciais para o acompanhamento: queixas, psicoterapia e mídia (foto ou vídeo).
       </p>
 
       <div className="field">
@@ -304,80 +287,16 @@ export default function AnamnesisPanel({
 
       <div className="field-row">
         <div className="field">
-          <label htmlFor="weight_kg">Peso (kg)</label>
-          <FieldHint>72,5 — use vírgula para decimais</FieldHint>
-          <input
-            id="weight_kg"
-            type="text"
-            inputMode="decimal"
-            placeholder="72,5"
-            value={form.weight_kg ?? ''}
-            disabled={readOnly}
-            onChange={(event) => updateField('weight_kg', event.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="height_cm">Altura (cm)</label>
-          <FieldHint>170 ou 170,5</FieldHint>
-          <input
-            id="height_cm"
-            type="text"
-            inputMode="decimal"
-            placeholder="170"
-            value={form.height_cm ?? ''}
-            disabled={readOnly}
-            onChange={(event) => updateField('height_cm', event.target.value)}
-          />
-        </div>
-      </div>
-
-      {bmi ? <p className="muted">IMC estimado: <strong>{bmi}</strong></p> : null}
-
-      <div className="field-row">
-        <div className="field">
-          <label htmlFor="blood_type">Tipo sanguíneo</label>
-          <FieldHint>O+</FieldHint>
+          <label htmlFor="psychotherapy">Faz psicoterapia?</label>
+          <FieldHint>Sim / Não</FieldHint>
           <select
-            id="blood_type"
-            value={form.blood_type || ''}
+            id="psychotherapy"
+            value={form.psychotherapy || 'nao'}
             disabled={readOnly}
-            onChange={(event) => updateField('blood_type', event.target.value)}
-          >
-            <option value="">Não informado</option>
-            {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="smokes">Fuma?</label>
-          <FieldHint>Não / Sim / Ex-fumante</FieldHint>
-          <select
-            id="smokes"
-            value={form.smokes || 'nao'}
-            disabled={readOnly}
-            onChange={(event) => updateField('smokes', event.target.value)}
+            onChange={(event) => updateField('psychotherapy', event.target.value)}
           >
             <option value="nao">Não</option>
             <option value="sim">Sim</option>
-            <option value="ex">Ex-fumante</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="field-row">
-        <div className="field">
-          <label htmlFor="drinks_alcohol">Consome álcool?</label>
-          <FieldHint>Socialmente</FieldHint>
-          <select
-            id="drinks_alcohol"
-            value={form.drinks_alcohol || 'nao'}
-            disabled={readOnly}
-            onChange={(event) => updateField('drinks_alcohol', event.target.value)}
-          >
-            <option value="nao">Não</option>
-            <option value="social">Socialmente</option>
-            <option value="frequente">Frequentemente</option>
           </select>
         </div>
         <div className="field">
@@ -402,18 +321,6 @@ export default function AnamnesisPanel({
           disabled={readOnly}
           placeholder="hipertensão, diabetes, hérnia de disco"
           onChange={(event) => updateField('health_conditions', event.target.value)}
-        />
-      </div>
-
-      <div className="field">
-        <label htmlFor="allergies">Alergias</label>
-        <FieldHint>dipirona, pólen — ou “nenhuma”</FieldHint>
-        <textarea
-          id="allergies"
-          value={form.allergies || ''}
-          disabled={readOnly}
-          placeholder="dipirona, pólen — ou nenhuma"
-          onChange={(event) => updateField('allergies', event.target.value)}
         />
       </div>
 

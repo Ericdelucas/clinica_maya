@@ -6,9 +6,11 @@ export const HOTSPOT_DEFAULTS = [
   { id: 'cotovelo_e', label: 'Cotovelo Esquerdo', region: 'Membros Superiores', position: [-0.58, 1.02, 0] },
   { id: 'punho_d', label: 'Punho Direito', region: 'Membros Superiores', position: [0.66, 0.62, 0] },
   { id: 'punho_e', label: 'Punho Esquerdo', region: 'Membros Superiores', position: [-0.66, 0.62, 0] },
-  // Costas: alinhados à superfície do tronco (z negativo = trás)
+  { id: 'pescoco_posterior', label: 'Pescoço (nuca)', region: 'Coluna', position: [0, 1.52, -0.145] },
   { id: 'coluna_cervical', label: 'Costas altas / Cervical', region: 'Coluna', position: [0, 1.40, -0.148] },
   { id: 'coluna_lombar', label: 'Costas baixas / Lombar', region: 'Coluna', position: [0, 0.95, -0.108] },
+  { id: 'lombo_sacra', label: 'Lombo-sacra', region: 'Coluna', position: [0, 0.58, -0.12] },
+  { id: 'epigastrio', label: 'Tórax / Abdômen (frente)', region: 'Tronco', position: [0, 1.08, 0.145] },
   { id: 'quadril_d', label: 'Quadril Direito', region: 'Membros Inferiores', position: [0.18, 0.48, 0] },
   { id: 'quadril_e', label: 'Quadril Esquerdo', region: 'Membros Inferiores', position: [-0.18, 0.48, 0] },
   { id: 'joelho_d', label: 'Joelho Direito', region: 'Membros Inferiores', position: [0.23, -0.08, 0] },

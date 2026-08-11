@@ -5,8 +5,10 @@ import AdminPanel from '../components/AdminPanel.jsx';
 import PatientPanel from '../components/PatientPanel.jsx';
 import WoodenMannequin from '../components/WoodenMannequin.jsx';
 import {
-  subscribeClinicalHotspots,
-  updateClinicalHotspotVideo,
+  clearPatientHotspotVideo,
+  seedDemoPatientVideos,
+  subscribePatientHotspots,
+  updatePatientHotspotVideo,
 } from '../lib/clinicalHotspots.js';
 import { HOTSPOT_DEFAULTS } from '../lib/hotspots.js';
 import { useIsMobile } from '../lib/useIsMobile.js';
@@ -37,24 +39,44 @@ export default function Home({ profile, onLogout, demoMode = false }) {
   const [mobileView, setMobileView] = useState('mannequin');
   const [toast, setToast] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [videoPatientId, setVideoPatientId] = useState(isAdmin ? '' : profile.id);
+  const [videoPatientName, setVideoPatientName] = useState(isAdmin ? '' : (profile.full_name || ''));
+  const [panelTabHint, setPanelTabHint] = useState(0);
+
+  const hotspotOwnerId = isAdmin ? videoPatientId : profile.id;
 
   useEffect(() => {
+    if (!demoMode || !isAdmin) return undefined;
+    void seedDemoPatientVideos().then((result) => {
+      if (result?.remote === false && result?.error) {
+        setHotspotsError(`${result.error} Os vídeos de teste ficaram salvos neste aparelho.`);
+      }
+    });
+    return undefined;
+  }, [demoMode, isAdmin]);
+
+  useEffect(() => {
+    if (!hotspotOwnerId) {
+      setHotspots(mergeHotspots([]));
+      setLoadingHotspots(false);
+      return undefined;
+    }
+
     setLoadingHotspots(true);
-    const unsubscribe = subscribeClinicalHotspots(
+    const unsubscribe = subscribePatientHotspots(
+      hotspotOwnerId,
       (rows) => {
         setHotspots(mergeHotspots(rows));
-        setHotspotsError('');
         setLoadingHotspots(false);
       },
       (err) => {
-        setHotspotsError(err?.message || 'Não foi possível carregar as articulações do Firestore.');
-        setHotspots(mergeHotspots([]));
+        setHotspotsError(err?.message || 'Não foi possível carregar os vídeos do paciente.');
         setLoadingHotspots(false);
       },
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [hotspotOwnerId]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -62,7 +84,20 @@ export default function Home({ profile, onLogout, demoMode = false }) {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  function openPatientMannequin(patient) {
+    setVideoPatientId(patient.id);
+    setVideoPatientName(patient.full_name || patient.email || 'Paciente');
+    setPanelTabHint((current) => current + 1);
+    setSelectedId(null);
+    if (isMobile) setMobileView('mannequin');
+    setToast(`Boneco de ${patient.full_name || 'paciente'} — vídeos só dele.`);
+  }
+
   function focusArticulation(hotspot) {
+    if (isAdmin && !videoPatientId) {
+      setToast('Abra o boneco de um paciente em Pacientes → Ver boneco.');
+      return;
+    }
     setSelectedId(hotspot.id);
     setFocusArticulationKey((current) => current + 1);
     if (isMobile) setMobileView('panel');
@@ -84,9 +119,13 @@ export default function Home({ profile, onLogout, demoMode = false }) {
   }
 
   async function handleSaveHotspot(hotspotId, videoUrl) {
+    if (!hotspotOwnerId) {
+      throw new Error('Abra o boneco de um paciente antes de salvar o vídeo.');
+    }
+
     const current = hotspots.find((item) => item.id === hotspotId);
     const trimmed = videoUrl.trim();
-    await updateClinicalHotspotVideo(hotspotId, trimmed, {
+    await updatePatientHotspotVideo(hotspotOwnerId, hotspotId, trimmed, {
       label: current?.label,
       region: current?.region,
     });
@@ -97,17 +136,31 @@ export default function Home({ profile, onLogout, demoMode = false }) {
     );
   }
 
+  async function handleClearHotspot(hotspotId) {
+    if (!hotspotOwnerId) {
+      throw new Error('Abra o boneco de um paciente antes de apagar o vídeo.');
+    }
+
+    await clearPatientHotspotVideo(hotspotOwnerId, hotspotId);
+    setHotspots((items) =>
+      items.map((item) =>
+        item.id === hotspotId ? { ...item, video_url: '' } : item,
+      ),
+    );
+  }
+
   const selectedHotspot = hotspots.find((item) => item.id === selectedId) || null;
   const showCanvas = !isMobile || mobileView === 'mannequin';
   const showPanel = !isMobile || mobileView === 'panel';
+  const linkedCount = hotspots.filter((item) => item.video_url).length;
 
   return (
     <div className={`dashboard ${isMobile ? 'is-mobile' : 'is-desktop'}`}>
       <header className="topbar">
         <div className="topbar-brand">
-          <span className="brand-orb">maya</span>
+          <span className="brand-orb">RPG</span>
           <div className="topbar-brand-text">
-            <strong>Clínica Maya</strong>
+            <strong>RPG.Mayêutica</strong>
             {isMobile ? (
               <small>{isAdmin ? 'Área profissional' : 'Área do paciente'}</small>
             ) : null}
@@ -150,6 +203,14 @@ export default function Home({ profile, onLogout, demoMode = false }) {
         </div>
       </header>
 
+      {isAdmin && videoPatientName ? (
+        <div className="patient-mannequin-banner">
+          Boneco de <strong>{videoPatientName}</strong>
+          {' · '}
+          {linkedCount} vídeo(s) próprio(s)
+        </div>
+      ) : null}
+
       {isMobile ? (
         <nav className="mobile-switch" aria-label="Navegação principal">
           <button
@@ -174,15 +235,17 @@ export default function Home({ profile, onLogout, demoMode = false }) {
           <section className="canvas-pane" aria-label="Manequim anatômico 3D">
             <div className="canvas-hint">
               {isAdmin
-                ? (isMobile
-                  ? 'Gire o boneco · Toque na bolinha para editar o link'
-                  : 'Arraste para girar · Clique na bolinha para editar o link')
+                ? (videoPatientId
+                  ? (isMobile
+                    ? `Boneco de ${videoPatientName} · Toque na bolinha para editar o vídeo dele`
+                    : `Boneco de ${videoPatientName} · Clique na bolinha para editar o vídeo dele`)
+                  : 'Em Pacientes, escolha alguém e clique em Ver boneco')
                 : (isMobile
-                  ? 'Gire com o dedo · Toque na bolinha para abrir o vídeo'
-                  : 'Arraste para girar · Clique na bolinha para abrir o YouTube')}
+                  ? 'Gire com o dedo · Toque na bolinha para abrir o seu vídeo'
+                  : 'Arraste para girar · Clique na bolinha para abrir o seu YouTube')}
             </div>
             <Canvas
-              key={isMobile ? 'mobile-canvas' : 'desktop-canvas'}
+              key={`${isMobile ? 'mobile' : 'desktop'}-${hotspotOwnerId || 'none'}`}
               shadows={!isMobile}
               camera={{
                 position: isMobile ? [0, 1.05, 3.9] : [0, 1.1, 3.4],
@@ -245,7 +308,7 @@ export default function Home({ profile, onLogout, demoMode = false }) {
         {showPanel ? (
           <aside className="panel-pane">
             {hotspotsError ? <p className="form-error">{hotspotsError}</p> : null}
-            {loadingHotspots ? <p className="muted">Sincronizando articulações…</p> : null}
+            {loadingHotspots && hotspotOwnerId ? <p className="muted">Sincronizando vídeos do paciente…</p> : null}
 
             {isAdmin ? (
               <AdminPanel
@@ -255,8 +318,13 @@ export default function Home({ profile, onLogout, demoMode = false }) {
                 selectedHotspot={selectedHotspot}
                 focusArticulationKey={focusArticulationKey}
                 hotspotsError={hotspotsError}
+                videoPatientId={videoPatientId}
+                videoPatientName={videoPatientName}
+                openMannequinHint={panelTabHint}
+                onOpenPatientMannequin={openPatientMannequin}
                 onSelectHotspot={focusArticulation}
                 onSaveHotspot={handleSaveHotspot}
+                onClearHotspot={handleClearHotspot}
               />
             ) : (
               <PatientPanel profile={profile} demoMode={demoMode} />
