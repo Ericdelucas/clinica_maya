@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import AnamnesisPanel from './AnamnesisPanel.jsx';
+import ComputerVisionPanel from './ComputerVisionPanel.jsx';
 import {
   deleteDemoDocument,
   listDemoAnamnesis,
@@ -370,6 +371,9 @@ export default function AdminPanel({
         <button type="button" className={`tab ${tab === 'documents' ? 'active' : ''}`} onClick={() => setTab('documents')}>
           Exames
         </button>
+        <button type="button" className={`tab ${tab === 'vision' ? 'active' : ''}`} onClick={() => setTab('vision')}>
+          Visão
+        </button>
       </div>
 
       {tab === 'patients' ? (
@@ -599,6 +603,8 @@ export default function AdminPanel({
           </button>
         </form>
       ) : null}
+
+      {tab === 'vision' ? <ComputerVisionPanel /> : null}
 
       {tab === 'documents' ? (
         <section className="panel-section">

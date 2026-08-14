@@ -15,6 +15,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,ico,png,woff2}'],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+      },
       manifest: {
         name: 'Clínica Maya',
         short_name: 'Clínica Maya',
@@ -32,9 +36,6 @@ export default defineConfig({
             purpose: 'any maskable',
           },
         ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,ico,png,woff2}'],
       },
     }),
   ],

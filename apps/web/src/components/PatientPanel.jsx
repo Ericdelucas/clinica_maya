@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import AnamnesisPanel from './AnamnesisPanel.jsx';
+import ComputerVisionPanel from './ComputerVisionPanel.jsx';
 import { fileToDataUrl, readDemoDocuments, writeDemoDocument } from '../lib/demo.js';
 import { getSupabaseClient } from '../lib/supabase.js';
 
@@ -178,6 +179,13 @@ export default function PatientPanel({ profile, demoMode = false }) {
         >
           Orientações 3D
         </button>
+        <button
+          type="button"
+          className={`tab ${tab === 'vision' ? 'active' : ''}`}
+          onClick={() => setTab('vision')}
+        >
+          Visão
+        </button>
       </div>
 
       {tab === 'anamnesis' ? (
@@ -193,6 +201,8 @@ export default function PatientPanel({ profile, demoMode = false }) {
           </p>
         </section>
       ) : null}
+
+      {tab === 'vision' ? <ComputerVisionPanel /> : null}
 
       {tab === 'exams' ? (
         <div className="panel-section">

@@ -830,6 +830,75 @@ a {
   color: var(--text-muted);
 }
 
+.vision-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.vision-status {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.vision-status.ok {
+  color: #15803d;
+}
+
+.vision-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: min(62vh, 520px);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0b1220;
+  border: 1px solid var(--border);
+}
+
+.vision-video,
+.vision-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vision-video {
+  transform: scaleX(-1);
+}
+
+.vision-canvas {
+  pointer-events: none;
+}
+
+.vision-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 0.35rem;
+  text-align: center;
+  padding: 1.25rem;
+  color: #e2e8f0;
+  background:
+    radial-gradient(ellipse at center, rgba(124, 58, 237, 0.18), transparent 55%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.35), rgba(15, 23, 42, 0.72));
+}
+
+.vision-placeholder strong {
+  font-size: 1.05rem;
+}
+
+.vision-placeholder span {
+  font-size: 0.88rem;
+  color: #cbd5e1;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;
