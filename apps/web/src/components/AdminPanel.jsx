@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import AnamnesisPanel from './AnamnesisPanel.jsx';
-import ComputerVisionPanel from './ComputerVisionPanel.jsx';
 import {
   deleteDemoDocument,
   listDemoAnamnesis,
@@ -35,6 +34,8 @@ export default function AdminPanel({
   videoPatientName = '',
   openMannequinHint = 0,
   onOpenPatientMannequin,
+  onVisionModeChange,
+  exitVisionKey = 0,
 }) {
   const [tab, setTab] = useState('patients');
   const [videoUrl, setVideoUrl] = useState('');
@@ -68,6 +69,16 @@ export default function AdminPanel({
       setTab('hotspot');
     }
   }, [focusArticulationKey, openMannequinHint]);
+
+  useEffect(() => {
+    if (exitVisionKey > 0) {
+      setTab((current) => (current === 'vision' ? 'patients' : current));
+    }
+  }, [exitVisionKey]);
+
+  useEffect(() => {
+    onVisionModeChange?.(tab === 'vision');
+  }, [tab, onVisionModeChange]);
 
   useEffect(() => {
     setVideoUrl(selectedHotspot?.video_url || '');
@@ -604,7 +615,31 @@ export default function AdminPanel({
         </form>
       ) : null}
 
-      {tab === 'vision' ? <ComputerVisionPanel /> : null}
+      {tab === 'vision' ? (
+        <section className="panel-section vision-side-panel">
+          <span className="vision-pro-badge">Exclusivo da profissional</span>
+          <h3>Sessão de visão</h3>
+          <p className="muted">
+            A câmera abre em tela grande ao lado. O paciente não tem acesso a esta ferramenta —
+            ela fica só no painel profissional.
+          </p>
+          <ul className="vision-tips">
+            <li>Posicione a mão do paciente bem iluminada no centro do quadro.</li>
+            <li>Os 21 pontinhos e o esqueleto magenta aparecem em tempo real.</li>
+            <li>Use “Voltar ao boneco” na tela grande para encerrar a sessão.</li>
+          </ul>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => {
+              setTab('patients');
+              onVisionModeChange?.(false);
+            }}
+          >
+            Fechar visão e voltar
+          </button>
+        </section>
+      ) : null}
 
       {tab === 'documents' ? (
         <section className="panel-section">

@@ -830,33 +830,130 @@ a {
   color: var(--text-muted);
 }
 
-.vision-toolbar {
+.dashboard-body.vision-mode {
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.85fr);
+}
+
+.canvas-pane.vision-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(124, 58, 237, 0.12), transparent 45%),
+    linear-gradient(165deg, #0f172a 0%, #1e293b 55%, #0b1220 100%);
+  border-right: 1px solid #1e293b;
+}
+
+.vision-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  height: 100%;
+  min-height: 0;
+  padding: 1rem 1.15rem 1.15rem;
+  color: #e2e8f0;
+}
+
+.vision-workspace-header {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.vision-workspace-titles h2 {
+  margin: 0.35rem 0 0.2rem;
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  color: #f8fafc;
+}
+
+.vision-workspace-titles p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.vision-workspace-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.vision-pro-badge {
+  display: inline-flex;
   align-items: center;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(123, 185, 200, 0.18);
+  border: 1px solid rgba(123, 185, 200, 0.45);
+  color: #9ed4e0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.vision-side-panel .vision-pro-badge {
+  margin-bottom: 0.65rem;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.vision-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.55rem;
-  margin-bottom: 0.85rem;
 }
 
-.vision-status {
-  font-size: 0.86rem;
-  font-weight: 600;
-  color: var(--text-muted);
+.vision-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.22);
 }
 
-.vision-status.ok {
-  color: #15803d;
+.vision-chip span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.vision-chip strong {
+  font-size: 0.95rem;
+  color: #f1f5f9;
+}
+
+.vision-chip.ok {
+  border-color: rgba(74, 222, 128, 0.45);
+  background: rgba(22, 163, 74, 0.12);
+}
+
+.vision-chip.ok strong {
+  color: #86efac;
+}
+
+.vision-error {
+  margin: 0;
 }
 
 .vision-stage {
   position: relative;
+  flex: 1;
+  min-height: min(62vh, 520px);
   width: 100%;
-  aspect-ratio: 4 / 3;
-  max-height: min(62vh, 520px);
-  border-radius: 18px;
+  border-radius: 20px;
   overflow: hidden;
-  background: #0b1220;
-  border: 1px solid var(--border);
+  background: #020617;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 24px 48px rgba(2, 6, 23, 0.45);
 }
 
 .vision-video,
@@ -881,22 +978,46 @@ a {
   inset: 0;
   display: grid;
   place-content: center;
-  gap: 0.35rem;
+  gap: 0.45rem;
   text-align: center;
-  padding: 1.25rem;
+  padding: 1.5rem;
   color: #e2e8f0;
   background:
-    radial-gradient(ellipse at center, rgba(124, 58, 237, 0.18), transparent 55%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.35), rgba(15, 23, 42, 0.72));
+    radial-gradient(ellipse at center, rgba(124, 58, 237, 0.22), transparent 58%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.25), rgba(15, 23, 42, 0.78));
 }
 
 .vision-placeholder strong {
-  font-size: 1.05rem;
+  font-size: clamp(1.1rem, 2.2vw, 1.45rem);
 }
 
 .vision-placeholder span {
-  font-size: 0.88rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  font-size: 0.95rem;
   color: #cbd5e1;
+}
+
+.vision-tips {
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  display: grid;
+  gap: 0.45rem;
+}
+
+.vision-tips li {
+  line-height: 1.4;
+}
+
+.vision-workspace .btn-ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+}
+
+.vision-workspace .btn-ghost:disabled {
+  opacity: 0.45;
 }
 
 .chip-row {
@@ -1003,6 +1124,22 @@ a {
     border-right: none;
     min-height: 0;
     height: 100%;
+  }
+
+  .dashboard-body.vision-mode {
+    grid-template-columns: 1fr;
+  }
+
+  .vision-workspace {
+    padding: 0.85rem;
+  }
+
+  .vision-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .vision-stage {
+    min-height: min(70vh, 640px);
   }
 
   .panel-pane {

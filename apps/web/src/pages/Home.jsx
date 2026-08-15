@@ -1,7 +1,8 @@
 import { Canvas } from '@react-three/fiber';
 import { ContactShadows, OrbitControls } from '@react-three/drei';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import AdminPanel from '../components/AdminPanel.jsx';
+import ComputerVisionPanel from '../components/ComputerVisionPanel.jsx';
 import PatientPanel from '../components/PatientPanel.jsx';
 import WoodenMannequin from '../components/WoodenMannequin.jsx';
 import {
@@ -42,6 +43,8 @@ export default function Home({ profile, onLogout, demoMode = false }) {
   const [videoPatientId, setVideoPatientId] = useState(isAdmin ? '' : profile.id);
   const [videoPatientName, setVideoPatientName] = useState(isAdmin ? '' : (profile.full_name || ''));
   const [panelTabHint, setPanelTabHint] = useState(0);
+  const [visionMode, setVisionMode] = useState(false);
+  const [adminTabKick, setAdminTabKick] = useState(0);
 
   const hotspotOwnerId = isAdmin ? videoPatientId : profile.id;
 
@@ -149,8 +152,25 @@ export default function Home({ profile, onLogout, demoMode = false }) {
     );
   }
 
+  function handleCloseVision() {
+    setVisionMode(false);
+    setAdminTabKick((current) => current + 1);
+  }
+
+  const handleVisionModeChange = useCallback((active) => {
+    if (!isAdmin) {
+      setVisionMode(false);
+      return;
+    }
+    setVisionMode(Boolean(active));
+    if (active && isMobile) {
+      setMobileView('mannequin');
+    }
+  }, [isAdmin, isMobile]);
+
   const selectedHotspot = hotspots.find((item) => item.id === selectedId) || null;
-  const showCanvas = !isMobile || mobileView === 'mannequin';
+  const visionActive = isAdmin && visionMode;
+  const showCanvas = visionActive || !isMobile || mobileView === 'mannequin';
   const showPanel = !isMobile || mobileView === 'panel';
   const linkedCount = hotspots.filter((item) => item.video_url).length;
 
@@ -218,7 +238,7 @@ export default function Home({ profile, onLogout, demoMode = false }) {
             className={`mobile-switch-btn ${mobileView === 'mannequin' ? 'active' : ''}`}
             onClick={() => setMobileView('mannequin')}
           >
-            Manequim 3D
+            {visionActive ? 'Câmera' : 'Manequim 3D'}
           </button>
           <button
             type="button"
@@ -230,8 +250,13 @@ export default function Home({ profile, onLogout, demoMode = false }) {
         </nav>
       ) : null}
 
-      <div className="dashboard-body">
+      <div className={`dashboard-body ${visionActive ? 'vision-mode' : ''}`}>
         {showCanvas ? (
+          visionActive ? (
+            <section className="canvas-pane vision-pane" aria-label="Visão computacional">
+              <ComputerVisionPanel layout="workspace" onClose={handleCloseVision} />
+            </section>
+          ) : (
           <section className="canvas-pane" aria-label="Manequim anatômico 3D">
             <div className="canvas-hint">
               {isAdmin
@@ -303,6 +328,7 @@ export default function Home({ profile, onLogout, demoMode = false }) {
               </button>
             ) : null}
           </section>
+          )
         ) : null}
 
         {showPanel ? (
@@ -321,7 +347,9 @@ export default function Home({ profile, onLogout, demoMode = false }) {
                 videoPatientId={videoPatientId}
                 videoPatientName={videoPatientName}
                 openMannequinHint={panelTabHint}
+                exitVisionKey={adminTabKick}
                 onOpenPatientMannequin={openPatientMannequin}
+                onVisionModeChange={handleVisionModeChange}
                 onSelectHotspot={focusArticulation}
                 onSaveHotspot={handleSaveHotspot}
                 onClearHotspot={handleClearHotspot}

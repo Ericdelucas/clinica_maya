@@ -39,7 +39,6 @@ async function loadHandLandmarker() {
           minTrackingConfidence: 0.5,
         });
       } catch {
-        // Fallback CPU se GPU/WebGL falhar
         return HandLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: MODEL_URL,
@@ -58,7 +57,6 @@ async function loadHandLandmarker() {
 }
 
 function palmCenter(landmarks) {
-  // Centro aproximado da palma: wrist + bases dos dedos
   const ids = [0, 5, 9, 13, 17];
   let x = 0;
   let y = 0;
@@ -72,17 +70,21 @@ function palmCenter(landmarks) {
 function drawHands(ctx, width, height, hands, mirrored) {
   ctx.clearRect(0, 0, width, height);
 
-  // Guias laterais verdes (como na referência)
   ctx.strokeStyle = GUIDE_GREEN;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = Math.max(3, width * 0.003);
   ctx.beginPath();
-  ctx.moveTo(6, 8);
-  ctx.lineTo(6, height - 8);
-  ctx.moveTo(width - 6, 8);
-  ctx.lineTo(width - 6, height - 8);
+  ctx.moveTo(8, 12);
+  ctx.lineTo(8, height - 12);
+  ctx.moveTo(width - 8, 12);
+  ctx.lineTo(width - 8, height - 12);
   ctx.stroke();
 
   if (!hands?.length) return;
+
+  const lineW = Math.max(4, width * 0.004);
+  const ringR = Math.max(7, width * 0.008);
+  const coreR = Math.max(3, width * 0.0035);
+  const cross = Math.max(10, width * 0.012);
 
   for (const landmarks of hands) {
     const toXY = (lm) => {
@@ -91,7 +93,7 @@ function drawHands(ctx, width, height, hands, mirrored) {
       return [x, y];
     };
 
-    ctx.lineWidth = 4;
+    ctx.lineWidth = lineW;
     ctx.lineCap = 'round';
     ctx.strokeStyle = LINE_COLOR;
     for (const [a, b] of HAND_CONNECTIONS) {
@@ -107,28 +109,31 @@ function drawHands(ctx, width, height, hands, mirrored) {
       const [x, y] = toXY(lm);
       ctx.beginPath();
       ctx.fillStyle = DOT_RING;
-      ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.arc(x, y, ringR, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
       ctx.fillStyle = DOT_CORE;
-      ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+      ctx.arc(x, y, coreR, 0, Math.PI * 2);
       ctx.fill();
     }
 
     const center = palmCenter(landmarks);
     const [cx, cy] = toXY(center);
     ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = Math.max(2.5, width * 0.0025);
     ctx.beginPath();
-    ctx.moveTo(cx - 10, cy);
-    ctx.lineTo(cx + 10, cy);
-    ctx.moveTo(cx, cy - 10);
-    ctx.lineTo(cx, cy + 10);
+    ctx.moveTo(cx - cross, cy);
+    ctx.lineTo(cx + cross, cy);
+    ctx.moveTo(cx, cy - cross);
+    ctx.lineTo(cx, cy + cross);
     ctx.stroke();
   }
 }
 
-export default function ComputerVisionPanel() {
+export default function ComputerVisionPanel({
+  layout = 'workspace',
+  onClose,
+}) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -141,13 +146,14 @@ export default function ComputerVisionPanel() {
   const [isRunning, setIsRunning] = useState(false);
   const [handsDetected, setHandsDetected] = useState(0);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   function syncCanvasSize() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
-    const width = video.videoWidth || 640;
-    const height = video.videoHeight || 480;
+    const width = video.videoWidth || 1280;
+    const height = video.videoHeight || 720;
     if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width;
       canvas.height = height;
@@ -157,6 +163,7 @@ export default function ComputerVisionPanel() {
   function stopVision() {
     runningRef.current = false;
     setIsRunning(false);
+    setLoading(false);
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = 0;
@@ -204,6 +211,7 @@ export default function ComputerVisionPanel() {
 
   async function startVision() {
     setError('');
+    setLoading(true);
     setStatus('Carregando modelo MediaPipe…');
 
     try {
@@ -214,8 +222,8 @@ export default function ComputerVisionPanel() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'user',
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
         },
         audio: false,
       });
@@ -230,6 +238,7 @@ export default function ComputerVisionPanel() {
 
       runningRef.current = true;
       setIsRunning(true);
+      setLoading(false);
       setStatus('Câmera ativa — mostre a mão');
       lastVideoTimeRef.current = -1;
       rafRef.current = requestAnimationFrame(detectLoop);
@@ -249,34 +258,61 @@ export default function ComputerVisionPanel() {
 
   useEffect(() => () => stopVision(), []);
 
-  return (
-    <section className="panel-section vision-panel">
-      <h3>Visão computacional</h3>
-      <p className="muted">
-        Câmera com rastreamento da mão em tempo real (21 pontinhos + esqueleto), no estilo MediaPipe.
-      </p>
+  function handleClose() {
+    stopVision();
+    onClose?.();
+  }
 
-      <div className="vision-toolbar">
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={isRunning}
-          onClick={() => void startVision()}
-        >
-          Iniciar câmera
-        </button>
-        <button
-          type="button"
-          className="btn btn-ghost"
-          disabled={!isRunning}
-          onClick={stopVision}
-        >
-          Parar
-        </button>
-        <span className={`vision-status ${handsDetected ? 'ok' : ''}`}>{status}</span>
+  return (
+    <section className={`vision-workspace layout-${layout}`}>
+      <header className="vision-workspace-header">
+        <div className="vision-workspace-titles">
+          <span className="vision-pro-badge">Somente profissional</span>
+          <h2>Visão computacional</h2>
+          <p>Rastreamento da mão em tempo real · 21 landmarks MediaPipe</p>
+        </div>
+
+        <div className="vision-workspace-actions">
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={isRunning || loading}
+            onClick={() => void startVision()}
+          >
+            {loading ? 'Preparando…' : isRunning ? 'Câmera ligada' : 'Iniciar câmera'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            disabled={!isRunning}
+            onClick={stopVision}
+          >
+            Parar
+          </button>
+          {onClose ? (
+            <button type="button" className="btn btn-ghost" onClick={handleClose}>
+              Voltar ao boneco
+            </button>
+          ) : null}
+        </div>
+      </header>
+
+      <div className="vision-metrics">
+        <div className={`vision-chip ${handsDetected ? 'ok' : ''}`}>
+          <span>Status</span>
+          <strong>{status}</strong>
+        </div>
+        <div className={`vision-chip ${handsDetected ? 'ok' : ''}`}>
+          <span>Mãos</span>
+          <strong>{handsDetected}</strong>
+        </div>
+        <div className="vision-chip">
+          <span>Acesso</span>
+          <strong>Profissional</strong>
+        </div>
       </div>
 
-      {error ? <p className="form-error">{error}</p> : null}
+      {error ? <p className="form-error vision-error">{error}</p> : null}
 
       <div className="vision-stage">
         <video
@@ -290,8 +326,8 @@ export default function ComputerVisionPanel() {
         <canvas ref={canvasRef} className="vision-canvas" />
         {!isRunning ? (
           <div className="vision-placeholder">
-            <strong>Mão em foco</strong>
-            <span>Clique em Iniciar câmera e posicione a mão na frente.</span>
+            <strong>Área de captura ampliada</strong>
+            <span>Inicie a câmera e posicione a mão do paciente no enquadramento.</span>
           </div>
         ) : null}
       </div>
