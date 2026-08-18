@@ -7,10 +7,10 @@ import PatientPanel from '../components/PatientPanel.jsx';
 import WoodenMannequin from '../components/WoodenMannequin.jsx';
 import {
   clearPatientHotspotVideo,
-  seedDemoPatientVideos,
   subscribePatientHotspots,
   updatePatientHotspotVideo,
 } from '../lib/clinicalHotspots.js';
+import { updateOwnCredentials } from '../lib/demo.js';
 import { HOTSPOT_DEFAULTS } from '../lib/hotspots.js';
 import { useIsMobile } from '../lib/useIsMobile.js';
 
@@ -29,7 +29,7 @@ function mergeHotspots(rows) {
   });
 }
 
-export default function Home({ profile, onLogout, demoMode = false }) {
+export default function Home({ profile, onLogout, onProfileUpdate, demoMode = false }) {
   const isMobile = useIsMobile();
   const isAdmin = profile.role === 'admin';
   const [hotspots, setHotspots] = useState(() => mergeHotspots([]));
@@ -45,18 +45,19 @@ export default function Home({ profile, onLogout, demoMode = false }) {
   const [panelTabHint, setPanelTabHint] = useState(0);
   const [visionMode, setVisionMode] = useState(false);
   const [adminTabKick, setAdminTabKick] = useState(0);
+  const [credentialsOpen, setCredentialsOpen] = useState(false);
+  const [nextEmail, setNextEmail] = useState(profile.email || '');
+  const [nextPassword, setNextPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [credentialsMessage, setCredentialsMessage] = useState('');
+  const [credentialsError, setCredentialsError] = useState('');
+  const [savingCredentials, setSavingCredentials] = useState(false);
 
   const hotspotOwnerId = isAdmin ? videoPatientId : profile.id;
 
   useEffect(() => {
-    if (!demoMode || !isAdmin) return undefined;
-    void seedDemoPatientVideos().then((result) => {
-      if (result?.remote === false && result?.error) {
-        setHotspotsError(`${result.error} Os vídeos de teste ficaram salvos neste aparelho.`);
-      }
-    });
-    return undefined;
-  }, [demoMode, isAdmin]);
+    setNextEmail(profile.email || '');
+  }, [profile.email]);
 
   useEffect(() => {
     if (!hotspotOwnerId) {
@@ -152,6 +153,33 @@ export default function Home({ profile, onLogout, demoMode = false }) {
     );
   }
 
+  async function handleSaveCredentials(event) {
+    event.preventDefault();
+    setCredentialsError('');
+    setCredentialsMessage('');
+
+    if (nextPassword && nextPassword !== confirmPassword) {
+      setCredentialsError('A confirmação da senha não confere.');
+      return;
+    }
+
+    setSavingCredentials(true);
+    try {
+      const updated = updateOwnCredentials(profile, {
+        email: nextEmail,
+        password: nextPassword,
+      });
+      onProfileUpdate?.(updated);
+      setNextPassword('');
+      setConfirmPassword('');
+      setCredentialsMessage('Dados atualizados.');
+    } catch (err) {
+      setCredentialsError(err?.message || 'Não foi possível atualizar o cadastro.');
+    } finally {
+      setSavingCredentials(false);
+    }
+  }
+
   function handleCloseVision() {
     setVisionMode(false);
     setAdminTabKick((current) => current + 1);
@@ -192,7 +220,6 @@ export default function Home({ profile, onLogout, demoMode = false }) {
             <span className="topbar-user">{profile.full_name || profile.email}</span>
           ) : null}
           <span className="role-badge">{isAdmin ? 'Profissional' : 'Paciente'}</span>
-          {demoMode && !isMobile ? <span className="role-badge soft">Demo</span> : null}
 
           <div className="profile-menu">
             <button
@@ -200,13 +227,67 @@ export default function Home({ profile, onLogout, demoMode = false }) {
               className="avatar-btn"
               aria-expanded={menuOpen}
               aria-label="Menu do perfil"
-              onClick={() => setMenuOpen((open) => !open)}
+              onClick={() => {
+                setMenuOpen((open) => !open);
+                setCredentialsOpen(false);
+                setCredentialsError('');
+                setCredentialsMessage('');
+              }}
             >
               {(profile.full_name || profile.email || '?').slice(0, 1).toUpperCase()}
             </button>
             {menuOpen ? (
               <div className="profile-dropdown">
-                <p>{profile.full_name || profile.email}</p>
+                <p>{profile.full_name || 'Conta'}</p>
+                <small className="profile-email">{profile.email}</small>
+                <button
+                  type="button"
+                  className="dropdown-action"
+                  onClick={() => {
+                    setCredentialsOpen((open) => !open);
+                    setCredentialsError('');
+                    setCredentialsMessage('');
+                    setNextEmail(profile.email || '');
+                    setNextPassword('');
+                    setConfirmPassword('');
+                  }}
+                >
+                  Alterar e-mail e senha
+                </button>
+                {credentialsOpen ? (
+                  <form className="profile-credentials" onSubmit={(event) => void handleSaveCredentials(event)}>
+                    <label htmlFor="profileEmail">E-mail</label>
+                    <input
+                      id="profileEmail"
+                      type="email"
+                      required
+                      value={nextEmail}
+                      onChange={(event) => setNextEmail(event.target.value)}
+                    />
+                    <label htmlFor="profilePassword">Nova senha</label>
+                    <input
+                      id="profilePassword"
+                      type="password"
+                      minLength={3}
+                      placeholder="Deixe em branco para manter"
+                      value={nextPassword}
+                      onChange={(event) => setNextPassword(event.target.value)}
+                    />
+                    <label htmlFor="profilePasswordConfirm">Confirmar senha</label>
+                    <input
+                      id="profilePasswordConfirm"
+                      type="password"
+                      minLength={3}
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                    />
+                    {credentialsError ? <p className="form-error">{credentialsError}</p> : null}
+                    {credentialsMessage ? <p className="form-success">{credentialsMessage}</p> : null}
+                    <button className="btn btn-primary btn-block" type="submit" disabled={savingCredentials}>
+                      {savingCredentials ? 'Salvando…' : 'Salvar alteração'}
+                    </button>
+                  </form>
+                ) : null}
                 <button
                   type="button"
                   className="dropdown-logout"
@@ -268,6 +349,8 @@ export default function Home({ profile, onLogout, demoMode = false }) {
                 : (isMobile
                   ? 'Gire com o dedo · Toque na bolinha para abrir o seu vídeo'
                   : 'Arraste para girar · Clique na bolinha para abrir o seu YouTube')}
+              {' · '}
+              De frente: D = direito do paciente (esquerda da tela), E = esquerdo
             </div>
             <Canvas
               key={`${isMobile ? 'mobile' : 'desktop'}-${hotspotOwnerId || 'none'}`}

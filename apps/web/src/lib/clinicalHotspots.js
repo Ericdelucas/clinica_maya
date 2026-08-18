@@ -52,6 +52,22 @@ function writeLocalMap(map) {
   localStorage.setItem(LOCAL_KEY, JSON.stringify(map || {}));
 }
 
+/** Garante 1 boneco por paciente e remove leftovers de IDs que não existem mais. */
+export function syncPatientMannequins(patientIds) {
+  const ids = [...new Set((patientIds || []).filter(Boolean))];
+  const map = readLocalMap();
+  const next = {};
+  for (const id of ids) {
+    next[id] = map[id] || {};
+  }
+  writeLocalMap(next);
+  return ids.length;
+}
+
+export function countPatientMannequins() {
+  return Object.keys(readLocalMap()).length;
+}
+
 export function readLocalPatientHotspots(patientId) {
   const map = readLocalMap();
   const patient = map[patientId] || {};

@@ -2,56 +2,66 @@ const DEMO_SESSION_KEY = 'clinica-maya-demo-session';
 const DEMO_DOCS_KEY = 'clinica-maya-demo-documents';
 const DEMO_PATIENTS_KEY = 'clinica-maya-demo-patients';
 const DEMO_ANAMNESIS_KEY = 'clinica-maya-demo-anamnesis';
+const PROFESSIONAL_KEY = 'clinica-maya-professional';
 
-export const DEMO_ACCOUNTS = {
-  admin: {
-    id: 'demo-admin',
-    email: 'maya@demo.local',
-    password: 'maya123',
-    full_name: 'Maya',
-    role: 'admin',
-  },
-  patient: {
-    id: 'demo-patient',
-    email: 'paciente@demo.local',
-    password: 'paciente123',
-    full_name: 'Paciente Demo',
-    role: 'patient',
-  },
+/** Conta da profissional — única com acesso à área administrativa. */
+export const DEFAULT_PROFESSIONAL = {
+  id: 'professional-maya',
+  email: 'mayayyamamoto@gmail.com',
+  password: '123',
+  full_name: 'Maya Yamamoto',
+  role: 'admin',
 };
 
-const SEED_PATIENTS = [
-  {
-    id: 'demo-patient',
-    email: 'paciente@demo.local',
-    full_name: 'Paciente Demo',
-    created_at: '2026-07-01T12:00:00.000Z',
-  },
-  {
-    id: 'demo-carla',
-    email: 'carla.mendes@demo.local',
-    full_name: 'Carla Mendes',
-    created_at: '2026-07-12T12:00:00.000Z',
-  },
-  {
-    id: 'demo-ricardo',
-    email: 'ricardo.alves@demo.local',
-    full_name: 'Ricardo Alves',
-    created_at: '2026-07-18T12:00:00.000Z',
-  },
-  {
-    id: 'demo-sofia',
-    email: 'sofia.nogueira@demo.local',
-    full_name: 'Sofia Nogueira',
-    created_at: '2026-07-22T12:00:00.000Z',
-  },
-];
-
-/** Pacientes antigos removidos do demo — limpa localStorage antigo */
+/** Pacientes fictícios do demo antigo — não entram em produção. */
 const REMOVED_DEMO_PATIENT_IDS = new Set([
+  'demo-patient',
   'demo-patient-2',
   'demo-patient-3',
+  'demo-carla',
+  'demo-ricardo',
+  'demo-sofia',
+  'demo-admin',
 ]);
+
+function stripPassword(account) {
+  const { password: _ignored, ...profile } = account || {};
+  return profile;
+}
+
+export function readProfessionalAccount() {
+  try {
+    const raw = localStorage.getItem(PROFESSIONAL_KEY);
+    if (raw) {
+      const stored = JSON.parse(raw);
+      return {
+        ...DEFAULT_PROFESSIONAL,
+        ...stored,
+        id: DEFAULT_PROFESSIONAL.id,
+        role: 'admin',
+      };
+    }
+  } catch {
+    // segue com o seed
+  }
+
+  const seeded = { ...DEFAULT_PROFESSIONAL };
+  localStorage.setItem(PROFESSIONAL_KEY, JSON.stringify(seeded));
+  return seeded;
+}
+
+export function writeProfessionalAccount(patch) {
+  const current = readProfessionalAccount();
+  const next = {
+    ...current,
+    ...patch,
+    id: DEFAULT_PROFESSIONAL.id,
+    role: 'admin',
+    email: String(patch.email ?? current.email).trim().toLowerCase(),
+  };
+  localStorage.setItem(PROFESSIONAL_KEY, JSON.stringify(next));
+  return next;
+}
 
 export function emptyAnamnesis(pacienteId = '') {
   return {
@@ -91,13 +101,100 @@ export function clearDemoSession() {
 
 export function authenticateDemo(email, password) {
   const normalized = String(email || '').trim().toLowerCase();
-  const accounts = Object.values(DEMO_ACCOUNTS);
-  const match = accounts.find(
-    (account) => account.email === normalized && account.password === password,
+  const enteredPassword = String(password || '');
+
+  const professional = readProfessionalAccount();
+  if (
+    String(professional.email || '').trim().toLowerCase() === normalized
+    && String(professional.password || '') === enteredPassword
+  ) {
+    return stripPassword(professional);
+  }
+
+  const patient = readDemoPatients().find((item) => (
+    String(item.email || '').trim().toLowerCase() === normalized
+    && String(item.password || '') === enteredPassword
+  ));
+
+  if (!patient) return null;
+
+  return {
+    id: patient.id,
+    email: patient.email,
+    full_name: patient.full_name,
+    role: 'patient',
+  };
+}
+
+export function hydrateDemoProfile(saved) {
+  if (!saved?.id) return null;
+
+  const professional = readProfessionalAccount();
+  if (saved.id === professional.id || (
+    saved.role === 'admin'
+    && String(saved.email || '').toLowerCase() === String(professional.email).toLowerCase()
+  )) {
+    return stripPassword(professional);
+  }
+
+  const patient = readDemoPatients().find((item) => item.id === saved.id);
+  if (!patient) return null;
+
+  return {
+    id: patient.id,
+    email: patient.email,
+    full_name: patient.full_name,
+    role: 'patient',
+  };
+}
+
+export function updateOwnCredentials(profile, { email, password }) {
+  const nextEmail = String(email || '').trim().toLowerCase();
+  if (!nextEmail || !nextEmail.includes('@')) {
+    throw new Error('Informe um e-mail válido.');
+  }
+
+  if (profile?.role === 'admin') {
+    const patch = { email: nextEmail };
+    if (password) patch.password = password;
+    const updated = stripPassword(writeProfessionalAccount(patch));
+    writeDemoSession(updated);
+    return updated;
+  }
+
+  const professional = readProfessionalAccount();
+  if (String(professional.email).toLowerCase() === nextEmail) {
+    throw new Error('Este e-mail pertence à área profissional.');
+  }
+
+  const patients = readDemoPatients();
+  const taken = patients.find(
+    (item) => item.id !== profile.id && String(item.email || '').toLowerCase() === nextEmail,
   );
-  if (!match) return null;
-  const { password: _ignored, ...profile } = match;
-  return profile;
+  if (taken) {
+    throw new Error('Este e-mail já está em uso por outro paciente.');
+  }
+
+  const current = patients.find((item) => item.id === profile.id);
+  if (!current) {
+    throw new Error('Paciente não encontrado.');
+  }
+
+  const next = {
+    ...current,
+    email: nextEmail,
+    ...(password ? { password } : {}),
+  };
+  writeDemoPatient(next);
+
+  const session = {
+    id: next.id,
+    email: next.email,
+    full_name: next.full_name,
+    role: 'patient',
+  };
+  writeDemoSession(session);
+  return session;
 }
 
 export function readDemoDocuments() {
@@ -144,17 +241,11 @@ export function readDemoPatients() {
     if (cleaned.length !== stored.length) {
       localStorage.setItem(DEMO_PATIENTS_KEY, JSON.stringify(cleaned));
     }
-
-    const byId = new Map();
-    [...SEED_PATIENTS, ...cleaned].forEach((patient) => {
-      if (REMOVED_DEMO_PATIENT_IDS.has(patient.id)) return;
-      byId.set(patient.id, patient);
-    });
-    return Array.from(byId.values()).sort((a, b) =>
-      String(b.created_at).localeCompare(String(a.created_at)),
+    return cleaned.sort((a, b) =>
+      String(b.created_at || '').localeCompare(String(a.created_at || '')),
     );
   } catch {
-    return [...SEED_PATIENTS];
+    return [];
   }
 }
 

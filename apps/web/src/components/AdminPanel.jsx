@@ -5,12 +5,14 @@ import {
   listDemoAnamnesis,
   readDemoDocuments,
   readDemoPatients,
+  readProfessionalAccount,
   updateDemoDocument,
   writeDemoPatient,
 } from '../lib/demo.js';
 import {
   describeFirebaseError,
   FIRESTORE_OPEN_RULES,
+  syncPatientMannequins,
 } from '../lib/clinicalHotspots.js';
 import { HOTSPOT_DEFAULTS, isValidYoutubeUrl } from '../lib/hotspots.js';
 import { getSupabaseClient } from '../lib/supabase.js';
@@ -103,6 +105,7 @@ export default function AdminPanel({
             ...patient,
             hasAnamnesis: Boolean(anamnesisMap[patient.id]?.updated_at),
           }));
+          syncPatientMannequins(enriched.map((patient) => patient.id));
           if (active) {
             setPatients(enriched);
             setSelectedPatientId((current) => current || enriched[0]?.id || null);
@@ -119,8 +122,10 @@ export default function AdminPanel({
 
         if (error) throw error;
         if (active) {
-          setPatients(data || []);
-          setSelectedPatientId((current) => current || data?.[0]?.id || null);
+          const rows = data || [];
+          syncPatientMannequins(rows.map((patient) => patient.id));
+          setPatients(rows);
+          setSelectedPatientId((current) => current || rows[0]?.id || null);
         }
       } catch (err) {
         if (active) setPatientsError(err?.message || 'Falha ao carregar pacientes.');
@@ -265,14 +270,27 @@ export default function AdminPanel({
 
     try {
       if (demoMode) {
+        const email = patientEmail.trim().toLowerCase();
+        const professionalEmail = String(readProfessionalAccount().email || '').toLowerCase();
+        if (email === professionalEmail) {
+          throw new Error('Este e-mail é da profissional e não pode ser usado por paciente.');
+        }
+        const existing = readDemoPatients().find(
+          (item) => String(item.email || '').toLowerCase() === email,
+        );
+        if (existing) {
+          throw new Error('Já existe um paciente com este e-mail.');
+        }
+
         const created = {
           id: crypto.randomUUID(),
-          email: patientEmail.trim(),
+          email,
           full_name: patientName.trim(),
           password: patientPassword,
           created_at: new Date().toISOString(),
         };
         writeDemoPatient(created);
+        syncPatientMannequins(readDemoPatients().map((patient) => patient.id));
         setSelectedPatientId(created.id);
       } else {
         const supabase = getSupabaseClient();
@@ -390,8 +408,18 @@ export default function AdminPanel({
       {tab === 'patients' ? (
         <section className="panel-section">
           <h3>Lista de pacientes</h3>
+          <div className="clinic-stats">
+            <div>
+              <span>Pacientes</span>
+              <strong>{patients.length}</strong>
+            </div>
+            <div>
+              <span>Bonecos</span>
+              <strong>{patients.length}</strong>
+            </div>
+          </div>
           <p className="muted">
-            Cada paciente tem o próprio boneco e os próprios vídeos. Abra o boneco dele para editar.
+            Cada paciente tem exatamente um boneco. Os números acima são sempre iguais.
           </p>
           <div className="field">
             <label htmlFor="patientSearch">Buscar</label>
@@ -624,9 +652,9 @@ export default function AdminPanel({
             ela fica só no painel profissional.
           </p>
           <ul className="vision-tips">
-            <li>Posicione a mão do paciente bem iluminada no centro do quadro.</li>
-            <li>Os 21 pontinhos e o esqueleto magenta aparecem em tempo real.</li>
-            <li>Use “Voltar ao boneco” na tela grande para encerrar a sessão.</li>
+            <li>Enquadre ombro, cotovelo e mão — o sistema mede o braço na digitação.</li>
+            <li>Cotovelo perto de 90° e pulso quase alinhado ao antebraço (curva suave ok).</li>
+            <li>Se o pulso curvar demais, as linhas daquela mão passam de verde para vermelho.</li>
           </ul>
           <button
             type="button"

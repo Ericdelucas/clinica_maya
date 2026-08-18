@@ -1,13 +1,10 @@
 import { useState } from 'react';
-import {
-  DEMO_ACCOUNTS,
-  authenticateDemo,
-} from '../lib/demo.js';
+import { authenticateDemo } from '../lib/demo.js';
 import { getSupabaseClient } from '../lib/supabase.js';
 
 export default function Login({ demoMode = false, onDemoLogin }) {
-  const [email, setEmail] = useState(demoMode ? DEMO_ACCOUNTS.admin.email : '');
-  const [password, setPassword] = useState(demoMode ? DEMO_ACCOUNTS.admin.password : '');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,7 +17,7 @@ export default function Login({ demoMode = false, onDemoLogin }) {
       if (demoMode) {
         const profile = authenticateDemo(email, password);
         if (!profile) {
-          setError('Use maya@demo.local / maya123 ou paciente@demo.local / paciente123');
+          setError('E-mail ou senha inválidos.');
           return;
         }
         onDemoLogin?.(profile);
@@ -34,19 +31,13 @@ export default function Login({ demoMode = false, onDemoLogin }) {
       });
 
       if (authError) {
-        setError('Credenciais inválidas. Entre em contato com a Clínica Maya.');
+        setError('Credenciais inválidas. Entre em contato com a clínica.');
       }
     } catch {
-      setError('Credenciais inválidas. Entre em contato com a Clínica Maya.');
+      setError('Não foi possível entrar. Tente novamente.');
     } finally {
       setSubmitting(false);
     }
-  }
-
-  function enterAs(role) {
-    const account = DEMO_ACCOUNTS[role];
-    const { password: _ignored, ...profile } = account;
-    onDemoLogin?.(profile);
   }
 
   return (
@@ -58,27 +49,15 @@ export default function Login({ demoMode = false, onDemoLogin }) {
         </header>
 
         <div className="login-card">
-          <h1>Bem-vindo(a)!</h1>
+          <h1>Entrar</h1>
           <p className="login-lead">
-            {demoMode
-              ? 'Ambiente de demonstração. Entre como profissional ou paciente.'
-              : 'Acesso exclusivo para profissionais e pacientes cadastrados pela clínica.'}
+            Acesso restrito. Use o e-mail e a senha cadastrados. A área profissional
+            é exclusiva da fisioterapeuta.
           </p>
-
-          {demoMode ? (
-            <div className="login-demo-actions">
-              <button type="button" className="btn btn-primary" onClick={() => enterAs('admin')}>
-                Sou profissional
-              </button>
-              <button type="button" className="btn btn-ghost" onClick={() => enterAs('patient')}>
-                Sou paciente
-              </button>
-            </div>
-          ) : null}
 
           <form className="login-form" onSubmit={(event) => void handleSubmit(event)}>
             <div className="field">
-              <label htmlFor="email">Usuário</label>
+              <label htmlFor="email">E-mail</label>
               <input
                 id="email"
                 name="email"

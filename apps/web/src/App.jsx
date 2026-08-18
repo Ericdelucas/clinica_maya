@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   clearDemoSession,
+  hydrateDemoProfile,
+  readDemoSession,
+  writeDemoSession,
 } from './lib/demo.js';
 import { getSupabaseClient, isSupabaseConfigured } from './lib/supabase.js';
 import Login from './pages/Login.jsx';
@@ -23,10 +26,16 @@ export default function App() {
 
   useEffect(() => {
     if (demoMode) {
-      // Sempre começa na tela de login; não restaura sessão anterior.
-      clearDemoSession();
-      setSession(null);
-      setProfile(null);
+      const restored = hydrateDemoProfile(readDemoSession());
+      if (restored) {
+        writeDemoSession(restored);
+        setSession({ user: { id: restored.id } });
+        setProfile(restored);
+      } else {
+        clearDemoSession();
+        setSession(null);
+        setProfile(null);
+      }
       setBootstrapping(false);
       return undefined;
     }
@@ -97,9 +106,15 @@ export default function App() {
   }, [demoMode]);
 
   function handleDemoLogin(nextProfile) {
+    writeDemoSession(nextProfile);
     setSession({ user: { id: nextProfile.id } });
     setProfile(nextProfile);
     setError('');
+  }
+
+  function handleProfileUpdate(nextProfile) {
+    writeDemoSession(nextProfile);
+    setProfile(nextProfile);
   }
 
   async function handleLogout() {
@@ -140,6 +155,7 @@ export default function App() {
       profile={profile}
       demoMode={demoMode}
       onLogout={() => void handleLogout()}
+      onProfileUpdate={handleProfileUpdate}
     />
   );
 }

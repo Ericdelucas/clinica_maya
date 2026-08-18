@@ -1,3 +1,4 @@
+import { Html } from '@react-three/drei';
 import { useMemo } from 'react';
 
 const wood = '#bd7f3f';
@@ -128,18 +129,19 @@ export default function WoodenMannequin({ hotspots = [], selectedId = null, mode
     chestTop: [0, 1.42, 0],
     chestBottom: [0, 0.82, 0],
     pelvis: [0, 0.52, 0],
-    shoulderR: [0.34, 1.39, 0],
-    shoulderL: [-0.34, 1.39, 0],
-    elbowR: [0.58, 1.02, 0],
-    elbowL: [-0.58, 1.02, 0],
-    wristR: [0.66, 0.62, 0],
-    wristL: [-0.66, 0.62, 0],
-    hipR: [0.18, 0.48, 0],
-    hipL: [-0.18, 0.48, 0],
-    kneeR: [0.23, -0.08, 0],
-    kneeL: [-0.23, -0.08, 0],
-    ankleR: [0.24, -0.72, 0],
-    ankleL: [-0.24, -0.72, 0],
+    // Direito do paciente = X negativo (esquerda da tela, de frente)
+    shoulderR: [-0.34, 1.39, 0],
+    shoulderL: [0.34, 1.39, 0],
+    elbowR: [-0.58, 1.02, 0],
+    elbowL: [0.58, 1.02, 0],
+    wristR: [-0.66, 0.62, 0],
+    wristL: [0.66, 0.62, 0],
+    hipR: [-0.18, 0.48, 0],
+    hipL: [0.18, 0.48, 0],
+    kneeR: [-0.23, -0.08, 0],
+    kneeL: [0.23, -0.08, 0],
+    ankleR: [-0.24, -0.72, 0],
+    ankleL: [0.24, -0.72, 0],
   };
 
   return (
@@ -192,10 +194,10 @@ export default function WoodenMannequin({ hotspots = [], selectedId = null, mode
       <Limb from={points.hipL} to={points.kneeL} topRadius={0.085} bottomRadius={0.065} color="#c98850" />
       <Limb from={points.kneeL} to={points.ankleL} topRadius={0.06} bottomRadius={0.043} color={skinLight} />
 
-      <Ellipsoid position={[0.69, 0.55, 0.04]} scale={[0.045, 0.075, 0.035]} color={skinLight} />
       <Ellipsoid position={[-0.69, 0.55, 0.04]} scale={[0.045, 0.075, 0.035]} color={skinLight} />
-      <Ellipsoid position={[0.25, -0.78, 0.1]} scale={[0.065, 0.035, 0.14]} color={skinLight} rotation={[0.2, 0, 0]} />
+      <Ellipsoid position={[0.69, 0.55, 0.04]} scale={[0.045, 0.075, 0.035]} color={skinLight} />
       <Ellipsoid position={[-0.25, -0.78, 0.1]} scale={[0.065, 0.035, 0.14]} color={skinLight} rotation={[0.2, 0, 0]} />
+      <Ellipsoid position={[0.25, -0.78, 0.1]} scale={[0.065, 0.035, 0.14]} color={skinLight} rotation={[0.2, 0, 0]} />
 
       <Joint position={points.neck} radius={0.055} />
       <Joint position={points.shoulderR} radius={0.075} />
@@ -210,6 +212,13 @@ export default function WoodenMannequin({ hotspots = [], selectedId = null, mode
       <Joint position={points.kneeL} radius={0.06} />
       <Joint position={points.ankleR} radius={0.048} />
       <Joint position={points.ankleL} radius={0.048} />
+
+      <Html position={[-0.52, 1.52, 0]} center distanceFactor={8}>
+        <span className="side-tag" aria-label="Lado direito do paciente">D</span>
+      </Html>
+      <Html position={[0.52, 1.52, 0]} center distanceFactor={8}>
+        <span className="side-tag" aria-label="Lado esquerdo do paciente">E</span>
+      </Html>
 
       {hotspots.map((hotspot) => (
         <HotspotSphere
