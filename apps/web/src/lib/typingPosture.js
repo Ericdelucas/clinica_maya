@@ -1,7 +1,5 @@
-/** Landmarks MediaPipe Pose (parte do braço). */
+/** Landmarks MediaPipe Pose — só cotovelo e punho (sem ombro). */
 export const POSE_IDX = {
-  lShoulder: 11,
-  rShoulder: 12,
   lElbow: 13,
   rElbow: 14,
   lWrist: 15,
@@ -10,30 +8,25 @@ export const POSE_IDX = {
   rIndex: 20,
 };
 
-export const ARM_CONNECTIONS = {
+/** Segmento desenhado: cotovelo → punho → direção da mão */
+export const FOREARM_CONNECTIONS = {
   left: [
-    [POSE_IDX.lShoulder, POSE_IDX.lElbow],
     [POSE_IDX.lElbow, POSE_IDX.lWrist],
     [POSE_IDX.lWrist, POSE_IDX.lIndex],
   ],
   right: [
-    [POSE_IDX.rShoulder, POSE_IDX.rElbow],
     [POSE_IDX.rElbow, POSE_IDX.rWrist],
     [POSE_IDX.rWrist, POSE_IDX.rIndex],
   ],
 };
 
-const HAND_MCP = 9; // base do dedo médio — direção da palma
+const HAND_MCP = 9;
 
-/** Cotovelo perto de 90° (digitação). */
-const ELBOW_TARGET = 90;
-const ELBOW_TOLERANCE = 22;
+/** Curva suave ok; acima disso alerta vermelho */
+const BEND_SOFT_MAX = 18;
+const BEND_ALERT_MIN = 28;
 
-/** Desvio do pulso em relação à linha reta do antebraço. Curva suave ok; grande = alerta. */
-const WRIST_SOFT_MAX = 16;
-const WRIST_ALERT_MIN = 26;
-
-function visible(lm, min = 0.35) {
+function visible(lm, min = 0.3) {
   if (!lm) return false;
   const score = lm.visibility ?? lm.presence ?? 1;
   return score >= min;
@@ -63,63 +56,61 @@ function nearestHand(hands, wrist) {
       best = hand;
     }
   }
-  return bestD < 0.08 ? best : null;
+  return bestD < 0.1 ? best : null;
 }
 
-function sidePosture(pose, hands, keys) {
-  const shoulder = pose[keys.shoulder];
+/** Quanto a mão desvia de uma linha reta com o antebraço (cotovelo → punho → mão). */
+function sideForearm(pose, hands, keys) {
   const elbow = pose[keys.elbow];
   const wrist = pose[keys.wrist];
   const poseIndex = pose[keys.index];
 
-  if (!visible(shoulder) || !visible(elbow) || !visible(wrist)) {
-    return { ready: false, ok: true, elbowAngle: null, wristBend: null, reasons: [] };
+  if (!visible(elbow) || !visible(wrist)) {
+    return { ready: false, ok: true, bend: null, reasons: [] };
   }
 
-  const elbowAngle = angleAt(elbow, shoulder, wrist);
   const hand = nearestHand(hands, wrist);
-  const palm = hand?.[HAND_MCP] || poseIndex;
-  const wristAngle = palm ? angleAt(wrist, elbow, palm) : null;
-  const wristBend = wristAngle == null ? null : Math.abs(180 - wristAngle);
+  const handDir = hand?.[HAND_MCP] || hand?.[8] || poseIndex;
+  if (!handDir) {
+    return { ready: false, ok: true, bend: null, reasons: [] };
+  }
+
+  const angleAtWrist = angleAt(wrist, elbow, handDir);
+  const bend = angleAtWrist == null ? null : Math.abs(180 - angleAtWrist);
 
   const reasons = [];
-  if (elbowAngle != null && Math.abs(elbowAngle - ELBOW_TARGET) > ELBOW_TOLERANCE) {
-    reasons.push(`cotovelo ${Math.round(elbowAngle)}° (ideal ~90°)`);
-  }
-  if (wristBend != null && wristBend >= WRIST_ALERT_MIN) {
-    reasons.push(`pulso curvado ${Math.round(wristBend)}°`);
+  if (bend != null && bend >= BEND_ALERT_MIN) {
+    reasons.push(`curva ${Math.round(bend)}°`);
   }
 
   return {
     ready: true,
     ok: reasons.length === 0,
-    mildWrist: wristBend != null && wristBend > WRIST_SOFT_MAX && wristBend < WRIST_ALERT_MIN,
-    elbowAngle,
-    wristBend,
+    mild: bend != null && bend > BEND_SOFT_MAX && bend < BEND_ALERT_MIN,
+    bend,
     reasons,
   };
 }
 
 export function analyzeTypingPosture(poseLandmarks, hands) {
-  const empty = { ready: false, ok: true, elbowAngle: null, wristBend: null, reasons: [] };
-  if (!poseLandmarks?.length) {
+  const empty = { ready: false, ok: true, bend: null, reasons: [] };
+
+  if (!poseLandmarks?.length && !hands?.length) {
     return {
       left: empty,
       right: empty,
       anyAlert: false,
-      message: 'Mostre o braço inteiro: ombro, cotovelo e mão.',
+      message: 'Mostre a mão e o cotovelo na câmera (não precisa do ombro).',
     };
   }
 
-  const pose = poseLandmarks;
-  const left = sidePosture(pose, hands, {
-    shoulder: POSE_IDX.lShoulder,
+  const pose = poseLandmarks || [];
+  const left = sideForearm(pose, hands, {
     elbow: POSE_IDX.lElbow,
     wrist: POSE_IDX.lWrist,
     index: POSE_IDX.lIndex,
   });
-  const right = sidePosture(pose, hands, {
-    shoulder: POSE_IDX.rShoulder,
+  const right = sideForearm(pose, hands, {
     elbow: POSE_IDX.rElbow,
     wrist: POSE_IDX.rWrist,
     index: POSE_IDX.rIndex,
@@ -129,9 +120,13 @@ export function analyzeTypingPosture(poseLandmarks, hands) {
   if (!left.ok && left.ready) alerts.push(`Esquerdo: ${left.reasons.join(', ')}`);
   if (!right.ok && right.ready) alerts.push(`Direito: ${right.reasons.join(', ')}`);
 
-  let message = 'Postura ok — curva suave no pulso e cotovelo perto de 90°.';
+  let message = 'Linha reta — mão alinhada ao antebraço.';
   if (!left.ready && !right.ready) {
-    message = 'Aproxime o braço da câmera (ombro, cotovelo e mão no quadro).';
+    if (hands?.length) {
+      message = 'Mão detectada. Enquadre também o cotovelo (mão até cotovelo).';
+    } else {
+      message = 'Enquadre mão e cotovelo — ombro fora do quadro está ok.';
+    }
   } else if (alerts.length) {
     message = alerts.join(' · ');
   }
@@ -148,24 +143,22 @@ export function averageSide(history, sample, max = 6) {
   if (!sample?.ready) return sample;
   history.push(sample);
   if (history.length > max) history.shift();
-  const elbowVals = history.map((item) => item.elbowAngle).filter((v) => v != null);
-  const wristVals = history.map((item) => item.wristBend).filter((v) => v != null);
-  const avg = (list) => (list.length ? list.reduce((s, v) => s + v, 0) / list.length : null);
-  const elbowAngle = avg(elbowVals);
-  const wristBend = avg(wristVals);
+  const bends = history.map((item) => item.bend).filter((v) => v != null);
+  const bend = bends.length
+    ? bends.reduce((s, v) => s + v, 0) / bends.length
+    : null;
   const reasons = [];
-  if (elbowAngle != null && Math.abs(elbowAngle - ELBOW_TARGET) > ELBOW_TOLERANCE) {
-    reasons.push(`cotovelo ${Math.round(elbowAngle)}° (ideal ~90°)`);
-  }
-  if (wristBend != null && wristBend >= WRIST_ALERT_MIN) {
-    reasons.push(`pulso curvado ${Math.round(wristBend)}°`);
+  if (bend != null && bend >= BEND_ALERT_MIN) {
+    reasons.push(`curva ${Math.round(bend)}°`);
   }
   return {
     ready: true,
     ok: reasons.length === 0,
-    mildWrist: wristBend != null && wristBend > WRIST_SOFT_MAX && wristBend < WRIST_ALERT_MIN,
-    elbowAngle,
-    wristBend,
+    mild: bend != null && bend > BEND_SOFT_MAX && bend < BEND_ALERT_MIN,
+    bend,
     reasons,
   };
 }
+
+/** Compatibilidade com painel antigo */
+export const ARM_CONNECTIONS = FOREARM_CONNECTIONS;

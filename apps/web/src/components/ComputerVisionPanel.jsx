@@ -74,11 +74,11 @@ function toXY(lm, width, height, mirrored) {
 function colorFor(side) {
   if (!side?.ready) return COLOR_OK;
   if (!side.ok) return COLOR_ALERT;
-  if (side.mildWrist) return COLOR_MILD;
+  if (side.mild) return COLOR_MILD;
   return COLOR_OK;
 }
 
-function drawArm(ctx, pose, connections, color, width, height, mirrored, lineW) {
+function drawForearm(ctx, pose, connections, color, width, height, mirrored, lineW) {
   ctx.lineCap = 'round';
   ctx.lineWidth = lineW;
   ctx.strokeStyle = color;
@@ -94,22 +94,18 @@ function drawArm(ctx, pose, connections, color, width, height, mirrored, lineW) 
     ctx.stroke();
   }
 
-  const joints = [
-    connections[0][0],
-    connections[0][1],
-    connections[1][1],
-  ];
-  for (const id of joints) {
+  const jointIds = [connections[0][0], connections[0][1]];
+  for (const id of jointIds) {
     const lm = pose[id];
     if (!lm) continue;
     const [x, y] = toXY(lm, width, height, mirrored);
     ctx.beginPath();
     ctx.fillStyle = color;
-    ctx.arc(x, y, Math.max(6, width * 0.007), 0, Math.PI * 2);
+    ctx.arc(x, y, Math.max(7, width * 0.008), 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
     ctx.fillStyle = DOT_CORE;
-    ctx.arc(x, y, Math.max(2.8, width * 0.003), 0, Math.PI * 2);
+    ctx.arc(x, y, Math.max(3, width * 0.0035), 0, Math.PI * 2);
     ctx.fill();
   }
 }
@@ -187,14 +183,14 @@ function drawScene(ctx, width, height, pose, hands, posture, mirrored) {
   const rightColor = colorFor(posture.right);
 
   if (pose?.length) {
-    drawArm(ctx, pose, ARM_CONNECTIONS.left, leftColor, width, height, mirrored, lineW);
-    drawArm(ctx, pose, ARM_CONNECTIONS.right, rightColor, width, height, mirrored, lineW);
+    drawForearm(ctx, pose, ARM_CONNECTIONS.left, leftColor, width, height, mirrored, lineW);
+    drawForearm(ctx, pose, ARM_CONNECTIONS.right, rightColor, width, height, mirrored, lineW);
 
-    if (posture.left.elbowAngle != null) {
-      drawLabel(ctx, pose[POSE_IDX.lElbow], `${Math.round(posture.left.elbowAngle)}°`, width, height, mirrored, leftColor);
+    if (posture.left.bend != null) {
+      drawLabel(ctx, pose[POSE_IDX.lWrist], `${Math.round(posture.left.bend)}°`, width, height, mirrored, leftColor);
     }
-    if (posture.right.elbowAngle != null) {
-      drawLabel(ctx, pose[POSE_IDX.rElbow], `${Math.round(posture.right.elbowAngle)}°`, width, height, mirrored, rightColor);
+    if (posture.right.bend != null) {
+      drawLabel(ctx, pose[POSE_IDX.rWrist], `${Math.round(posture.right.bend)}°`, width, height, mirrored, rightColor);
     }
   }
 
@@ -241,8 +237,8 @@ export default function ComputerVisionPanel({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [posture, setPosture] = useState({
-    left: { ready: false, ok: true, elbowAngle: null, wristBend: null },
-    right: { ready: false, ok: true, elbowAngle: null, wristBend: null },
+    left: { ready: false, ok: true, bend: null },
+    right: { ready: false, ok: true, bend: null },
     anyAlert: false,
     message: '',
   });
@@ -282,8 +278,8 @@ export default function ComputerVisionPanel({
     historyRef.current = { left: [], right: [] };
     setHandsDetected(0);
     setPosture({
-      left: { ready: false, ok: true, elbowAngle: null, wristBend: null },
-      right: { ready: false, ok: true, elbowAngle: null, wristBend: null },
+      left: { ready: false, ok: true, bend: null },
+      right: { ready: false, ok: true, bend: null },
       anyAlert: false,
       message: '',
     });
@@ -332,9 +328,9 @@ export default function ComputerVisionPanel({
         } else if (left.ready || right.ready) {
           setStatus('Postura ok');
         } else if (hands.length) {
-          setStatus('Mão ok — mostre o cotovelo também');
+          setStatus('Mão ok — mostre o cotovelo');
         } else {
-          setStatus('Procurando braço e mão…');
+          setStatus('Procurando mão e cotovelo…');
         }
       }
     }
@@ -372,7 +368,7 @@ export default function ComputerVisionPanel({
       runningRef.current = true;
       setIsRunning(true);
       setLoading(false);
-      setStatus('Câmera ativa — mostre o braço digitando');
+      setStatus('Câmera ativa — mão e cotovelo no quadro');
       lastVideoTimeRef.current = -1;
       historyRef.current = { left: [], right: [] };
       rafRef.current = requestAnimationFrame(detectLoop);
@@ -405,7 +401,7 @@ export default function ComputerVisionPanel({
         <div className="vision-workspace-titles">
           <span className="vision-pro-badge">Somente profissional</span>
           <h2>Visão computacional</h2>
-          <p>Digitação: cotovelo ~90° e pulso sem curva forte (braço + antebraço + mão)</p>
+          <p>Mão até cotovelo: linha reta na digitação (sem precisar enquadrar o ombro)</p>
         </div>
 
         <div className="vision-workspace-actions">
@@ -440,15 +436,11 @@ export default function ComputerVisionPanel({
         </div>
         <div className={`vision-chip ${posture.left.ready && posture.left.ok ? 'ok' : ''} ${posture.left.ready && !posture.left.ok ? 'alert' : ''}`}>
           <span>Esquerdo</span>
-          <strong>
-            cotovelo {formatAngle(posture.left.elbowAngle)} · pulso {formatAngle(posture.left.wristBend)}
-          </strong>
+          <strong>curva {formatAngle(posture.left.bend)}</strong>
         </div>
         <div className={`vision-chip ${posture.right.ready && posture.right.ok ? 'ok' : ''} ${posture.right.ready && !posture.right.ok ? 'alert' : ''}`}>
           <span>Direito</span>
-          <strong>
-            cotovelo {formatAngle(posture.right.elbowAngle)} · pulso {formatAngle(posture.right.wristBend)}
-          </strong>
+          <strong>curva {formatAngle(posture.right.bend)}</strong>
         </div>
       </div>
 
@@ -471,9 +463,9 @@ export default function ComputerVisionPanel({
         <canvas ref={canvasRef} className="vision-canvas" />
         {!isRunning ? (
           <div className="vision-placeholder">
-            <strong>Postura na digitação</strong>
+            <strong>Linha mão → cotovelo</strong>
             <span>
-              Enquadre ombro, cotovelo e mão. Verde = ok. Vermelho = pulso curvado demais ou cotovelo longe de 90°.
+              Enquadre só mão e cotovelo. Verde = reta. Vermelho = curva forte no pulso. Sem som — só cor na tela.
             </span>
           </div>
         ) : null}

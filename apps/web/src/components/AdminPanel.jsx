@@ -652,9 +652,9 @@ export default function AdminPanel({
             ela fica só no painel profissional.
           </p>
           <ul className="vision-tips">
-            <li>Enquadre ombro, cotovelo e mão — o sistema mede o braço na digitação.</li>
-            <li>Cotovelo perto de 90° e pulso quase alinhado ao antebraço (curva suave ok).</li>
-            <li>Se o pulso curvar demais, as linhas daquela mão passam de verde para vermelho.</li>
+            <li>Enquadre mão e cotovelo — o ombro pode ficar fora da câmera.</li>
+            <li>Mede se a linha mão → antebraço está reta (curva suave ok).</li>
+            <li>Curva forte: linhas daquela mão ficam vermelhas (sem som).</li>
           </ul>
           <button
             type="button"
