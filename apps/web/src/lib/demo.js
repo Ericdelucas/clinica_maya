@@ -1,3 +1,11 @@
+import {
+  fetchCloudPatientByEmail,
+  fetchCloudProfessional,
+  saveCloudPatient,
+  saveCloudProfessional,
+  subscribeCloudPatients,
+} from './cloudPatients.js';
+
 const DEMO_SESSION_KEY = 'clinica-maya-demo-session';
 const DEMO_DOCS_KEY = 'clinica-maya-demo-documents';
 const DEMO_PATIENTS_KEY = 'clinica-maya-demo-patients';
@@ -27,6 +35,94 @@ const REMOVED_DEMO_PATIENT_IDS = new Set([
 function stripPassword(account) {
   const { password: _ignored, ...profile } = account || {};
   return profile;
+}
+
+function readPatientsFromStorage() {
+  try {
+    const raw = localStorage.getItem(DEMO_PATIENTS_KEY);
+    const stored = raw ? JSON.parse(raw) : [];
+    return stored.filter((patient) => !REMOVED_DEMO_PATIENT_IDS.has(patient.id));
+  } catch {
+    return [];
+  }
+}
+
+function writePatientsToStorage(patients) {
+  const sorted = [...patients].sort((a, b) =>
+    String(b.created_at || '').localeCompare(String(a.created_at || '')),
+  );
+  localStorage.setItem(DEMO_PATIENTS_KEY, JSON.stringify(sorted));
+  return sorted;
+}
+
+function mergePatients(cloudList) {
+  const local = readPatientsFromStorage();
+  const byId = new Map();
+  for (const patient of cloudList || []) {
+    if (patient?.id) byId.set(patient.id, patient);
+  }
+  for (const patient of local) {
+    if (!byId.has(patient.id)) byId.set(patient.id, patient);
+  }
+  return writePatientsToStorage([...byId.values()]);
+}
+
+let cloudSyncStop = null;
+const cloudPatientListeners = new Set();
+
+/** Sincroniza pacientes e conta profissional com o Firebase (todos os aparelhos). */
+export function startCloudAccountSync(onPatientsChange) {
+  if (onPatientsChange) {
+    cloudPatientListeners.add(onPatientsChange);
+  }
+
+  if (cloudSyncStop) {
+    return () => {
+      if (onPatientsChange) cloudPatientListeners.delete(onPatientsChange);
+    };
+  }
+
+  void (async () => {
+    try {
+      const remoteProfessional = await fetchCloudProfessional();
+      if (remoteProfessional?.email) {
+        const local = readProfessionalAccount();
+        const merged = {
+          ...DEFAULT_PROFESSIONAL,
+          ...local,
+          ...remoteProfessional,
+          id: DEFAULT_PROFESSIONAL.id,
+          role: 'admin',
+        };
+        localStorage.setItem(PROFESSIONAL_KEY, JSON.stringify(merged));
+      } else {
+        await saveCloudProfessional(readProfessionalAccount());
+      }
+    } catch {
+      // offline — segue com cache local
+    }
+  })();
+
+  cloudSyncStop = subscribeCloudPatients(
+    (list) => {
+      const merged = mergePatients(list);
+      for (const listener of cloudPatientListeners) {
+        listener(merged);
+      }
+    },
+    () => {
+      // mantém cache local se a nuvem falhar
+    },
+  );
+
+  return () => {
+    if (onPatientsChange) cloudPatientListeners.delete(onPatientsChange);
+  };
+}
+
+export function stopCloudAccountSync() {
+  cloudSyncStop?.();
+  cloudSyncStop = null;
 }
 
 export function readProfessionalAccount() {
@@ -60,6 +156,7 @@ export function writeProfessionalAccount(patch) {
     email: String(patch.email ?? current.email).trim().toLowerCase(),
   };
   localStorage.setItem(PROFESSIONAL_KEY, JSON.stringify(next));
+  void saveCloudProfessional(next).catch(() => {});
   return next;
 }
 
@@ -99,7 +196,7 @@ export function clearDemoSession() {
   localStorage.removeItem(DEMO_SESSION_KEY);
 }
 
-export function authenticateDemo(email, password) {
+export async function authenticateDemo(email, password) {
   const normalized = String(email || '').trim().toLowerCase();
   const enteredPassword = String(password || '');
 
@@ -111,10 +208,22 @@ export function authenticateDemo(email, password) {
     return stripPassword(professional);
   }
 
-  const patient = readDemoPatients().find((item) => (
+  let patient = readDemoPatients().find((item) => (
     String(item.email || '').trim().toLowerCase() === normalized
     && String(item.password || '') === enteredPassword
   ));
+
+  if (!patient) {
+    try {
+      const remote = await fetchCloudPatientByEmail(normalized);
+      if (remote && String(remote.password || '') === enteredPassword) {
+        await writeDemoPatient(remote);
+        patient = remote;
+      }
+    } catch {
+      // sem rede
+    }
+  }
 
   if (!patient) return null;
 
@@ -148,7 +257,7 @@ export function hydrateDemoProfile(saved) {
   };
 }
 
-export function updateOwnCredentials(profile, { email, password }) {
+export async function updateOwnCredentials(profile, { email, password }) {
   const nextEmail = String(email || '').trim().toLowerCase();
   if (!nextEmail || !nextEmail.includes('@')) {
     throw new Error('Informe um e-mail válido.');
@@ -185,7 +294,7 @@ export function updateOwnCredentials(profile, { email, password }) {
     email: nextEmail,
     ...(password ? { password } : {}),
   };
-  writeDemoPatient(next);
+  await writeDemoPatient(next);
 
   const session = {
     id: next.id,
@@ -234,26 +343,20 @@ export function deleteDemoDocument(docId) {
 }
 
 export function readDemoPatients() {
-  try {
-    const raw = localStorage.getItem(DEMO_PATIENTS_KEY);
-    const stored = raw ? JSON.parse(raw) : [];
-    const cleaned = stored.filter((patient) => !REMOVED_DEMO_PATIENT_IDS.has(patient.id));
-    if (cleaned.length !== stored.length) {
-      localStorage.setItem(DEMO_PATIENTS_KEY, JSON.stringify(cleaned));
-    }
-    return cleaned.sort((a, b) =>
-      String(b.created_at || '').localeCompare(String(a.created_at || '')),
-    );
-  } catch {
-    return [];
-  }
+  return readPatientsFromStorage().sort((a, b) =>
+    String(b.created_at || '').localeCompare(String(a.created_at || '')),
+  );
 }
 
-export function writeDemoPatient(patient) {
-  const raw = localStorage.getItem(DEMO_PATIENTS_KEY);
-  const stored = raw ? JSON.parse(raw) : [];
+export async function writeDemoPatient(patient) {
+  const stored = readPatientsFromStorage();
   const next = [patient, ...stored.filter((item) => item.id !== patient.id)];
-  localStorage.setItem(DEMO_PATIENTS_KEY, JSON.stringify(next));
+  writePatientsToStorage(next);
+  try {
+    await saveCloudPatient(patient);
+  } catch {
+    throw new Error('Paciente salvo localmente, mas não foi possível sincronizar na nuvem. Verifique a internet.');
+  }
   return readDemoPatients();
 }
 

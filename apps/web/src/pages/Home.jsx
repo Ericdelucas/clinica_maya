@@ -165,7 +165,7 @@ export default function Home({ profile, onLogout, onProfileUpdate, demoMode = fa
 
     setSavingCredentials(true);
     try {
-      const updated = updateOwnCredentials(profile, {
+      const updated = await updateOwnCredentials(profile, {
         email: nextEmail,
         password: nextPassword,
       });

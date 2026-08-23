@@ -6,6 +6,7 @@ import {
   readDemoDocuments,
   readDemoPatients,
   readProfessionalAccount,
+  startCloudAccountSync,
   updateDemoDocument,
   writeDemoPatient,
 } from '../lib/demo.js';
@@ -87,6 +88,21 @@ export default function AdminPanel({
     setSaveMessage('');
     setSaveError('');
   }, [selectedHotspot]);
+
+  useEffect(() => {
+    if (!demoMode) return undefined;
+
+    return startCloudAccountSync((list) => {
+      const anamnesisMap = listDemoAnamnesis();
+      const enriched = list.map((patient) => ({
+        ...patient,
+        hasAnamnesis: Boolean(anamnesisMap[patient.id]?.updated_at),
+      }));
+      syncPatientMannequins(enriched.map((patient) => patient.id));
+      setPatients(enriched);
+      setSelectedPatientId((current) => current || enriched[0]?.id || null);
+    });
+  }, [demoMode]);
 
   useEffect(() => {
     if (tab !== 'patients' && tab !== 'register') return undefined;
@@ -289,7 +305,7 @@ export default function AdminPanel({
           password: patientPassword,
           created_at: new Date().toISOString(),
         };
-        writeDemoPatient(created);
+        await writeDemoPatient(created);
         syncPatientMannequins(readDemoPatients().map((patient) => patient.id));
         setSelectedPatientId(created.id);
       } else {
@@ -599,6 +615,11 @@ export default function AdminPanel({
         <form className="panel-section" onSubmit={(event) => void handleCreatePatient(event)}>
           <h3>Cadastrar Novo Paciente</h3>
           <p className="muted">Somente a profissional pode criar contas. Não há cadastro público.</p>
+          {demoMode ? (
+            <p className="muted">
+              Pacientes são salvos na nuvem (Firebase) — qualquer celular ou computador consegue logar com o mesmo e-mail e senha.
+            </p>
+          ) : null}
 
           <div className="field">
             <label htmlFor="patientName">Nome</label>
@@ -652,9 +673,9 @@ export default function AdminPanel({
             ela fica só no painel profissional.
           </p>
           <ul className="vision-tips">
-            <li>Enquadre mão e cotovelo — o ombro pode ficar fora da câmera.</li>
-            <li>Mede se a linha mão → antebraço está reta (curva suave ok).</li>
-            <li>Curva forte: linhas daquela mão ficam vermelhas (sem som).</li>
+            <li>Basta enquadrar as mãos — não precisa ver cotovelo nem braço inteiro.</li>
+            <li>Mede se a mão está reta em relação ao eixo do antebraço (estimado).</li>
+            <li>Desvio forte: linhas daquela mão ficam vermelhas (sem som).</li>
           </ul>
           <button
             type="button"

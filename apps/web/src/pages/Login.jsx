@@ -15,7 +15,7 @@ export default function Login({ demoMode = false, onDemoLogin }) {
 
     try {
       if (demoMode) {
-        const profile = authenticateDemo(email, password);
+        const profile = await authenticateDemo(email, password);
         if (!profile) {
           setError('E-mail ou senha inválidos.');
           return;

@@ -3,6 +3,8 @@ import {
   clearDemoSession,
   hydrateDemoProfile,
   readDemoSession,
+  startCloudAccountSync,
+  stopCloudAccountSync,
   writeDemoSession,
 } from './lib/demo.js';
 import { getSupabaseClient, isSupabaseConfigured } from './lib/supabase.js';
@@ -36,8 +38,9 @@ export default function App() {
         setSession(null);
         setProfile(null);
       }
+      startCloudAccountSync();
       setBootstrapping(false);
-      return undefined;
+      return () => stopCloudAccountSync();
     }
 
     const supabase = getSupabaseClient();

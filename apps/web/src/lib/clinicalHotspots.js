@@ -16,6 +16,12 @@ service cloud.firestore {
         allow read, write: if true;
       }
     }
+    match /patients/{patientId} {
+      allow read, write: if true;
+    }
+    match /clinic_accounts/{accountId} {
+      allow read, write: if true;
+    }
   }
 }`;
 
