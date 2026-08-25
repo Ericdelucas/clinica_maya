@@ -173,6 +173,8 @@ export default function Home({ profile, onLogout, onProfileUpdate, demoMode = fa
       setNextPassword('');
       setConfirmPassword('');
       setCredentialsMessage('Dados atualizados.');
+      setCredentialsOpen(false);
+      setMenuOpen(false);
     } catch (err) {
       setCredentialsError(err?.message || 'Não foi possível atualizar o cadastro.');
     } finally {
@@ -244,7 +246,8 @@ export default function Home({ profile, onLogout, onProfileUpdate, demoMode = fa
                   type="button"
                   className="dropdown-action"
                   onClick={() => {
-                    setCredentialsOpen((open) => !open);
+                    setMenuOpen(false);
+                    setCredentialsOpen(true);
                     setCredentialsError('');
                     setCredentialsMessage('');
                     setNextEmail(profile.email || '');
@@ -254,40 +257,6 @@ export default function Home({ profile, onLogout, onProfileUpdate, demoMode = fa
                 >
                   Alterar e-mail e senha
                 </button>
-                {credentialsOpen ? (
-                  <form className="profile-credentials" onSubmit={(event) => void handleSaveCredentials(event)}>
-                    <label htmlFor="profileEmail">E-mail</label>
-                    <input
-                      id="profileEmail"
-                      type="email"
-                      required
-                      value={nextEmail}
-                      onChange={(event) => setNextEmail(event.target.value)}
-                    />
-                    <label htmlFor="profilePassword">Nova senha</label>
-                    <input
-                      id="profilePassword"
-                      type="password"
-                      minLength={3}
-                      placeholder="Deixe em branco para manter"
-                      value={nextPassword}
-                      onChange={(event) => setNextPassword(event.target.value)}
-                    />
-                    <label htmlFor="profilePasswordConfirm">Confirmar senha</label>
-                    <input
-                      id="profilePasswordConfirm"
-                      type="password"
-                      minLength={3}
-                      value={confirmPassword}
-                      onChange={(event) => setConfirmPassword(event.target.value)}
-                    />
-                    {credentialsError ? <p className="form-error">{credentialsError}</p> : null}
-                    {credentialsMessage ? <p className="form-success">{credentialsMessage}</p> : null}
-                    <button className="btn btn-primary btn-block" type="submit" disabled={savingCredentials}>
-                      {savingCredentials ? 'Salvando…' : 'Salvar alteração'}
-                    </button>
-                  </form>
-                ) : null}
                 <button
                   type="button"
                   className="dropdown-logout"
@@ -303,6 +272,82 @@ export default function Home({ profile, onLogout, onProfileUpdate, demoMode = fa
           </div>
         </div>
       </header>
+
+      {credentialsOpen ? (
+        <div
+          className="credentials-modal-backdrop"
+          role="presentation"
+          onClick={() => {
+            if (!savingCredentials) {
+              setCredentialsOpen(false);
+              setCredentialsError('');
+              setCredentialsMessage('');
+            }
+          }}
+        >
+          <div
+            className="credentials-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="credentialsModalTitle"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="credentials-modal-head">
+              <div>
+                <h2 id="credentialsModalTitle">Alterar e-mail e senha</h2>
+                <p className="muted">{profile.full_name || profile.email}</p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost credentials-modal-close"
+                disabled={savingCredentials}
+                onClick={() => {
+                  setCredentialsOpen(false);
+                  setCredentialsError('');
+                  setCredentialsMessage('');
+                }}
+              >
+                Fechar
+              </button>
+            </div>
+            <form className="profile-credentials" onSubmit={(event) => void handleSaveCredentials(event)}>
+              <label htmlFor="profileEmail">E-mail</label>
+              <input
+                id="profileEmail"
+                type="email"
+                required
+                autoComplete="email"
+                value={nextEmail}
+                onChange={(event) => setNextEmail(event.target.value)}
+              />
+              <label htmlFor="profilePassword">Nova senha</label>
+              <input
+                id="profilePassword"
+                type="password"
+                minLength={3}
+                autoComplete="new-password"
+                placeholder="Deixe em branco para manter"
+                value={nextPassword}
+                onChange={(event) => setNextPassword(event.target.value)}
+              />
+              <label htmlFor="profilePasswordConfirm">Confirmar senha</label>
+              <input
+                id="profilePasswordConfirm"
+                type="password"
+                minLength={3}
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+              />
+              {credentialsError ? <p className="form-error">{credentialsError}</p> : null}
+              {credentialsMessage ? <p className="form-success">{credentialsMessage}</p> : null}
+              <button className="btn btn-primary btn-block" type="submit" disabled={savingCredentials}>
+                {savingCredentials ? 'Salvando…' : 'Salvar alteração'}
+              </button>
+            </form>
+          </div>
+        </div>
+      ) : null}
 
       {isAdmin && videoPatientName ? (
         <div className="patient-mannequin-banner">

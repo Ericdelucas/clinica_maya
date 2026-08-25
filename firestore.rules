@@ -13,6 +13,9 @@ service cloud.firestore {
     match /patients/{patientId} {
       allow read, write: if true;
     }
+    match /patient_emails/{emailId} {
+      allow read, write: if true;
+    }
     match /clinic_accounts/{accountId} {
       allow read, write: if true;
     }

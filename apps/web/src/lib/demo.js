@@ -1,6 +1,9 @@
 import {
+  deleteCloudPatient,
+  fetchAllCloudPatients,
   fetchCloudPatientByEmail,
   fetchCloudProfessional,
+  pushPatientsToCloud,
   saveCloudPatient,
   saveCloudProfessional,
   subscribeCloudPatients,
@@ -11,6 +14,7 @@ const DEMO_DOCS_KEY = 'clinica-maya-demo-documents';
 const DEMO_PATIENTS_KEY = 'clinica-maya-demo-patients';
 const DEMO_ANAMNESIS_KEY = 'clinica-maya-demo-anamnesis';
 const PROFESSIONAL_KEY = 'clinica-maya-professional';
+const CLOUD_SYNC_META_KEY = 'clinica-maya-cloud-sync';
 
 /** Conta da profissional — única com acesso à área administrativa. */
 export const DEFAULT_PROFESSIONAL = {
@@ -55,20 +59,117 @@ function writePatientsToStorage(patients) {
   return sorted;
 }
 
-function mergePatients(cloudList) {
-  const local = readPatientsFromStorage();
-  const byId = new Map();
-  for (const patient of cloudList || []) {
-    if (patient?.id) byId.set(patient.id, patient);
+/**
+ * Nuvem é a fonte da verdade: a lista do aparelho passa a ser igual à da nuvem.
+ * Assim o mesmo login vê os mesmos pacientes em qualquer celular.
+ */
+function applyCloudPatients(cloudList) {
+  return writePatientsToStorage(Array.isArray(cloudList) ? cloudList : []);
+}
+
+/**
+ * Antes de subir: se o e-mail já existe na nuvem com outro id, reusa o id da nuvem
+ * para não criar pacientes duplicados.
+ */
+async function preparePatientsForPush(localPatients) {
+  const prepared = [];
+  for (const patient of localPatients || []) {
+    if (!patient?.email) continue;
+    try {
+      const remote = await fetchCloudPatientByEmail(patient.email);
+      if (remote?.id && remote.id !== patient.id) {
+        prepared.push({
+          ...patient,
+          id: remote.id,
+          created_at: remote.created_at || patient.created_at,
+          password: patient.password || remote.password,
+          full_name: patient.full_name || remote.full_name,
+        });
+        continue;
+      }
+    } catch {
+      // segue com o id local
+    }
+    prepared.push(patient);
   }
-  for (const patient of local) {
-    if (!byId.has(patient.id)) byId.set(patient.id, patient);
+  return prepared;
+}
+
+function setCloudSyncMeta(patch) {
+  try {
+    const current = JSON.parse(localStorage.getItem(CLOUD_SYNC_META_KEY) || '{}');
+    const next = { ...current, ...patch, updated_at: new Date().toISOString() };
+    localStorage.setItem(CLOUD_SYNC_META_KEY, JSON.stringify(next));
+    return next;
+  } catch {
+    return patch;
   }
-  return writePatientsToStorage([...byId.values()]);
+}
+
+export function readCloudSyncMeta() {
+  try {
+    return JSON.parse(localStorage.getItem(CLOUD_SYNC_META_KEY) || '{}');
+  } catch {
+    return {};
+  }
 }
 
 let cloudSyncStop = null;
 const cloudPatientListeners = new Set();
+const cloudStatusListeners = new Set();
+
+function notifyStatus(status) {
+  setCloudSyncMeta(status);
+  for (const listener of cloudStatusListeners) {
+    listener(readCloudSyncMeta());
+  }
+}
+
+export function subscribeCloudSyncStatus(listener) {
+  cloudStatusListeners.add(listener);
+  listener(readCloudSyncMeta());
+  return () => cloudStatusListeners.delete(listener);
+}
+
+/** Sobe pacientes deste aparelho e depois baixa a lista oficial da nuvem. */
+export async function syncLocalPatientsToCloud() {
+  notifyStatus({ state: 'syncing', message: 'Sincronizando pacientes com a nuvem…' });
+  try {
+    await saveCloudProfessional(readProfessionalAccount());
+    const prepared = await preparePatientsForPush(readPatientsFromStorage());
+    const result = await pushPatientsToCloud(prepared);
+    if (result.fail > 0) {
+      notifyStatus({
+        state: 'error',
+        message: `Falha ao subir ${result.fail} paciente(s). ${result.errors[0] || ''}`,
+        lastPushOk: result.ok,
+        lastPushFail: result.fail,
+      });
+      throw new Error(result.errors[0] || 'Falha ao sincronizar pacientes.');
+    }
+
+    const cloud = await fetchAllCloudPatients();
+    const applied = applyCloudPatients(cloud);
+    for (const listener of cloudPatientListeners) {
+      listener(applied);
+    }
+
+    notifyStatus({
+      state: 'ok',
+      message: `${applied.length} paciente(s) iguais em todos os aparelhos.`,
+      lastPushOk: result.ok,
+      lastPushFail: 0,
+      cloudCount: applied.length,
+    });
+    return { ...result, cloudCount: applied.length, patients: applied };
+  } catch (err) {
+    notifyStatus({
+      state: 'error',
+      message: err?.message || 'Não foi possível sincronizar com a nuvem.',
+    });
+    throw err;
+  }
+}
 
 /** Sincroniza pacientes e conta profissional com o Firebase (todos os aparelhos). */
 export function startCloudAccountSync(onPatientsChange) {
@@ -77,10 +178,14 @@ export function startCloudAccountSync(onPatientsChange) {
   }
 
   if (cloudSyncStop) {
+    // Já escutando: força um refresh completo para este aparelho
+    void syncLocalPatientsToCloud().catch(() => {});
     return () => {
       if (onPatientsChange) cloudPatientListeners.delete(onPatientsChange);
     };
   }
+
+  notifyStatus({ state: 'syncing', message: 'Conectando à nuvem…' });
 
   void (async () => {
     try {
@@ -98,26 +203,57 @@ export function startCloudAccountSync(onPatientsChange) {
       } else {
         await saveCloudProfessional(readProfessionalAccount());
       }
-    } catch {
-      // offline — segue com cache local
+
+      const prepared = await preparePatientsForPush(readPatientsFromStorage());
+      await pushPatientsToCloud(prepared);
+      const cloud = await fetchAllCloudPatients();
+      const applied = applyCloudPatients(cloud);
+      for (const listener of cloudPatientListeners) {
+        listener(applied);
+      }
+      notifyStatus({
+        state: 'ok',
+        message: `${applied.length} paciente(s) sincronizados na nuvem.`,
+        cloudCount: applied.length,
+      });
+    } catch (err) {
+      notifyStatus({
+        state: 'error',
+        message: err?.message || 'Sem conexão com a nuvem. Login entre celulares pode falhar.',
+      });
     }
   })();
 
   cloudSyncStop = subscribeCloudPatients(
     (list) => {
-      const merged = mergePatients(list);
+      // Fonte da verdade = nuvem (não misturar restos só deste celular)
+      const applied = applyCloudPatients(list);
+      notifyStatus({
+        state: 'ok',
+        message: `Nuvem ok · ${applied.length} paciente(s) em todos os aparelhos.`,
+        cloudCount: list.length,
+      });
       for (const listener of cloudPatientListeners) {
-        listener(merged);
+        listener(applied);
       }
     },
-    () => {
-      // mantém cache local se a nuvem falhar
+    (err) => {
+      notifyStatus({
+        state: 'error',
+        message: err?.message || 'Falha ao ouvir pacientes na nuvem.',
+      });
     },
   );
 
   return () => {
     if (onPatientsChange) cloudPatientListeners.delete(onPatientsChange);
   };
+}
+
+/** Lista oficial para o painel: sobe o local e devolve a nuvem. */
+export async function fetchCloudPatientsForAdmin() {
+  const result = await syncLocalPatientsToCloud();
+  return result.patients || readDemoPatients();
 }
 
 export function stopCloudAccountSync() {
@@ -181,7 +317,9 @@ export function emptyAnamnesis(pacienteId = '') {
 
 export function readDemoSession() {
   try {
-    const raw = localStorage.getItem(DEMO_SESSION_KEY);
+    // Sessão antiga em localStorage vazava o painel da Maya ao reabrir o link.
+    localStorage.removeItem(DEMO_SESSION_KEY);
+    const raw = sessionStorage.getItem(DEMO_SESSION_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -189,18 +327,38 @@ export function readDemoSession() {
 }
 
 export function writeDemoSession(profile) {
-  localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(profile));
+  localStorage.removeItem(DEMO_SESSION_KEY);
+  // Só vale nesta aba — fechar/reabrir o link sempre pede login.
+  sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(profile));
 }
 
 export function clearDemoSession() {
   localStorage.removeItem(DEMO_SESSION_KEY);
+  sessionStorage.removeItem(DEMO_SESSION_KEY);
 }
 
 export async function authenticateDemo(email, password) {
   const normalized = String(email || '').trim().toLowerCase();
   const enteredPassword = String(password || '');
 
-  const professional = readProfessionalAccount();
+  // Profissional: local + nuvem
+  let professional = readProfessionalAccount();
+  try {
+    const remoteProfessional = await fetchCloudProfessional();
+    if (remoteProfessional?.email) {
+      professional = {
+        ...DEFAULT_PROFESSIONAL,
+        ...professional,
+        ...remoteProfessional,
+        id: DEFAULT_PROFESSIONAL.id,
+        role: 'admin',
+      };
+      localStorage.setItem(PROFESSIONAL_KEY, JSON.stringify(professional));
+    }
+  } catch {
+    // offline
+  }
+
   if (
     String(professional.email || '').trim().toLowerCase() === normalized
     && String(professional.password || '') === enteredPassword
@@ -208,42 +366,67 @@ export async function authenticateDemo(email, password) {
     return stripPassword(professional);
   }
 
-  let patient = readDemoPatients().find((item) => (
-    String(item.email || '').trim().toLowerCase() === normalized
-    && String(item.password || '') === enteredPassword
-  ));
-
-  if (!patient) {
-    try {
-      const remote = await fetchCloudPatientByEmail(normalized);
-      if (remote && String(remote.password || '') === enteredPassword) {
-        await writeDemoPatient(remote);
-        patient = remote;
-      }
-    } catch {
-      // sem rede
-    }
+  // Paciente: nuvem primeiro (aparelho limpo), depois cache local
+  let remote = null;
+  try {
+    remote = await fetchCloudPatientByEmail(normalized);
+  } catch {
+    // sem rede
   }
 
-  if (!patient) return null;
+  if (remote) {
+    writePatientsToStorage([
+      remote,
+      ...readPatientsFromStorage().filter((item) => item.id !== remote.id),
+    ]);
+    if (String(remote.password || '') === enteredPassword) {
+      return {
+        id: remote.id,
+        email: remote.email,
+        full_name: remote.full_name,
+        role: 'patient',
+      };
+    }
+    throw new Error('Senha incorreta para este paciente.');
+  }
 
-  return {
-    id: patient.id,
-    email: patient.email,
-    full_name: patient.full_name,
-    role: 'patient',
-  };
+  const local = readDemoPatients().find(
+    (item) => String(item.email || '').trim().toLowerCase() === normalized,
+  );
+
+  if (local) {
+    if (String(local.password || '') === enteredPassword) {
+      // Existe só neste celular — tenta subir agora
+      try {
+        await saveCloudPatient(local);
+      } catch {
+        // login local ainda funciona
+      }
+      return {
+        id: local.id,
+        email: local.email,
+        full_name: local.full_name,
+        role: 'patient',
+      };
+    }
+    throw new Error('Senha incorreta para este paciente.');
+  }
+
+  return null;
 }
 
 export function hydrateDemoProfile(saved) {
   if (!saved?.id) return null;
 
   const professional = readProfessionalAccount();
-  if (saved.id === professional.id || (
+
+  // NUNCA restaurar área profissional sem digitar e-mail/senha de novo.
+  if (
     saved.role === 'admin'
-    && String(saved.email || '').toLowerCase() === String(professional.email).toLowerCase()
-  )) {
-    return stripPassword(professional);
+    || saved.id === professional.id
+    || saved.id === DEFAULT_PROFESSIONAL.id
+  ) {
+    return null;
   }
 
   const patient = readDemoPatients().find((item) => item.id === saved.id);
@@ -354,10 +537,46 @@ export async function writeDemoPatient(patient) {
   writePatientsToStorage(next);
   try {
     await saveCloudPatient(patient);
-  } catch {
-    throw new Error('Paciente salvo localmente, mas não foi possível sincronizar na nuvem. Verifique a internet.');
+    notifyStatus({
+      state: 'ok',
+      message: `Paciente ${patient.email} salvo na nuvem.`,
+    });
+  } catch (err) {
+    notifyStatus({
+      state: 'error',
+      message: err?.message || 'Falha ao salvar paciente na nuvem.',
+    });
+    throw new Error(
+      err?.message
+        || 'Paciente salvo só neste celular. Sem nuvem, outros aparelhos não conseguem logar.',
+    );
   }
   return readDemoPatients();
+}
+
+export async function deleteDemoPatient(patientId) {
+  const current = readPatientsFromStorage().find((item) => item.id === patientId);
+  if (!current) throw new Error('Paciente não encontrado.');
+
+  writePatientsToStorage(readPatientsFromStorage().filter((item) => item.id !== patientId));
+
+  try {
+    await deleteCloudPatient(patientId, current.email);
+  } catch (err) {
+    throw new Error(err?.message || 'Não foi possível apagar o paciente na nuvem.');
+  }
+
+  return readDemoPatients();
+}
+
+export async function resetDemoPatientPassword(patientId, newPassword) {
+  const password = String(newPassword || '');
+  if (password.length < 3) {
+    throw new Error('A nova senha precisa ter pelo menos 3 caracteres.');
+  }
+  const current = readPatientsFromStorage().find((item) => item.id === patientId);
+  if (!current) throw new Error('Paciente não encontrado.');
+  return writeDemoPatient({ ...current, password });
 }
 
 function readAnamnesisMap() {

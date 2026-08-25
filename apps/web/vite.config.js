@@ -18,6 +18,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,ico,png,woff2}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        clientsClaim: true,
+        skipWaiting: true,
       },
       manifest: {
         name: 'Clínica Maya',

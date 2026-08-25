@@ -2,11 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import AnamnesisPanel from './AnamnesisPanel.jsx';
 import {
   deleteDemoDocument,
+  deleteDemoPatient,
+  fetchCloudPatientsForAdmin,
   listDemoAnamnesis,
+  readCloudSyncMeta,
   readDemoDocuments,
   readDemoPatients,
   readProfessionalAccount,
+  resetDemoPatientPassword,
   startCloudAccountSync,
+  subscribeCloudSyncStatus,
+  syncLocalPatientsToCloud,
   updateDemoDocument,
   writeDemoPatient,
 } from '../lib/demo.js';
@@ -64,6 +70,11 @@ export default function AdminPanel({
   const [docsError, setDocsError] = useState('');
   const [observationDrafts, setObservationDrafts] = useState({});
   const [docsMessage, setDocsMessage] = useState('');
+  const [cloudMeta, setCloudMeta] = useState(() => readCloudSyncMeta());
+  const [syncingCloud, setSyncingCloud] = useState(false);
+  const [patientActionMessage, setPatientActionMessage] = useState('');
+  const [patientActionError, setPatientActionError] = useState('');
+  const [patientActionBusy, setPatientActionBusy] = useState(false);
 
   const articulationList = hotspots.length ? hotspots : HOTSPOT_DEFAULTS;
 
@@ -91,6 +102,11 @@ export default function AdminPanel({
 
   useEffect(() => {
     if (!demoMode) return undefined;
+    return subscribeCloudSyncStatus(setCloudMeta);
+  }, [demoMode]);
+
+  useEffect(() => {
+    if (!demoMode) return undefined;
 
     return startCloudAccountSync((list) => {
       const anamnesisMap = listDemoAnamnesis();
@@ -115,7 +131,12 @@ export default function AdminPanel({
 
       try {
         if (demoMode) {
-          const list = readDemoPatients();
+          let list = readDemoPatients();
+          try {
+            list = await fetchCloudPatientsForAdmin();
+          } catch {
+            // mantém cache local se a nuvem falhar
+          }
           const anamnesisMap = listDemoAnamnesis();
           const enriched = list.map((patient) => ({
             ...patient,
@@ -124,7 +145,10 @@ export default function AdminPanel({
           syncPatientMannequins(enriched.map((patient) => patient.id));
           if (active) {
             setPatients(enriched);
-            setSelectedPatientId((current) => current || enriched[0]?.id || null);
+            setSelectedPatientId((current) => {
+              if (current && enriched.some((item) => item.id === current)) return current;
+              return enriched[0]?.id || null;
+            });
           }
           return;
         }
@@ -327,7 +351,11 @@ export default function AdminPanel({
         }
       }
 
-      setCreateMessage(`Paciente ${patientEmail.trim()} cadastrado.`);
+      setCreateMessage(
+        demoMode
+          ? `Paciente ${patientEmail.trim()} cadastrado e enviado à nuvem — funciona em qualquer celular.`
+          : `Paciente ${patientEmail.trim()} cadastrado.`,
+      );
       setPatientEmail('');
       setPatientName('');
       setPatientPassword('');
@@ -336,6 +364,78 @@ export default function AdminPanel({
       setCreateError(err?.message || 'Não foi possível cadastrar o paciente.');
     } finally {
       setCreatingPatient(false);
+    }
+  }
+
+  async function handleSyncCloud() {
+    setPatientActionError('');
+    setPatientActionMessage('');
+    setSyncingCloud(true);
+    try {
+      const result = await syncLocalPatientsToCloud();
+      setPatientActionMessage(
+        `${result.cloudCount ?? result.ok} paciente(s) iguais na nuvem — qualquer celular vê a mesma lista.`,
+      );
+      const list = result.patients || readDemoPatients();
+      setPatients(list.map((patient) => ({
+        ...patient,
+        hasAnamnesis: Boolean(listDemoAnamnesis()[patient.id]?.updated_at),
+      })));
+      setSelectedPatientId((current) => {
+        if (current && list.some((item) => item.id === current)) return current;
+        return list[0]?.id || null;
+      });
+    } catch (err) {
+      setPatientActionError(err?.message || 'Falha ao sincronizar.');
+    } finally {
+      setSyncingCloud(false);
+    }
+  }
+
+  async function handleResetPatientPassword(patient) {
+    setPatientActionError('');
+    setPatientActionMessage('');
+    const nextPassword = window.prompt(
+      `Nova senha para ${patient.full_name || patient.email}:`,
+      '',
+    );
+    if (nextPassword == null) return;
+    setPatientActionBusy(true);
+    try {
+      await resetDemoPatientPassword(patient.id, nextPassword);
+      setPatientActionMessage(`Senha de ${patient.email} atualizada na nuvem.`);
+      setPatients(readDemoPatients().map((item) => ({
+        ...item,
+        hasAnamnesis: Boolean(listDemoAnamnesis()[item.id]?.updated_at),
+      })));
+    } catch (err) {
+      setPatientActionError(err?.message || 'Não foi possível redefinir a senha.');
+    } finally {
+      setPatientActionBusy(false);
+    }
+  }
+
+  async function handleDeletePatient(patient) {
+    setPatientActionError('');
+    setPatientActionMessage('');
+    const confirmed = window.confirm(
+      `Apagar o paciente ${patient.full_name || patient.email}?\nEle não conseguirá mais logar em nenhum aparelho.`,
+    );
+    if (!confirmed) return;
+    setPatientActionBusy(true);
+    try {
+      const next = await deleteDemoPatient(patient.id);
+      syncPatientMannequins(next.map((item) => item.id));
+      setPatients(next.map((item) => ({
+        ...item,
+        hasAnamnesis: Boolean(listDemoAnamnesis()[item.id]?.updated_at),
+      })));
+      setSelectedPatientId((current) => (current === patient.id ? (next[0]?.id || null) : current));
+      setPatientActionMessage(`Paciente ${patient.email} apagado.`);
+    } catch (err) {
+      setPatientActionError(err?.message || 'Não foi possível apagar o paciente.');
+    } finally {
+      setPatientActionBusy(false);
     }
   }
 
@@ -437,6 +537,24 @@ export default function AdminPanel({
           <p className="muted">
             Cada paciente tem exatamente um boneco. Os números acima são sempre iguais.
           </p>
+          {demoMode ? (
+            <div className={`cloud-sync-banner ${cloudMeta.state === 'error' ? 'error' : cloudMeta.state === 'ok' ? 'ok' : ''}`}>
+              <p>
+                {cloudMeta.message
+                  || 'A lista de pacientes vem da nuvem. No celular da Maya e no seu tem que ser a mesma.'}
+              </p>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={syncingCloud || patientActionBusy}
+                onClick={() => void handleSyncCloud()}
+              >
+                {syncingCloud ? 'Sincronizando…' : 'Sincronizar agora'}
+              </button>
+            </div>
+          ) : null}
+          {patientActionMessage ? <p className="form-success">{patientActionMessage}</p> : null}
+          {patientActionError ? <p className="form-error">{patientActionError}</p> : null}
           <div className="field">
             <label htmlFor="patientSearch">Buscar</label>
             <input
@@ -481,6 +599,26 @@ export default function AdminPanel({
                   >
                     Ver boneco
                   </button>
+                  {demoMode ? (
+                    <div className="patient-card-actions">
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        disabled={patientActionBusy}
+                        onClick={() => void handleResetPatientPassword(patient)}
+                      >
+                        Redefinir senha
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        disabled={patientActionBusy}
+                        onClick={() => void handleDeletePatient(patient)}
+                      >
+                        Apagar
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </li>
             ))}

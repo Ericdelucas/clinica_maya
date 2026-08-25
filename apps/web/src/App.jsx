@@ -5,6 +5,7 @@ import {
   readDemoSession,
   startCloudAccountSync,
   stopCloudAccountSync,
+  syncLocalPatientsToCloud,
   writeDemoSession,
 } from './lib/demo.js';
 import { getSupabaseClient, isSupabaseConfigured } from './lib/supabase.js';
@@ -28,8 +29,14 @@ export default function App() {
 
   useEffect(() => {
     if (demoMode) {
+      // Limpa qualquer sessão profissional persistida por engano.
+      const rawSession = readDemoSession();
+      if (rawSession?.role === 'admin' || rawSession?.id === 'professional-maya') {
+        clearDemoSession();
+      }
+
       const restored = hydrateDemoProfile(readDemoSession());
-      if (restored) {
+      if (restored && restored.role === 'patient') {
         writeDemoSession(restored);
         setSession({ user: { id: restored.id } });
         setProfile(restored);
@@ -113,6 +120,10 @@ export default function App() {
     setSession({ user: { id: nextProfile.id } });
     setProfile(nextProfile);
     setError('');
+    // Profissional: sobe o que estava só neste celular e baixa a lista oficial
+    if (nextProfile?.role === 'admin') {
+      void syncLocalPatientsToCloud().catch(() => {});
+    }
   }
 
   function handleProfileUpdate(nextProfile) {

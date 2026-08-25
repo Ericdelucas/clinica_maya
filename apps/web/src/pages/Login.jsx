@@ -15,13 +15,18 @@ export default function Login({ demoMode = false, onDemoLogin }) {
 
     try {
       if (demoMode) {
-        const profile = await authenticateDemo(email, password);
-        if (!profile) {
-          setError('E-mail ou senha inválidos.');
+        try {
+          const profile = await authenticateDemo(email, password);
+          if (!profile) {
+            setError('E-mail não cadastrado. Peça à fisioterapeuta para criar sua conta e sincronizar na nuvem.');
+            return;
+          }
+          onDemoLogin?.(profile);
+          return;
+        } catch (authErr) {
+          setError(authErr?.message || 'E-mail ou senha inválidos.');
           return;
         }
-        onDemoLogin?.(profile);
-        return;
       }
 
       const supabase = getSupabaseClient();
@@ -52,7 +57,7 @@ export default function Login({ demoMode = false, onDemoLogin }) {
           <h1>Entrar</h1>
           <p className="login-lead">
             Acesso restrito. Use o e-mail e a senha cadastrados. A área profissional
-            é exclusiva da fisioterapeuta.
+            é exclusiva da fisioterapeuta e só abre depois do login.
           </p>
 
           <form className="login-form" onSubmit={(event) => void handleSubmit(event)}>
