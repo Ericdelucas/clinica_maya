@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RPG.Mayêutica</string>
+    <string name="title_activity_main">RPG.Mayêutica</string>
+    <string name="package_name">com.clinicamaya.app</string>
+    <string name="custom_url_scheme">com.clinicamaya.app</string>
+</resources>

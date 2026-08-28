@@ -1,0 +1,12 @@
+{
+  "appId": "com.clinicamaya.app",
+  "appName": "RPG.Mayêutica",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": []
+}

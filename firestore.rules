@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /clinical_hotspots/{hotspotId} {
+      allow read, write: if true;
+    }
+    match /patient_hotspots/{patientId} {
+      allow read, write: if true;
+      match /joints/{hotspotId} {
+        allow read, write: if true;
+      }
+    }
+    match /patients/{patientId} {
+      allow read, write: if true;
+    }
+    match /patient_emails/{emailId} {
+      allow read, write: if true;
+    }
+    match /clinic_accounts/{accountId} {
+      allow read, write: if true;
+    }
+  }
+}

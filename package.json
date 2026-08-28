@@ -1,0 +1,20 @@
+{
+  "name": "clinica-maya",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Clínica Maya — plataforma fisioterapêutica interativa",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @clinica-maya/web",
+    "dev:web": "npm run dev --workspace @clinica-maya/web",
+    "build": "npm run build --workspace @clinica-maya/web",
+    "preview": "npm run preview --workspace @clinica-maya/web",
+    "apk": "npm run apk:debug --workspace @clinica-maya/web && npm run apk:copy --workspace @clinica-maya/web"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
