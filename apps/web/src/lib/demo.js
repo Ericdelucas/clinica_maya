@@ -2,7 +2,7 @@ import {
   deleteCloudPatient,
   fetchAllCloudPatients,
   fetchCloudPatientByEmail,
-  fetchCloudProfessional,
+  fetchCloudProfessionals,
   pushPatientsToCloud,
   saveCloudPatient,
   saveCloudProfessional,
@@ -14,9 +14,10 @@ const DEMO_DOCS_KEY = 'clinica-maya-demo-documents';
 const DEMO_PATIENTS_KEY = 'clinica-maya-demo-patients';
 const DEMO_ANAMNESIS_KEY = 'clinica-maya-demo-anamnesis';
 const PROFESSIONAL_KEY = 'clinica-maya-professional';
+const EXTRA_PROFESSIONALS_KEY = 'clinica-maya-professionals';
 const CLOUD_SYNC_META_KEY = 'clinica-maya-cloud-sync';
 
-/** Conta da profissional — única com acesso à área administrativa. */
+/** Conta principal da profissional (Maya). */
 export const DEFAULT_PROFESSIONAL = {
   id: 'professional-maya',
   email: 'mayayyamamoto@gmail.com',
@@ -24,6 +25,17 @@ export const DEFAULT_PROFESSIONAL = {
   full_name: 'Maya Yamamoto',
   role: 'admin',
 };
+
+/** Contas profissionais extras com o mesmo acesso administrativo. */
+export const EXTRA_PROFESSIONALS = [
+  {
+    id: 'professional-eric',
+    email: 'ericdelaxs@gmail.com',
+    password: '1234',
+    full_name: 'Eric',
+    role: 'admin',
+  },
+];
 
 /** Pacientes fictícios do demo antigo — não entram em produção. */
 const REMOVED_DEMO_PATIENT_IDS = new Set([
@@ -131,11 +143,55 @@ export function subscribeCloudSyncStatus(listener) {
   return () => cloudStatusListeners.delete(listener);
 }
 
+async function saveAllProfessionalsToCloud() {
+  for (const account of listProfessionalAccounts()) {
+    await saveCloudProfessional(account);
+  }
+}
+
+function applyCloudProfessionals(remotes) {
+  const list = Array.isArray(remotes) ? remotes : [];
+  const mayaRemote = list.find(
+    (item) =>
+      item?.id === DEFAULT_PROFESSIONAL.id
+      || String(item?.email || '').trim().toLowerCase() === DEFAULT_PROFESSIONAL.email,
+  );
+  if (mayaRemote?.email) {
+    const local = readProfessionalAccount();
+    const merged = {
+      ...DEFAULT_PROFESSIONAL,
+      ...local,
+      ...mayaRemote,
+      id: DEFAULT_PROFESSIONAL.id,
+      role: 'admin',
+    };
+    localStorage.setItem(PROFESSIONAL_KEY, JSON.stringify(merged));
+  }
+
+  const extrasById = new Map(
+    EXTRA_PROFESSIONALS.map((item) => [item.id, { ...item }]),
+  );
+  for (const stored of readStoredExtraProfessionals()) {
+    extrasById.set(stored.id, { ...extrasById.get(stored.id), ...stored, role: 'admin' });
+  }
+  for (const remote of list) {
+    if (!remote?.id || remote.id === DEFAULT_PROFESSIONAL.id) continue;
+    extrasById.set(remote.id, {
+      ...EXTRA_PROFESSIONALS.find((item) => item.id === remote.id),
+      ...extrasById.get(remote.id),
+      ...remote,
+      id: remote.id,
+      role: 'admin',
+    });
+  }
+  writeStoredExtraProfessionals([...extrasById.values()]);
+}
+
 /** Sobe pacientes deste aparelho e depois baixa a lista oficial da nuvem. */
 export async function syncLocalPatientsToCloud() {
   notifyStatus({ state: 'syncing', message: 'Sincronizando pacientes com a nuvem…' });
   try {
-    await saveCloudProfessional(readProfessionalAccount());
+    await saveAllProfessionalsToCloud();
     const prepared = await preparePatientsForPush(readPatientsFromStorage());
     const result = await pushPatientsToCloud(prepared);
     if (result.fail > 0) {
@@ -189,20 +245,11 @@ export function startCloudAccountSync(onPatientsChange) {
 
   void (async () => {
     try {
-      const remoteProfessional = await fetchCloudProfessional();
-      if (remoteProfessional?.email) {
-        const local = readProfessionalAccount();
-        const merged = {
-          ...DEFAULT_PROFESSIONAL,
-          ...local,
-          ...remoteProfessional,
-          id: DEFAULT_PROFESSIONAL.id,
-          role: 'admin',
-        };
-        localStorage.setItem(PROFESSIONAL_KEY, JSON.stringify(merged));
-      } else {
-        await saveCloudProfessional(readProfessionalAccount());
+      const remotes = await fetchCloudProfessionals();
+      if (remotes.length > 0) {
+        applyCloudProfessionals(remotes);
       }
+      await saveAllProfessionalsToCloud();
 
       const prepared = await preparePatientsForPush(readPatientsFromStorage());
       await pushPatientsToCloud(prepared);
@@ -282,16 +329,77 @@ export function readProfessionalAccount() {
   return seeded;
 }
 
-export function writeProfessionalAccount(patch) {
-  const current = readProfessionalAccount();
+function readStoredExtraProfessionals() {
+  const byId = new Map(EXTRA_PROFESSIONALS.map((item) => [item.id, { ...item }]));
+  try {
+    const raw = localStorage.getItem(EXTRA_PROFESSIONALS_KEY);
+    const stored = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(stored)) {
+      for (const item of stored) {
+        if (!item?.id || item.id === DEFAULT_PROFESSIONAL.id) continue;
+        byId.set(item.id, {
+          ...byId.get(item.id),
+          ...item,
+          id: item.id,
+          role: 'admin',
+        });
+      }
+    }
+  } catch {
+    // seed
+  }
+  return [...byId.values()];
+}
+
+function writeStoredExtraProfessionals(accounts) {
+  const extras = (accounts || []).filter(
+    (item) => item?.id && item.id !== DEFAULT_PROFESSIONAL.id,
+  );
+  localStorage.setItem(EXTRA_PROFESSIONALS_KEY, JSON.stringify(extras));
+  return extras;
+}
+
+export function listProfessionalAccounts() {
+  return [readProfessionalAccount(), ...readStoredExtraProfessionals()];
+}
+
+export function isProfessionalEmail(email) {
+  const normalized = String(email || '').trim().toLowerCase();
+  return listProfessionalAccounts().some(
+    (item) => String(item.email || '').trim().toLowerCase() === normalized,
+  );
+}
+
+export function writeProfessionalAccount(patch, accountId = DEFAULT_PROFESSIONAL.id) {
+  const id = accountId || DEFAULT_PROFESSIONAL.id;
+  if (id === DEFAULT_PROFESSIONAL.id) {
+    const current = readProfessionalAccount();
+    const next = {
+      ...current,
+      ...patch,
+      id: DEFAULT_PROFESSIONAL.id,
+      role: 'admin',
+      email: String(patch.email ?? current.email).trim().toLowerCase(),
+    };
+    localStorage.setItem(PROFESSIONAL_KEY, JSON.stringify(next));
+    void saveCloudProfessional(next).catch(() => {});
+    return next;
+  }
+
+  const extras = readStoredExtraProfessionals();
+  const current = extras.find((item) => item.id === id)
+    || EXTRA_PROFESSIONALS.find((item) => item.id === id);
+  if (!current) {
+    throw new Error('Conta profissional não encontrada.');
+  }
   const next = {
     ...current,
     ...patch,
-    id: DEFAULT_PROFESSIONAL.id,
+    id,
     role: 'admin',
     email: String(patch.email ?? current.email).trim().toLowerCase(),
   };
-  localStorage.setItem(PROFESSIONAL_KEY, JSON.stringify(next));
+  writeStoredExtraProfessionals(extras.map((item) => (item.id === id ? next : item)));
   void saveCloudProfessional(next).catch(() => {});
   return next;
 }
@@ -341,29 +449,26 @@ export async function authenticateDemo(email, password) {
   const normalized = String(email || '').trim().toLowerCase();
   const enteredPassword = String(password || '');
 
-  // Profissional: local + nuvem
-  let professional = readProfessionalAccount();
   try {
-    const remoteProfessional = await fetchCloudProfessional();
-    if (remoteProfessional?.email) {
-      professional = {
-        ...DEFAULT_PROFESSIONAL,
-        ...professional,
-        ...remoteProfessional,
-        id: DEFAULT_PROFESSIONAL.id,
-        role: 'admin',
-      };
-      localStorage.setItem(PROFESSIONAL_KEY, JSON.stringify(professional));
+    const remotes = await fetchCloudProfessionals();
+    if (remotes.length > 0) {
+      applyCloudProfessionals(remotes);
     }
   } catch {
     // offline
   }
 
-  if (
-    String(professional.email || '').trim().toLowerCase() === normalized
-    && String(professional.password || '') === enteredPassword
-  ) {
+  const professional = listProfessionalAccounts().find(
+    (item) =>
+      String(item.email || '').trim().toLowerCase() === normalized
+      && String(item.password || '') === enteredPassword,
+  );
+  if (professional) {
     return stripPassword(professional);
+  }
+
+  if (isProfessionalEmail(normalized)) {
+    throw new Error('Senha incorreta para esta conta profissional.');
   }
 
   // Paciente: nuvem primeiro (aparelho limpo), depois cache local
@@ -418,14 +523,10 @@ export async function authenticateDemo(email, password) {
 export function hydrateDemoProfile(saved) {
   if (!saved?.id) return null;
 
-  const professional = readProfessionalAccount();
+  const professionalIds = new Set(listProfessionalAccounts().map((item) => item.id));
 
   // NUNCA restaurar área profissional sem digitar e-mail/senha de novo.
-  if (
-    saved.role === 'admin'
-    || saved.id === professional.id
-    || saved.id === DEFAULT_PROFESSIONAL.id
-  ) {
+  if (saved.role === 'admin' || professionalIds.has(saved.id)) {
     return null;
   }
 
@@ -449,13 +550,12 @@ export async function updateOwnCredentials(profile, { email, password }) {
   if (profile?.role === 'admin') {
     const patch = { email: nextEmail };
     if (password) patch.password = password;
-    const updated = stripPassword(writeProfessionalAccount(patch));
+    const updated = stripPassword(writeProfessionalAccount(patch, profile.id));
     writeDemoSession(updated);
     return updated;
   }
 
-  const professional = readProfessionalAccount();
-  if (String(professional.email).toLowerCase() === nextEmail) {
+  if (isProfessionalEmail(nextEmail)) {
     throw new Error('Este e-mail pertence à área profissional.');
   }
 

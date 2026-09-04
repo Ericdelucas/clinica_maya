@@ -4,11 +4,11 @@ import {
   deleteDemoDocument,
   deleteDemoPatient,
   fetchCloudPatientsForAdmin,
+  isProfessionalEmail,
   listDemoAnamnesis,
   readCloudSyncMeta,
   readDemoDocuments,
   readDemoPatients,
-  readProfessionalAccount,
   resetDemoPatientPassword,
   startCloudAccountSync,
   subscribeCloudSyncStatus,
@@ -311,8 +311,7 @@ export default function AdminPanel({
     try {
       if (demoMode) {
         const email = patientEmail.trim().toLowerCase();
-        const professionalEmail = String(readProfessionalAccount().email || '').toLowerCase();
-        if (email === professionalEmail) {
+        if (isProfessionalEmail(email)) {
           throw new Error('Este e-mail é da profissional e não pode ser usado por paciente.');
         }
         const existing = readDemoPatients().find(

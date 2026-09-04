@@ -12,7 +12,17 @@ import { describeFirebaseError } from './clinicalHotspots.js';
 
 const PATIENTS = 'patients';
 const PATIENT_EMAILS = 'patient_emails';
+const CLINIC_ACCOUNTS = 'clinic_accounts';
 const PROFESSIONAL_ID = 'professional';
+const MAYA_ACCOUNT_ID = 'professional-maya';
+
+function professionalDocId(account) {
+  const id = String(account?.id || '').trim();
+  if (!id || id === MAYA_ACCOUNT_ID || id === PROFESSIONAL_ID) {
+    return PROFESSIONAL_ID;
+  }
+  return id;
+}
 
 async function ready() {
   await ensureFirebaseSession();
@@ -24,15 +34,36 @@ function normalizeEmail(email) {
 
 export async function fetchCloudProfessional() {
   await ready();
-  const snap = await getDoc(doc(db, 'clinic_accounts', PROFESSIONAL_ID));
+  const snap = await getDoc(doc(db, CLINIC_ACCOUNTS, PROFESSIONAL_ID));
   return snap.exists() ? snap.data() : null;
+}
+
+export async function fetchCloudProfessionals() {
+  await ready();
+  try {
+    const snap = await getDocs(collection(db, CLINIC_ACCOUNTS));
+    return snap.docs.map((item) => {
+      const data = item.data() || {};
+      const id =
+        item.id === PROFESSIONAL_ID
+          ? (data.id || MAYA_ACCOUNT_ID)
+          : (data.id || item.id);
+      return { ...data, id };
+    });
+  } catch (err) {
+    throw new Error(describeFirebaseError(err));
+  }
 }
 
 export async function saveCloudProfessional(account) {
   await ready();
+  const docId = professionalDocId(account);
+  const accountId = docId === PROFESSIONAL_ID
+    ? (account.id || MAYA_ACCOUNT_ID)
+    : (account.id || docId);
   try {
-    await setDoc(doc(db, 'clinic_accounts', PROFESSIONAL_ID), {
-      id: account.id,
+    await setDoc(doc(db, CLINIC_ACCOUNTS, docId), {
+      id: accountId,
       email: normalizeEmail(account.email),
       full_name: account.full_name || '',
       password: account.password || '',
