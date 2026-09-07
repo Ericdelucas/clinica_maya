@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/maya_bg"
+    tools:context=".DashboardFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <include
+            android:id="@+id/includeTopbar"
+            layout="@layout/layout_topbar" />
+
+        <TextView
+            android:id="@+id/bannerMannequin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_banner"
+            android:padding="10dp"
+            android:textColor="@color/maya_accent_deep"
+            android:textSize="13sp"
+            android:visibility="gone"
+            tools:text="Boneco de Ana · 3 vídeo(s) próprio(s)"
+            tools:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/mobileSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_switch"
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <Button
+                android:id="@+id/buttonMannequinTab"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_tab"
+                android:text="@string/nav_mannequin"
+                android:textAllCaps="false"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/buttonPanelTab"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_tab"
+                android:text="@string/nav_panel"
+                android:textAllCaps="false"
+                android:textColor="@color/maya_text_muted" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <include
+                android:id="@+id/includeMannequin"
+                layout="@layout/layout_mannequin"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <include
+                android:id="@+id/includePanelPro"
+                layout="@layout/layout_panel_profissional"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/includePanelPaciente"
+                layout="@layout/layout_panel_paciente"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <include
+        android:id="@+id/includeCredentials"
+        layout="@layout/dialog_credentials"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/textToast"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_margin="20dp"
+        android:background="@drawable/bg_toast"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="10dp"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        tools:text="Boneco aberto"
+        tools:visibility="visible" />
+</FrameLayout>

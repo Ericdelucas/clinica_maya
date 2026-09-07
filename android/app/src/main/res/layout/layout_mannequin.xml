@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/maya_bg_panel">
+
+    <TextView
+        android:id="@+id/textCanvasHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:padding="10dp"
+        android:text="@string/canvas_hint_admin"
+        android:textColor="@color/maya_text_muted"
+        android:textSize="12sp" />
+
+    <com.example.appdamaya.WoodenMannequinView
+        android:id="@+id/mannequinView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="36dp"
+        android:layout_marginBottom="64dp" />
+
+    <Button
+        android:id="@+id/buttonOpenPanel"
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_btn_primary"
+        android:text="@string/open_panel"
+        android:textAllCaps="false"
+        android:textColor="@color/white" />
+</FrameLayout>

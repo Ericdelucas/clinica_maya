@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:angle="145"
+        android:endColor="@color/maya_accent_strong"
+        android:startColor="@color/maya_hero_start"
+        android:type="linear" />
+</shape>

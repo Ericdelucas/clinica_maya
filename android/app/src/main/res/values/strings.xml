@@ -1,46 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">App da maya</string>
-    <string name="action_settings">Settings</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
-
-    <string name="lorem_ipsum">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
-        volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus
-        dui nec risus. Maecenas non sodales nisi, vel dictum dolor. Class aptent taciti sociosqu ad
-        litora torquent per conubia nostra, per inceptos himenaeos. Suspendisse blandit eleifend
-        diam, vel rutrum tellus vulputate quis. Aliquam eget libero aliquet, imperdiet nisl a,
-        ornare ex. Sed rhoncus est ut libero porta lobortis. Fusce in dictum tellus.\n\n
-        Suspendisse interdum ornare ante. Aliquam nec cursus lorem. Morbi id magna felis. Vivamus
-        egestas, est a condimentum egestas, turpis nisl iaculis ipsum, in dictum tellus dolor sed
-        neque. Morbi tellus erat, dapibus ut sem a, iaculis tincidunt dui. Interdum et malesuada
-        fames ac ante ipsum primis in faucibus. Curabitur et eros porttitor, ultricies urna vitae,
-        molestie nibh. Phasellus at commodo eros, non aliquet metus. Sed maximus nisl nec dolor
-        bibendum, vel congue leo egestas.\n\n
-        Sed interdum tortor nibh, in sagittis risus mollis quis. Curabitur mi odio, condimentum sit
-        amet auctor at, mollis non turpis. Nullam pretium libero vestibulum, finibus orci vel,
-        molestie quam. Fusce blandit tincidunt nulla, quis sollicitudin libero facilisis et. Integer
-        interdum nunc ligula, et fermentum metus hendrerit id. Vestibulum lectus felis, dictum at
-        lacinia sit amet, tristique id quam. Cras eu consequat dui. Suspendisse sodales nunc ligula,
-        in lobortis sem porta sed. Integer id ultrices magna, in luctus elit. Sed a pellentesque
-        est.\n\n
-        Aenean nunc velit, lacinia sed dolor sed, ultrices viverra nulla. Etiam a venenatis nibh.
-        Morbi laoreet, tortor sed facilisis varius, nibh orci rhoncus nulla, id elementum leo dui
-        non lorem. Nam mollis ipsum quis auctor varius. Quisque elementum eu libero sed commodo. In
-        eros nisl, imperdiet vel imperdiet et, scelerisque a mauris. Pellentesque varius ex nunc,
-        quis imperdiet eros placerat ac. Duis finibus orci et est auctor tincidunt. Sed non viverra
-        ipsum. Nunc quis augue egestas, cursus lorem at, molestie sem. Morbi a consectetur ipsum, a
-        placerat diam. Etiam vulputate dignissim convallis. Integer faucibus mauris sit amet finibus
-        convallis.\n\n
-        Phasellus in aliquet mi. Pellentesque habitant morbi tristique senectus et netus et
-        malesuada fames ac turpis egestas. In volutpat arcu ut felis sagittis, in finibus massa
-        gravida. Pellentesque id tellus orci. Integer dictum, lorem sed efficitur ullamcorper,
-        libero justo consectetur ipsum, in mollis nisl ex sed nisl. Donec maximus ullamcorper
-        sodales. Praesent bibendum rhoncus tellus nec feugiat. In a ornare nulla. Donec rhoncus
-        libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus
-        vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
-    </string>
+    <string name="app_name">RPG.Mayêutica</string>
+    <string name="login_hero">RPG.Mayêutica — fisioterapia com acompanhamento visual</string>
+    <string name="action_settings">Configurações</string>
+    <string name="login_title">Entrar</string>
+    <string name="login_lead">Acesso restrito. Use o e-mail e a senha cadastrados. A área profissional é exclusiva da fisioterapeuta e só abre depois do login.</string>
+    <string name="label_email">E-mail</string>
+    <string name="label_password">Senha</string>
+    <string name="hint_email">seu e-mail</string>
+    <string name="hint_password">sua senha</string>
+    <string name="action_enter">Entrar</string>
+    <string name="action_entering">Entrando…</string>
+    <string name="error_not_registered">E-mail não cadastrado. Peça à fisioterapeuta para criar sua conta e sincronizar na nuvem.</string>
+    <string name="error_login">E-mail ou senha inválidos.</string>
+    <string name="brand_orb">RPG</string>
+    <string name="area_profissional">Área profissional</string>
+    <string name="area_paciente">Área do paciente</string>
+    <string name="role_profissional">Profissional</string>
+    <string name="role_paciente">Paciente</string>
+    <string name="menu_profile">Menu do perfil</string>
+    <string name="action_change_credentials">Alterar e-mail e senha</string>
+    <string name="action_logout">Sair</string>
+    <string name="action_close">Fechar</string>
+    <string name="action_save">Salvar alteração</string>
+    <string name="credentials_title">Alterar e-mail e senha</string>
+    <string name="label_new_password">Nova senha</string>
+    <string name="hint_keep_password">Deixe em branco para manter</string>
+    <string name="label_confirm_password">Confirmar senha</string>
+    <string name="nav_mannequin">Manequim 3D</string>
+    <string name="nav_camera">Câmera</string>
+    <string name="nav_panel">Painel</string>
+    <string name="nav_my_area">Minha área</string>
+    <string name="canvas_hint_patient">Gire com o dedo · Toque na bolinha vermelha para abrir o seu vídeo · De frente: D = direito do paciente (esquerda da tela), E = esquerdo</string>
+    <string name="canvas_hint_admin">Gire com o dedo · Toque na bolinha para editar o vídeo deste paciente · De frente: D = direito do paciente (esquerda da tela), E = esquerdo</string>
+    <string name="open_panel">Abrir painel</string>
+    <string name="panel_pro_title">Painel da Profissional</string>
+    <string name="panel_pro_lead">Em Pacientes, clique em Ver boneco para editar os vídeos só daquele paciente (RPG.Mayêutica).</string>
+    <string name="tab_patients">Pacientes</string>
+    <string name="tab_joints">Articulações</string>
+    <string name="tab_register">Cadastrar</string>
+    <string name="tab_exams">Exames</string>
+    <string name="tab_vision">Visão</string>
+    <string name="tab_calendar">Calendário</string>
+    <string name="tab_anamnesis">Ficha clínica</string>
+    <string name="tab_guide">Orientações 3D</string>
+    <string name="patients_title">Lista de pacientes</string>
+    <string name="stat_patients">Pacientes</string>
+    <string name="stat_mannequins">Bonecos</string>
+    <string name="patients_hint">Cada paciente tem exatamente um boneco. Os números acima são sempre iguais.</string>
+    <string name="label_search">Buscar</string>
+    <string name="hint_search">Nome ou e-mail</string>
+    <string name="action_view_mannequin">Ver boneco</string>
+    <string name="action_reset_password">Redefinir senha</string>
+    <string name="action_delete">Apagar</string>
+    <string name="chip_ficha">Ficha preenchida</string>
+    <string name="chip_no_ficha">Sem ficha</string>
+    <string name="chip_open">Boneco aberto</string>
+    <string name="videos_title">Vídeos deste paciente</string>
+    <string name="videos_empty">Ainda não há boneco aberto. Vá em Pacientes e clique em Ver boneco.</string>
+    <string name="label_youtube">URL do YouTube</string>
+    <string name="hint_youtube">https://www.youtube.com/watch?v=...</string>
+    <string name="action_open_video">Abrir vídeo</string>
+    <string name="action_clear_video">Apagar vídeo</string>
+    <string name="action_save_video">Salvar Alteração</string>
+    <string name="register_title">Cadastrar Novo Paciente</string>
+    <string name="register_lead">Somente a profissional pode criar contas. Não há cadastro público.</string>
+    <string name="label_name">Nome</string>
+    <string name="label_temp_password">Senha provisória</string>
+    <string name="action_register">Cadastrar Paciente</string>
+    <string name="vision_badge">Exclusivo da profissional</string>
+    <string name="vision_title">Sessão de visão</string>
+    <string name="vision_lead">A câmera abre em tela grande ao lado. O paciente não tem acesso a esta ferramenta.</string>
+    <string name="vision_tip_1">Basta enquadrar as mãos — não precisa ver cotovelo nem braço inteiro.</string>
+    <string name="vision_tip_2">Mede se a mão está reta em relação ao eixo do antebraço (estimado).</string>
+    <string name="vision_tip_3">Desvio forte: linhas daquela mão ficam vermelhas (sem som).</string>
+    <string name="vision_close">Fechar visão e voltar</string>
+    <string name="exams_pro_title">Exames enviados</string>
+    <string name="exams_pro_lead">Abra o arquivo, escreva uma observação para o paciente ou exclua o exame.</string>
+    <string name="exams_empty">Nenhum documento enviado ainda. Peça ao paciente para enviar pela aba Exames.</string>
+    <string name="patient_portal_title">Portal do Paciente</string>
+    <string name="patient_portal_lead">Preencha sua ficha clínica, envie exames e toque nas bolinhas vermelhas do manequim para ver orientações.</string>
+    <string name="ficha_title">Minha ficha clínica</string>
+    <string name="ficha_lead">Dados essenciais para o acompanhamento: queixas, psicoterapia e mídia (foto ou vídeo).</string>
+    <string name="label_full_name">Nome completo</string>
+    <string name="hint_full_name">Maria Oliveira da Silva</string>
+    <string name="label_birth">Data de nascimento</string>
+    <string name="hint_birth">DD/MM/AAAA</string>
+    <string name="label_phone">Telefone</string>
+    <string name="hint_phone">(11) 98888-7777</string>
+    <string name="label_psychotherapy">Faz psicoterapia?</string>
+    <string name="option_no">Não</string>
+    <string name="option_yes">Sim</string>
+    <string name="label_activity">Atividade física</string>
+    <string name="hint_activity">caminhada 3x por semana</string>
+    <string name="label_health">Problemas de saúde</string>
+    <string name="hint_health">hipertensão, diabetes, hérnia de disco</string>
+    <string name="label_meds">Medicamentos em uso</string>
+    <string name="hint_meds">losartana 50 mg 1x ao dia</string>
+    <string name="label_surgeries">Cirurgias anteriores</string>
+    <string name="hint_surgeries">apendicectomia em 2018 — ou nenhuma</string>
+    <string name="label_pain">Áreas de dor / limitação</string>
+    <string name="hint_pain">joelho direito, lombar</string>
+    <string name="label_complaint">Queixa principal</string>
+    <string name="hint_complaint">dor ao subir escadas há 2 meses</string>
+    <string name="label_notes">Observações</string>
+    <string name="hint_notes">prefiro atendimento pela manhã</string>
+    <string name="action_save_ficha">Salvar ficha clínica</string>
+    <string name="exams_send_title">Envio de exames</string>
+    <string name="exams_send_lead">Anexe PDF ou imagem e, se quiser, descreva observações para a clínica.</string>
+    <string name="label_file">Arquivo</string>
+    <string name="hint_file">Ex.: raio-x.pdf ou foto do exame em PNG/JPEG</string>
+    <string name="action_pick_file">Escolher arquivo</string>
+    <string name="action_send_exam">Enviar exame</string>
+    <string name="guide_title">Como usar o manequim</string>
+    <string name="guide_lead">Gire o boneco com o dedo e toque nas bolinhas vermelhas para abrir o vídeo de exercício da articulação cadastrado pela profissional.</string>
+    <string name="no_joint">Nenhuma articulação selecionada.</string>
+    <string name="with_link">Com link</string>
+    <string name="without_link">Sem link</string>
+    <string name="mannequin_placeholder">Manequim anatômico 3D</string>
+    <string name="calendar_title">Agenda da clínica</string>
+    <string name="calendar_title_patient">Minha agenda</string>
+    <string name="calendar_lead">Escolha o dia, informe o horário e agende o paciente.</string>
+    <string name="calendar_lead_patient">Veja os horários marcados pela profissional.</string>
+    <string name="calendar_empty">Nenhum horário neste dia.</string>
+    <string name="label_patient_name">Paciente</string>
+    <string name="hint_appointment_patient">Nome do paciente</string>
+    <string name="label_time">Horário</string>
+    <string name="hint_time">14:00</string>
+    <string name="hint_appointment_notes">Observação da sessão</string>
+    <string name="action_schedule">Agendar horário</string>
+    <string-array name="psychotherapy_options">
+        <item>Não</item>
+        <item>Sim</item>
+    </string-array>
 </resources>

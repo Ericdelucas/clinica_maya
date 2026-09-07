@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/patient_portal_title"
+            android:textColor="@color/maya_accent_deep"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="@string/patient_portal_lead"
+            android:textColor="@color/maya_text_muted"
+            android:textSize="13sp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/tabFicha"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_tab"
+                    android:text="@string/tab_anamnesis"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white" />
+
+                <Button
+                    android:id="@+id/tabExamesPaciente"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_tab"
+                    android:text="@string/tab_exams"
+                    android:textAllCaps="false"
+                    android:textColor="@color/maya_text_muted" />
+
+                <Button
+                    android:id="@+id/tabOrientacoes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_tab"
+                    android:text="@string/tab_guide"
+                    android:textAllCaps="false"
+                    android:textColor="@color/maya_text_muted" />
+
+                <Button
+                    android:id="@+id/tabAgenda"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_tab"
+                    android:text="@string/tab_calendar"
+                    android:textAllCaps="false"
+                    android:textColor="@color/maya_text_muted" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <LinearLayout
+            android:id="@+id/contentFicha"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <include
+                android:id="@+id/includeFicha"
+                layout="@layout/layout_ficha_clinica" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/contentExamesPaciente"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/exams_send_title"
+                android:textColor="@color/maya_text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/exams_send_lead"
+                android:textColor="@color/maya_text_muted" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/label_file"
+                android:textColor="@color/maya_text_muted"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/hint_file"
+                android:textColor="@color/maya_accent_deep"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/buttonPickFile"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_btn_ghost"
+                android:text="@string/action_pick_file"
+                android:textAllCaps="false"
+                android:textColor="@color/maya_accent_deep" />
+
+            <TextView
+                android:id="@+id/textPickedFile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/maya_text_muted" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/label_notes"
+                android:textColor="@color/maya_text_muted"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/inputExamNotes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_input"
+                android:gravity="top"
+                android:hint="@string/hint_notes"
+                android:inputType="textMultiLine"
+                android:minHeight="88dp"
+                android:padding="14dp" />
+
+            <Button
+                android:id="@+id/buttonSendExam"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_btn_primary"
+                android:text="@string/action_send_exam"
+                android:textAllCaps="false"
+                android:textColor="@color/white" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/contentOrientacoes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/guide_title"
+                android:textColor="@color/maya_text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/guide_lead"
+                android:textColor="@color/maya_text_muted" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/contentAgenda"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/calendar_title_patient"
+                android:textColor="@color/maya_text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/calendar_lead_patient"
+                android:textColor="@color/maya_text_muted" />
+
+            <CalendarView
+                android:id="@+id/calendarViewPatient"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/listAppointmentsPatient"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:nestedScrollingEnabled="false" />
+
+            <TextView
+                android:id="@+id/textAppointmentsEmptyPatient"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/calendar_empty"
+                android:textColor="@color/maya_text_muted" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
