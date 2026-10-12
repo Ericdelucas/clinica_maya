@@ -141,4 +141,8 @@
     <string name="other_regions">Selecionar outra região</string>
     <string name="body_front">Frente · D à esquerda</string>
     <string name="body_back">Costas · D à direita</string>
+    <string name="video_patient_label">Vídeos para qual paciente?</string>
+    <string name="choose_video_patient">Selecione um paciente</string>
+    <string name="preview_patient_videos">Ver boneco e vídeos deste paciente</string>
+    <string name="test_patient_choice">Paciente para testar (sem senha)</string>
 </resources>

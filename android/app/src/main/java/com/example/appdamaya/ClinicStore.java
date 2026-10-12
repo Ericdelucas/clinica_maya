@@ -49,7 +49,7 @@ public final class ClinicStore {
         if (preferences != null) return;
         preferences = context.getApplicationContext().getSharedPreferences("clinic_store", Context.MODE_PRIVATE);
         String saved = preferences.getString("accounts_and_videos", null);
-        if (saved == null) return;
+        if (saved == null) { seedExamplePatients(); return; }
         try {
             JSONObject root = new JSONObject(saved);
             List<ClinicSession> loadedProfessionals = decodeAccounts(root.getJSONArray("professionals"), true);
@@ -86,6 +86,24 @@ public final class ClinicStore {
         } catch (JSONException ignored) {
             // Keep the initial accounts if the saved snapshot is invalid.
         }
+        seedExamplePatients();
+    }
+
+    public static void seedExamplePatients() {
+        seedExamplePatient("example-ana", "ana.souza@example.com", "Ana Souza (exemplo)",
+                "https://www.youtube.com/watch?v=aqz-KE-bpKQ", "https://www.youtube.com/watch?v=OHOpb2fS-cM");
+        seedExamplePatient("example-bruno", "bruno.lima@example.com", "Bruno Lima (exemplo)",
+                "https://www.youtube.com/watch?v=OHOpb2fS-cM", "https://www.youtube.com/watch?v=aqz-KE-bpKQ");
+        persist();
+    }
+
+    private static void seedExamplePatient(String id, String email, String name, String cervical, String shoulder) {
+        for (ClinicSession patient : patients) if (id.equals(patient.id)) return;
+        patients.add(ClinicSession.patient(id, email, name, ""));
+        Map<String, String> videos = new HashMap<>();
+        videos.put("coluna_cervical", cervical);
+        videos.put("ombro_d", shoulder);
+        jointVideos.put(id, videos);
     }
 
     private static List<ClinicSession> decodeAccounts(JSONArray rows, boolean professional) throws JSONException {
@@ -274,6 +292,7 @@ public final class ClinicStore {
     }
 
     public static String videoUrl(String patientId, String jointId) {
+        if (current != null && !current.isAdmin() && !current.id.equals(patientId)) return "";
         if (patientId == null || jointId == null) {
             return "";
         }

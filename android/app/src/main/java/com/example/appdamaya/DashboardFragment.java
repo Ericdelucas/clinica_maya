@@ -32,6 +32,8 @@ public class DashboardFragment extends Fragment {
     private FragmentDashboardBinding binding;
     private PatientCardAdapter adapter;
     private AppointmentAdapter appointmentsAdapter;
+    private final List<ClinicSession> videoPatients = new ArrayList<>();
+    private boolean patientPreview;
     private String openPatientId = "";
     private String openPatientName = "";
     private String selectedJointId = "";
@@ -132,26 +134,38 @@ public class DashboardFragment extends Fragment {
             return;
         }
         adapter = new PatientCardAdapter(patient -> {
-            openPatientId = patient.id;
-            openPatientName = patient.fullName;
-            selectedJointId = "";
-            selectedJoint = "";
-            binding.includePanelPro.inputYoutube.setText("");
-            binding.includePanelPro.textSelectedJoint.setText(R.string.no_joint);
-            binding.includePanelPro.textJointOrientation.setText(R.string.joint_orientation_hint);
-            binding.includeMannequin.mannequinView.setSelectedId("");
-            binding.bannerMannequin.setText("Boneco de " + patient.fullName + " · vídeos só dele");
-            binding.bannerMannequin.setVisibility(View.VISIBLE);
-            binding.includePanelPro.textVideosHint.setText(
-                    "Editando o boneco de " + patient.fullName + ". Os links valem só para ele."
-            );
-            binding.includePanelPro.textVideosHint.setTextColor(
-                    ContextCompat.getColor(requireContext(), R.color.maya_text_muted)
-            );
-            toast("Boneco de " + patient.fullName + " — vídeos só dele.");
-            refreshPatients();
-            populateJoints();
+            chooseVideoPatient(patient);
             showMannequin(profile);
+        });
+        binding.includePanelPro.spinnerVideoPatient.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0 && !openPatientId.isEmpty()) {
+                    openPatientId = "";
+                    openPatientName = "";
+                    selectedJointId = "";
+                    selectedJoint = "";
+                    binding.includePanelPro.inputYoutube.setText("");
+                    binding.includePanelPro.textSelectedJoint.setText(R.string.no_joint);
+                    binding.includePanelPro.textJointOrientation.setText(R.string.joint_orientation_hint);
+                    binding.includePanelPro.textVideosHint.setText(R.string.videos_empty);
+                    binding.includeMannequin.mannequinView.setSelectedId("");
+                    populateJoints();
+                    if (adapter != null) adapter.submit(new ArrayList<>(ClinicStore.patients), "");
+                }
+                if (position > 0 && position <= videoPatients.size()) {
+                    ClinicSession patient = videoPatients.get(position - 1);
+                    if (!patient.id.equals(openPatientId)) chooseVideoPatient(patient);
+                }
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) { }
+        });
+        binding.includePanelPro.buttonPatientPreview.setOnClickListener(v -> {
+            if (openPatientId.isEmpty()) { toast("Selecione um paciente primeiro."); return; }
+            showMannequin(profile);
+            patientPreview = true;
+            binding.bannerMannequin.setText("Visualização de " + openPatientName + " · toque para abrir os vídeos dele");
+            binding.includeMannequin.textCanvasHint.setText(R.string.canvas_hint_patient);
+            binding.includeMannequin.buttonOpenPanel.setText("Voltar à edição de vídeos");
         });
         binding.includePanelPro.listPatients.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.includePanelPro.listPatients.setAdapter(adapter);
@@ -169,6 +183,31 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPro.buttonOpenVideo.setOnClickListener(v -> openSelectedVideo());
         binding.includePanelPro.buttonClearVideo.setOnClickListener(v -> clearJointVideo());
         selectProTab("patients");
+    }
+
+    private void chooseVideoPatient(ClinicSession patient) {
+        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
+        String previousRegion = selectedJointId;
+        openPatientId = patient.id;
+        openPatientName = patient.fullName;
+        patientPreview = false;
+        selectedJointId = "";
+        selectedJoint = "";
+        binding.includePanelPro.inputYoutube.setText("");
+        binding.includePanelPro.textSelectedJoint.setText(R.string.no_joint);
+        binding.includePanelPro.textJointOrientation.setText(R.string.joint_orientation_hint);
+        binding.includeMannequin.mannequinView.setSelectedId("");
+        binding.bannerMannequin.setText("Boneco de " + patient.fullName + " · vídeos exclusivos deste paciente");
+        binding.includePanelPro.textVideosHint.setText("Editando " + patient.fullName + " · " + patient.email
+                + "\nCada região tem um link próprio para este paciente. Alterações não afetam os demais.");
+        binding.includePanelPro.textVideosHint.setTextColor(ContextCompat.getColor(requireContext(), R.color.maya_text_muted));
+        int selectedIndex = 0;
+        for (int i = 0; i < videoPatients.size(); i++) if (videoPatients.get(i).id.equals(patient.id)) selectedIndex = i + 1;
+        binding.includePanelPro.spinnerVideoPatient.setSelection(selectedIndex);
+        if (adapter != null) adapter.submit(new ArrayList<>(ClinicStore.patients), openPatientId);
+        ClinicalHotspot previous = ClinicalHotspot.byId(previousRegion);
+        if (previous != null) selectJoint(previous, false);
+        else populateJoints();
     }
 
     private void setupPatientPanel(ClinicSession profile) {
@@ -200,6 +239,9 @@ public class DashboardFragment extends Fragment {
     }
 
     private void showMannequin(ClinicSession profile) {
+        patientPreview = false;
+        binding.includeMannequin.textCanvasHint.setText(profile.isAdmin() ? R.string.canvas_hint_admin : R.string.canvas_hint_patient);
+        binding.includeMannequin.buttonOpenPanel.setText(R.string.open_panel);
         activeScreen = "mannequin";
         binding.bannerMannequin.setVisibility(openPatientId.isEmpty() ? View.GONE : View.VISIBLE);
         binding.includeMannequin.getRoot().setVisibility(View.VISIBLE);
@@ -210,6 +252,8 @@ public class DashboardFragment extends Fragment {
     }
 
     private void showPanel(ClinicSession profile) {
+        if (patientPreview && profile.isAdmin()) selectProTab("joints");
+        patientPreview = false;
         activeScreen = "panel";
         binding.bannerMannequin.setVisibility(View.GONE);
         binding.includeMannequin.getRoot().setVisibility(View.GONE);
@@ -269,6 +313,7 @@ public class DashboardFragment extends Fragment {
         }
         if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
         boolean editable = !openPatientId.isEmpty() && !selectedJointId.isEmpty();
+        binding.includePanelPro.buttonPatientPreview.setEnabled(!openPatientId.isEmpty());
         binding.includePanelPro.inputYoutube.setEnabled(editable);
         binding.includePanelPro.buttonSaveVideo.setEnabled(editable);
         binding.includePanelPro.buttonClearVideo.setEnabled(editable);
@@ -294,7 +339,7 @@ public class DashboardFragment extends Fragment {
     }
 
     private void handleHotspot(ClinicSession profile, ClinicalHotspot hotspot) {
-        if (profile.isAdmin()) {
+        if (profile.isAdmin() && !patientPreview) {
             if (openPatientId.isEmpty()) {
                 toast("Abra o boneco de um paciente em Pacientes → Ver boneco.");
                 return;
@@ -303,7 +348,7 @@ public class DashboardFragment extends Fragment {
             return;
         }
         binding.includeMannequin.mannequinView.setSelectedId(hotspot.id);
-        String url = ClinicStore.videoUrl(profile.id, hotspot.id);
+        String url = ClinicStore.videoUrl(profile.isAdmin() ? openPatientId : profile.id, hotspot.id);
         if (url.isEmpty()) {
             toast(hotspot.label + ": região selecionada. Ainda sem vídeo cadastrado.");
             return;
@@ -357,7 +402,7 @@ public class DashboardFragment extends Fragment {
         }
         ClinicStore.setVideoUrl(openPatientId, selectedJointId, url);
         populateJoints();
-        toast("Alteração salva para " + selectedJoint);
+        toast("Vídeo salvo para " + openPatientName + " · " + selectedJoint);
     }
 
     private void clearJointVideo() {
@@ -410,6 +455,17 @@ public class DashboardFragment extends Fragment {
             options.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             binding.includeCalendar.inputAppointmentPatient.setAdapter(options);
             binding.includeCalendar.buttonAddAppointment.setEnabled(!copy.isEmpty());
+            videoPatients.clear();
+            videoPatients.addAll(copy);
+            List<String> videoNames = new ArrayList<>();
+            videoNames.add(getString(R.string.choose_video_patient));
+            videoNames.addAll(names);
+            ArrayAdapter<String> videoOptions = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, videoNames);
+            videoOptions.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            binding.includePanelPro.spinnerVideoPatient.setAdapter(videoOptions);
+            int selectedIndex = 0;
+            for (int i = 0; i < copy.size(); i++) if (copy.get(i).id.equals(openPatientId)) selectedIndex = i + 1;
+            binding.includePanelPro.spinnerVideoPatient.setSelection(selectedIndex);
         }
         binding.includePanelPro.textPatientCount.setText(String.valueOf(copy.size()));
         binding.includePanelPro.textMannequinCount.setText(String.valueOf(copy.size()));

@@ -57,6 +57,31 @@ public class ClinicStoreTest {
     }
 
     @Test
+    public void sameCervicalRegionKeepsDifferentVideosForEachPatient() {
+        ClinicSession first = ClinicSession.patient("isolation-a", "a@example.com", "A", "");
+        ClinicSession second = ClinicSession.patient("isolation-b", "b@example.com", "B", "");
+        ClinicStore.current = ClinicStore.authenticate("ericdelucass@gmail.com", "1234", "admin");
+        String region = "coluna_cervical";
+        try {
+            ClinicStore.setVideoUrl(first.id, region, "https://youtu.be/exerciseA");
+            ClinicStore.setVideoUrl(second.id, region, "https://youtu.be/exerciseB");
+            ClinicStore.current = first;
+            assertEquals("https://youtu.be/exerciseA", ClinicStore.videoUrl(first.id, region));
+            assertEquals("", ClinicStore.videoUrl(second.id, region));
+            ClinicStore.current = second;
+            assertEquals("https://youtu.be/exerciseB", ClinicStore.videoUrl(second.id, region));
+            assertEquals("", ClinicStore.videoUrl(first.id, region));
+            ClinicStore.current = ClinicStore.authenticate("ericdelucass@gmail.com", "1234", "admin");
+            ClinicStore.setVideoUrl(first.id, region, "");
+            assertEquals("https://youtu.be/exerciseB", ClinicStore.videoUrl(second.id, region));
+        } finally {
+            ClinicStore.current = ClinicStore.authenticate("ericdelucass@gmail.com", "1234", "admin");
+            ClinicStore.setVideoUrl(first.id, region, "");
+            ClinicStore.setVideoUrl(second.id, region, "");
+        }
+    }
+
+    @Test
     public void rejectsLinksThatOnlyImpersonateYoutube() {
         assertTrue(ClinicStore.isYoutubeUrl("https://www.youtube.com/watch?v=abc"));
         assertTrue(ClinicStore.isYoutubeUrl("https://youtu.be/abc"));
