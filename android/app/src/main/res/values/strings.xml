@@ -137,4 +137,8 @@
     <string name="cancel_appointment">Cancelar agendamento</string>
     <string name="calendar_day_summary">%1$s · %2$d agendamento(s)</string>
     <string name="new_appointment">Novo agendamento</string>
+    <string name="joint_orientation_hint">Direito e esquerdo são os lados do paciente. De frente, o lado direito fica à esquerda da tela. Use Frente e Costas no boneco para conferir a região.</string>
+    <string name="other_regions">Selecionar outra região</string>
+    <string name="body_front">Frente · D à esquerda</string>
+    <string name="body_back">Costas · D à direita</string>
 </resources>

@@ -122,6 +122,8 @@ public class DashboardFragment extends Fragment {
                 profile.isAdmin() ? R.string.canvas_hint_admin : R.string.canvas_hint_patient
         );
         binding.includeMannequin.buttonOpenPanel.setVisibility(profile.isAdmin() ? View.VISIBLE : View.GONE);
+        binding.includeMannequin.buttonFront.setOnClickListener(v -> binding.includeMannequin.mannequinView.showSide(false));
+        binding.includeMannequin.buttonBack.setOnClickListener(v -> binding.includeMannequin.mannequinView.showSide(true));
         binding.includeMannequin.mannequinView.setListener(hotspot -> handleHotspot(profile, hotspot));
     }
 
@@ -132,6 +134,12 @@ public class DashboardFragment extends Fragment {
         adapter = new PatientCardAdapter(patient -> {
             openPatientId = patient.id;
             openPatientName = patient.fullName;
+            selectedJointId = "";
+            selectedJoint = "";
+            binding.includePanelPro.inputYoutube.setText("");
+            binding.includePanelPro.textSelectedJoint.setText(R.string.no_joint);
+            binding.includePanelPro.textJointOrientation.setText(R.string.joint_orientation_hint);
+            binding.includeMannequin.mannequinView.setSelectedId("");
             binding.bannerMannequin.setText("Boneco de " + patient.fullName + " · vídeos só dele");
             binding.bannerMannequin.setVisibility(View.VISIBLE);
             binding.includePanelPro.textVideosHint.setText(
@@ -225,6 +233,7 @@ public class DashboardFragment extends Fragment {
     }
 
     private void selectProTab(String tab) {
+        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
         binding.includePanelPro.contentPacientes.setVisibility("patients".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPro.contentArticulacoes.setVisibility("joints".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPro.contentCadastrar.setVisibility("register".equals(tab) ? View.VISIBLE : View.GONE);
@@ -258,6 +267,12 @@ public class DashboardFragment extends Fragment {
         if (binding == null) {
             return;
         }
+        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
+        boolean editable = !openPatientId.isEmpty() && !selectedJointId.isEmpty();
+        binding.includePanelPro.inputYoutube.setEnabled(editable);
+        binding.includePanelPro.buttonSaveVideo.setEnabled(editable);
+        binding.includePanelPro.buttonClearVideo.setEnabled(editable);
+        binding.includePanelPro.buttonOpenVideo.setEnabled(editable);
         GridLayout grid = binding.includePanelPro.gridJoints;
         grid.removeAllViews();
         String ownerId = hotspotOwnerId();
@@ -266,6 +281,8 @@ public class DashboardFragment extends Fragment {
             TextView title = chip.findViewById(R.id.textJointLabel);
             TextView status = chip.findViewById(R.id.textJointStatus);
             title.setText(hotspot.label);
+            chip.setAlpha(hotspot.id.equals(selectedJointId) ? 1f : .8f);
+            chip.setContentDescription(hotspot.label + ". " + hotspot.region);
             status.setText(ClinicStore.hasVideo(ownerId, hotspot.id) ? R.string.with_link : R.string.without_link);
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
             params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
@@ -295,15 +312,27 @@ public class DashboardFragment extends Fragment {
     }
 
     private void selectJoint(ClinicalHotspot hotspot, boolean openPanel) {
+        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
+        if (openPatientId.isEmpty()) {
+            toast("Escolha um paciente em Pacientes → Ver boneco.");
+            return;
+        }
         selectedJointId = hotspot.id;
         selectedJoint = hotspot.label;
-        binding.includePanelPro.textSelectedJoint.setText(hotspot.label + " · " + hotspot.region);
+        binding.includePanelPro.textSelectedJoint.setText(hotspot.label);
+        String side = hotspot.id.endsWith("_d") ? "Lado DIREITO do paciente"
+                : hotspot.id.endsWith("_e") ? "Lado ESQUERDO do paciente"
+                : hotspot.z < 0 ? "Parte POSTERIOR · costas" : "Parte ANTERIOR · frente";
+        binding.includePanelPro.textJointOrientation.setText("Paciente: " + openPatientName + "\n"
+                + hotspot.region + " · " + side + "\n" + getString(R.string.joint_orientation_hint));
         binding.includePanelPro.inputYoutube.setText(ClinicStore.videoUrl(hotspotOwnerId(), hotspot.id));
         binding.includeMannequin.mannequinView.setSelectedId(hotspot.id);
-        if (openPanel && ClinicStore.current != null && ClinicStore.current.isAdmin()) {
+        populateJoints();
+        if (openPanel) {
             selectProTab("joints");
             showPanel(ClinicStore.current);
         }
+        binding.includePanelPro.getRoot().post(() -> binding.includePanelPro.getRoot().smoothScrollTo(0, 0));
     }
 
     private String hotspotOwnerId() {
@@ -314,6 +343,7 @@ public class DashboardFragment extends Fragment {
     }
 
     private void saveJointVideo() {
+        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
         if (openPatientId.isEmpty() || selectedJointId.isEmpty()) {
             toast(openPatientId.isEmpty()
                     ? "Abra o boneco de um paciente antes de salvar o vídeo."
@@ -331,6 +361,7 @@ public class DashboardFragment extends Fragment {
     }
 
     private void clearJointVideo() {
+        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
         if (openPatientId.isEmpty() || selectedJointId.isEmpty()) {
             toast(getString(R.string.no_joint));
             return;
@@ -342,6 +373,7 @@ public class DashboardFragment extends Fragment {
     }
 
     private void openSelectedVideo() {
+        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
         String url = String.valueOf(binding.includePanelPro.inputYoutube.getText()).trim();
         if (url.isEmpty() && !selectedJointId.isEmpty()) {
             url = ClinicStore.videoUrl(hotspotOwnerId(), selectedJointId);

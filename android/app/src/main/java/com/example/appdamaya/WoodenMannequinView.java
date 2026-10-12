@@ -35,6 +35,10 @@ public class WoodenMannequinView extends GLSurfaceView {
         setContentDescription("Manequim clínico 3D. Arraste para girar e toque nos pontos de dor.");
     }
     public void setListener(Listener value) { listener = value; }
+    public void showSide(boolean back) {
+        queueEvent(() -> scene.yaw = back ? 180 : 0);
+        requestRender();
+    }
     public void setSelectedId(String value) {
         queueEvent(() -> scene.selected = value == null ? "" : value);
         requestRender();

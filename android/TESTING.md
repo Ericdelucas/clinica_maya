@@ -49,3 +49,8 @@ Para cancelar um horário, entre como profissional, toque em Cancelar agendament
 
 Nesta etapa, selecione Paciente ou Profissional e toque em Entrar. E-mail e senha podem ficar vazios; qualquer conteúdo nesses campos é ignorado. O aplicativo abre um perfil local Teste (`teste@example.com`) do tipo escolhido.
 Os perfis de teste têm identificadores próprios e não alteram as contas Eric e Maya. O paciente Teste também é preparado ao entrar como profissional e aparece na lista de pacientes, permitindo testar vídeos e agendamentos para ele. Esse acesso temporário substitui a validação de credenciais na tela Android enquanto o aplicativo está sendo montado.
+
+## Links por região
+
+Como profissional, abra Pacientes → Ver boneco. Use Frente ou Costas para orientar o manequim e toque no ponto desejado. A edição abre diretamente na região selecionada, com nome do paciente, nome da articulação e lado anatômico. Direito e esquerdo sempre se referem ao paciente: de frente, o ombro direito está à esquerda da tela.
+Salve um link diferente para cada ombro e confira como paciente: cada ponto abre seu próprio vídeo diretamente. A edição e seus botões não são disponibilizados ao paciente. Pontos sem link mostram uma mensagem em vez de abrir uma página vazia. Ao mudar de paciente, a seleção é limpa e os controles de edição ficam desativados até selecionar outra região.
