@@ -54,7 +54,7 @@
         <LinearLayout android:id="@+id/contentFicha" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="vertical">
             <include
                 android:id="@+id/includeFicha"
-                layout="@layout/layout_ficha_clinica" />
+                layout="@layout/formulario_ficha_clinica" />
         </LinearLayout>
         <LinearLayout android:id="@+id/contentExamesPaciente" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="vertical" android:visibility="gone">
             <TextView

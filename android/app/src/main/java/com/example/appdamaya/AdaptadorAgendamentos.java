@@ -11,13 +11,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.Holder> {
-    public interface Listener { void onCancel(ClinicAppointment visit); }
+public class AdaptadorAgendamentos extends RecyclerView.Adapter<AdaptadorAgendamentos.Holder> {
+    public interface Listener { void onCancel(AgendamentoConsulta visit); }
     private final Listener listener;
-    public AppointmentAdapter(Listener listener) { this.listener = listener; }
-    private final List<ClinicAppointment> items = new ArrayList<>();
+    public AdaptadorAgendamentos(Listener listener) { this.listener = listener; }
+    private final List<AgendamentoConsulta> items = new ArrayList<>();
 
-    public void submit(List<ClinicAppointment> next) {
+    public void atualizarLista(List<AgendamentoConsulta> next) {
         items.clear();
         items.addAll(next);
         notifyDataSetChanged();
@@ -27,13 +27,13 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_appointment, parent, false);
+                .inflate(R.layout.item_agendamento, parent, false);
         return new Holder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        ClinicAppointment item = items.get(position);
+        AgendamentoConsulta item = items.get(position);
         holder.cancel.setVisibility(listener == null ? View.GONE : View.VISIBLE);
         holder.cancel.setOnClickListener(v -> { if (listener != null) listener.onCancel(item); });
         holder.time.setText(item.time);

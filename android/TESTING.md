@@ -35,14 +35,14 @@ Para reinstalar e voltar às contas iniciais, limpe os dados do aplicativo (isso
 
 O manequim Android agora usa OpenGL ES 2.0: malhas tridimensionais, iluminação, profundidade e rotação por arraste. O enquadramento inclui cabeça e pés e se adapta à proporção da tela.
 
-Abra **Calendário** na navegação principal. Como profissional, selecione o dia, escolha um paciente cadastrado, toque no horário e salve o agendamento. Horários iguais no mesmo dia são recusados. Como paciente, a agenda mostra somente os horários associados ao seu identificador. Os agendamentos são salvos no mesmo armazenamento local dos cadastros e links.
+Abra **Calendário** na navegação principal. Como profissional, selecione o dia, escolha um paciente cadastrado, toque no horário e salve o agendamento. Horários iguais no mesmo dia são recusados. O calendário é exclusivo do profissional; o paciente não vê essa aba. Os agendamentos são salvos no mesmo armazenamento local dos cadastros e links.
 
-Existe somente um formulário de login, em `fragment_login.xml`. `activity_main.xml` contém apenas o host de navegação; não representa um segundo login.
+Existe somente um formulário de login, em `tela_login.xml`. `tela_principal.xml` contém apenas o host de navegação; não representa um segundo login.
 
 ## Repaginação e agenda independente
 
-A navegação inferior tem três abas fixas: Manequim 3D, Painel/Minha área e Calendário.
-O calendário é uma tela própria, compartilhada pelos dois perfis. Use as setas do mês, selecione um dia ou toque em Hoje. A lista mostra os horários em ordem; abaixo fica o formulário de novo agendamento, exclusivo do profissional.
+A navegação inferior do profissional tem Manequim 3D, Painel e Calendário. Para o paciente, aparecem apenas Manequim 3D e Minha área.
+O calendário é uma tela própria, exclusiva do profissional. Use as setas do mês, selecione um dia ou toque em Hoje. A lista mostra os horários em ordem; abaixo fica o formulário de novo agendamento, exclusivo do profissional.
 Para cancelar um horário, entre como profissional, toque em Cancelar agendamento no cartão e confirme. O paciente não tem esse controle. O dia selecionado e a aba ativa são preservados ao girar a tela. Confira também o cabeçalho e seu menu em telas estreitas e com fontes maiores.
 
 ## Acesso temporário sem login
@@ -80,3 +80,5 @@ Ao atualizar o APK, estes exemplos são acrescentados aos dados existentes; cada
 5. Altere um vídeo de Ana como profissional e confira que o vídeo de Bruno permanece igual.
 
 O seletor de acesso é temporário para demonstração, assim como a entrada sem credenciais solicitada nesta etapa.
+
+Verificação de acesso: entre como Ana ou Bruno e confirme que Calendário não aparece; entre como profissional e confira que a aba e seus controles continuam disponíveis.

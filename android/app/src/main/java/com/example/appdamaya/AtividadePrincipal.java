@@ -9,22 +9,22 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.example.appdamaya.databinding.ActivityMainBinding;
+import com.example.appdamaya.databinding.TelaPrincipalBinding;
 
-public class MainActivity extends AppCompatActivity {
+public class AtividadePrincipal extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ClinicStore.initialize(this);
+        DadosClinica.inicializar(this);
         EdgeToEdge.enable(this);
-        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
+        TelaPrincipalBinding binding = TelaPrincipalBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         // Attach navigation at runtime so the activity preview stays an empty host.
-        // The login layout is authored and previewed only in fragment_login.xml.
+        // The login layout is authored and previewed only in tela_login.xml.
         NavHostFragment navHost = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment_content_main);
         if (navHost != null && navHost.getNavController().getCurrentDestination() == null) {
-            navHost.getNavController().setGraph(R.navigation.nav_graph);
+            navHost.getNavController().setGraph(R.navigation.mapa_navegacao);
         }
         ViewCompat.setOnApplyWindowInsetsListener(binding.main, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());

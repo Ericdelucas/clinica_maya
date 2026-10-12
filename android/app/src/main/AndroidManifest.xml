@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppDaMaya">
         <activity
-            android:name=".MainActivity"
+            android:name=".AtividadePrincipal"
             android:exported="true"
             android:theme="@style/Theme.AppDaMaya"
             android:windowSoftInputMode="adjustResize">

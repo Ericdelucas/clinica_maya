@@ -19,7 +19,7 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.example.appdamaya.databinding.FragmentDashboardBinding;
+import com.example.appdamaya.databinding.TelaPainelBinding;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -27,12 +27,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class DashboardFragment extends Fragment {
+public class TelaPainelFragment extends Fragment {
 
-    private FragmentDashboardBinding binding;
-    private PatientCardAdapter adapter;
-    private AppointmentAdapter appointmentsAdapter;
-    private final List<ClinicSession> videoPatients = new ArrayList<>();
+    private TelaPainelBinding binding;
+    private AdaptadorPacientes adapter;
+    private AdaptadorAgendamentos appointmentsAdapter;
+    private final List<SessaoUsuario> videoPatients = new ArrayList<>();
     private boolean patientPreview;
     private String openPatientId = "";
     private String openPatientName = "";
@@ -49,16 +49,16 @@ public class DashboardFragment extends Fragment {
             ViewGroup container,
             Bundle savedInstanceState
     ) {
-        binding = FragmentDashboardBinding.inflate(inflater, container, false);
+        binding = TelaPainelBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ClinicSession profile = ClinicStore.current;
+        SessaoUsuario profile = DadosClinica.current;
         if (profile == null) {
-            NavHostFragment.findNavController(this).navigate(R.id.action_dashboard_to_login);
+            NavHostFragment.findNavController(this).navigate(R.id.acao_painel_para_login);
             return;
         }
 
@@ -67,25 +67,28 @@ public class DashboardFragment extends Fragment {
             activeScreen = savedInstanceState.getString("activeScreen", "mannequin");
         }
         String restoredScreen = activeScreen;
-        bindProfile(profile);
-        setupNavigation(profile);
-        setupProfessionalPanel(profile);
-        setupPatientPanel(profile);
-        setupCalendar(profile);
-        binding.buttonCalendarTab.setOnClickListener(v -> showCalendar(profile));
-        if ("calendar".equals(restoredScreen)) showCalendar(profile);
-        else if ("panel".equals(restoredScreen)) showPanel(profile);
-        else showMannequin(profile);
-        populateJoints();
-        refreshPatients();
+        preencherCabecalho(profile);
+        configurarNavegacao(profile);
+        configurarPainelProfissional(profile);
+        configurarPainelPaciente(profile);
+        binding.buttonCalendarTab.setVisibility(profile.ehProfissional() ? View.VISIBLE : View.GONE);
+        if (profile.ehProfissional()) {
+            configurarCalendario(profile);
+            binding.buttonCalendarTab.setOnClickListener(v -> mostrarCalendario(profile));
+        }
+        if ("calendar".equals(restoredScreen) && profile.ehProfissional()) mostrarCalendario(profile);
+        else if ("panel".equals(restoredScreen)) mostrarPainel(profile);
+        else mostrarBoneco(profile);
+        atualizarListaDeRegioes();
+        atualizarListaDePacientes();
     }
 
-    private void bindProfile(ClinicSession profile) {
+    private void preencherCabecalho(SessaoUsuario profile) {
         binding.includeTopbar.textArea.setText(
-                profile.isAdmin() ? R.string.area_profissional : R.string.area_paciente
+                profile.ehProfissional() ? R.string.area_profissional : R.string.area_paciente
         );
         binding.includeTopbar.textRoleBadge.setText(
-                profile.isAdmin() ? R.string.role_profissional : R.string.role_paciente
+                profile.ehProfissional() ? R.string.role_profissional : R.string.role_paciente
         );
         String initial = (profile.fullName == null || profile.fullName.isEmpty())
                 ? "?"
@@ -104,38 +107,38 @@ public class DashboardFragment extends Fragment {
             binding.includeCredentials.getRoot().setVisibility(View.VISIBLE);
         });
         binding.includeTopbar.buttonLogout.setOnClickListener(v -> {
-            ClinicStore.current = null;
-            NavHostFragment.findNavController(this).navigate(R.id.action_dashboard_to_login);
+            DadosClinica.current = null;
+            NavHostFragment.findNavController(this).navigate(R.id.acao_painel_para_login);
         });
         binding.includeCredentials.buttonCloseCredentials.setOnClickListener(v ->
                 binding.includeCredentials.getRoot().setVisibility(View.GONE)
         );
         binding.includeCredentials.buttonSaveCredentials.setBackgroundResource(R.drawable.bg_btn_primary);
-        binding.includeCredentials.buttonSaveCredentials.setOnClickListener(v -> saveCredentials(profile));
+        binding.includeCredentials.buttonSaveCredentials.setOnClickListener(v -> salvarDadosDeAcesso(profile));
     }
 
-    private void setupNavigation(ClinicSession profile) {
-        binding.buttonMannequinTab.setOnClickListener(v -> showMannequin(profile));
-        binding.buttonPanelTab.setOnClickListener(v -> showPanel(profile));
-        binding.buttonPanelTab.setText(profile.isAdmin() ? R.string.nav_panel : R.string.nav_my_area);
+    private void configurarNavegacao(SessaoUsuario profile) {
+        binding.buttonMannequinTab.setOnClickListener(v -> mostrarBoneco(profile));
+        binding.buttonPanelTab.setOnClickListener(v -> mostrarPainel(profile));
+        binding.buttonPanelTab.setText(profile.ehProfissional() ? R.string.nav_panel : R.string.nav_my_area);
         binding.includeMannequin.buttonOpenPanel.setBackgroundResource(R.drawable.bg_btn_primary);
-        binding.includeMannequin.buttonOpenPanel.setOnClickListener(v -> showPanel(profile));
+        binding.includeMannequin.buttonOpenPanel.setOnClickListener(v -> mostrarPainel(profile));
         binding.includeMannequin.textCanvasHint.setText(
-                profile.isAdmin() ? R.string.canvas_hint_admin : R.string.canvas_hint_patient
+                profile.ehProfissional() ? R.string.canvas_hint_admin : R.string.canvas_hint_patient
         );
-        binding.includeMannequin.buttonOpenPanel.setVisibility(profile.isAdmin() ? View.VISIBLE : View.GONE);
-        binding.includeMannequin.buttonFront.setOnClickListener(v -> binding.includeMannequin.mannequinView.showSide(false));
-        binding.includeMannequin.buttonBack.setOnClickListener(v -> binding.includeMannequin.mannequinView.showSide(true));
-        binding.includeMannequin.mannequinView.setListener(hotspot -> handleHotspot(profile, hotspot));
+        binding.includeMannequin.buttonOpenPanel.setVisibility(profile.ehProfissional() ? View.VISIBLE : View.GONE);
+        binding.includeMannequin.buttonFront.setOnClickListener(v -> binding.includeMannequin.mannequinView.mostrarLadoDoCorpo(false));
+        binding.includeMannequin.buttonBack.setOnClickListener(v -> binding.includeMannequin.mannequinView.mostrarLadoDoCorpo(true));
+        binding.includeMannequin.mannequinView.definirAoSelecionarRegiao(hotspot -> aoTocarNaRegiao(profile, hotspot));
     }
 
-    private void setupProfessionalPanel(ClinicSession profile) {
-        if (!profile.isAdmin()) {
+    private void configurarPainelProfissional(SessaoUsuario profile) {
+        if (!profile.ehProfissional()) {
             return;
         }
-        adapter = new PatientCardAdapter(patient -> {
-            chooseVideoPatient(patient);
-            showMannequin(profile);
+        adapter = new AdaptadorPacientes(patient -> {
+            selecionarPacienteDosVideos(patient);
+            mostrarBoneco(profile);
         });
         binding.includePanelPro.spinnerVideoPatient.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
@@ -148,20 +151,20 @@ public class DashboardFragment extends Fragment {
                     binding.includePanelPro.textSelectedJoint.setText(R.string.no_joint);
                     binding.includePanelPro.textJointOrientation.setText(R.string.joint_orientation_hint);
                     binding.includePanelPro.textVideosHint.setText(R.string.videos_empty);
-                    binding.includeMannequin.mannequinView.setSelectedId("");
-                    populateJoints();
-                    if (adapter != null) adapter.submit(new ArrayList<>(ClinicStore.patients), "");
+                    binding.includeMannequin.mannequinView.destacarRegiao("");
+                    atualizarListaDeRegioes();
+                    if (adapter != null) adapter.atualizarLista(new ArrayList<>(DadosClinica.patients), "");
                 }
                 if (position > 0 && position <= videoPatients.size()) {
-                    ClinicSession patient = videoPatients.get(position - 1);
-                    if (!patient.id.equals(openPatientId)) chooseVideoPatient(patient);
+                    SessaoUsuario patient = videoPatients.get(position - 1);
+                    if (!patient.id.equals(openPatientId)) selecionarPacienteDosVideos(patient);
                 }
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) { }
         });
         binding.includePanelPro.buttonPatientPreview.setOnClickListener(v -> {
-            if (openPatientId.isEmpty()) { toast("Selecione um paciente primeiro."); return; }
-            showMannequin(profile);
+            if (openPatientId.isEmpty()) { mostrarMensagem("Selecione um paciente primeiro."); return; }
+            mostrarBoneco(profile);
             patientPreview = true;
             binding.bannerMannequin.setText("Visualização de " + openPatientName + " · toque para abrir os vídeos dele");
             binding.includeMannequin.textCanvasHint.setText(R.string.canvas_hint_patient);
@@ -170,23 +173,23 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPro.listPatients.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.includePanelPro.listPatients.setAdapter(adapter);
 
-        binding.includePanelPro.tabPacientes.setOnClickListener(v -> selectProTab("patients"));
-        binding.includePanelPro.tabArticulacoes.setOnClickListener(v -> selectProTab("joints"));
-        binding.includePanelPro.tabCadastrar.setOnClickListener(v -> selectProTab("register"));
-        binding.includePanelPro.tabExames.setOnClickListener(v -> selectProTab("exams"));
-        binding.includePanelPro.tabVisao.setOnClickListener(v -> selectProTab("vision"));
-        binding.includePanelPro.buttonCloseVision.setOnClickListener(v -> selectProTab("patients"));
+        binding.includePanelPro.tabPacientes.setOnClickListener(v -> selecionarAbaProfissional("patients"));
+        binding.includePanelPro.tabArticulacoes.setOnClickListener(v -> selecionarAbaProfissional("joints"));
+        binding.includePanelPro.tabCadastrar.setOnClickListener(v -> selecionarAbaProfissional("register"));
+        binding.includePanelPro.tabExames.setOnClickListener(v -> selecionarAbaProfissional("exams"));
+        binding.includePanelPro.tabVisao.setOnClickListener(v -> selecionarAbaProfissional("vision"));
+        binding.includePanelPro.buttonCloseVision.setOnClickListener(v -> selecionarAbaProfissional("patients"));
         binding.includePanelPro.buttonRegisterPatient.setBackgroundResource(R.drawable.bg_btn_primary);
-        binding.includePanelPro.buttonRegisterPatient.setOnClickListener(v -> registerPatient());
+        binding.includePanelPro.buttonRegisterPatient.setOnClickListener(v -> cadastrarPaciente());
         binding.includePanelPro.buttonSaveVideo.setBackgroundResource(R.drawable.bg_btn_primary);
-        binding.includePanelPro.buttonSaveVideo.setOnClickListener(v -> saveJointVideo());
-        binding.includePanelPro.buttonOpenVideo.setOnClickListener(v -> openSelectedVideo());
-        binding.includePanelPro.buttonClearVideo.setOnClickListener(v -> clearJointVideo());
-        selectProTab("patients");
+        binding.includePanelPro.buttonSaveVideo.setOnClickListener(v -> salvarVideoDaRegiao());
+        binding.includePanelPro.buttonOpenVideo.setOnClickListener(v -> abrirVideoSelecionado());
+        binding.includePanelPro.buttonClearVideo.setOnClickListener(v -> removerVideoDaRegiao());
+        selecionarAbaProfissional("patients");
     }
 
-    private void chooseVideoPatient(ClinicSession patient) {
-        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
+    private void selecionarPacienteDosVideos(SessaoUsuario patient) {
+        if (DadosClinica.current == null || !DadosClinica.current.ehProfissional()) return;
         String previousRegion = selectedJointId;
         openPatientId = patient.id;
         openPatientName = patient.fullName;
@@ -196,7 +199,7 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPro.inputYoutube.setText("");
         binding.includePanelPro.textSelectedJoint.setText(R.string.no_joint);
         binding.includePanelPro.textJointOrientation.setText(R.string.joint_orientation_hint);
-        binding.includeMannequin.mannequinView.setSelectedId("");
+        binding.includeMannequin.mannequinView.destacarRegiao("");
         binding.bannerMannequin.setText("Boneco de " + patient.fullName + " · vídeos exclusivos deste paciente");
         binding.includePanelPro.textVideosHint.setText("Editando " + patient.fullName + " · " + patient.email
                 + "\nCada região tem um link próprio para este paciente. Alterações não afetam os demais.");
@@ -204,14 +207,14 @@ public class DashboardFragment extends Fragment {
         int selectedIndex = 0;
         for (int i = 0; i < videoPatients.size(); i++) if (videoPatients.get(i).id.equals(patient.id)) selectedIndex = i + 1;
         binding.includePanelPro.spinnerVideoPatient.setSelection(selectedIndex);
-        if (adapter != null) adapter.submit(new ArrayList<>(ClinicStore.patients), openPatientId);
-        ClinicalHotspot previous = ClinicalHotspot.byId(previousRegion);
-        if (previous != null) selectJoint(previous, false);
-        else populateJoints();
+        if (adapter != null) adapter.atualizarLista(new ArrayList<>(DadosClinica.patients), openPatientId);
+        PontoDor previous = PontoDor.buscarPorId(previousRegion);
+        if (previous != null) selecionarRegiao(previous, false);
+        else atualizarListaDeRegioes();
     }
 
-    private void setupPatientPanel(ClinicSession profile) {
-        if (profile.isAdmin()) {
+    private void configurarPainelPaciente(SessaoUsuario profile) {
+        if (profile.ehProfissional()) {
             return;
         }
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
@@ -221,26 +224,26 @@ public class DashboardFragment extends Fragment {
         );
         binding.includePanelPaciente.includeFicha.spinnerPsychotherapy.setAdapter(spinnerAdapter);
         binding.includePanelPaciente.includeFicha.inputFullName.setText(profile.fullName);
-        binding.includePanelPaciente.tabFicha.setOnClickListener(v -> selectPatientTab("ficha"));
-        binding.includePanelPaciente.tabExamesPaciente.setOnClickListener(v -> selectPatientTab("exams"));
-        binding.includePanelPaciente.tabOrientacoes.setOnClickListener(v -> selectPatientTab("guide"));
+        binding.includePanelPaciente.tabFicha.setOnClickListener(v -> selecionarAbaPaciente("ficha"));
+        binding.includePanelPaciente.tabExamesPaciente.setOnClickListener(v -> selecionarAbaPaciente("exams"));
+        binding.includePanelPaciente.tabOrientacoes.setOnClickListener(v -> selecionarAbaPaciente("guide"));
         binding.includePanelPaciente.includeFicha.buttonSaveFicha.setBackgroundResource(R.drawable.bg_btn_primary);
         binding.includePanelPaciente.buttonSendExam.setBackgroundResource(R.drawable.bg_btn_primary);
         binding.includePanelPaciente.includeFicha.buttonSaveFicha.setOnClickListener(v ->
-                toast(getString(R.string.action_save_ficha))
+                mostrarMensagem(getString(R.string.action_save_ficha))
         );
         binding.includePanelPaciente.buttonPickFile.setOnClickListener(v ->
-                toast(getString(R.string.action_pick_file))
+                mostrarMensagem(getString(R.string.action_pick_file))
         );
         binding.includePanelPaciente.buttonSendExam.setOnClickListener(v ->
-                toast(getString(R.string.action_send_exam))
+                mostrarMensagem(getString(R.string.action_send_exam))
         );
-        selectPatientTab("ficha");
+        selecionarAbaPaciente("ficha");
     }
 
-    private void showMannequin(ClinicSession profile) {
+    private void mostrarBoneco(SessaoUsuario profile) {
         patientPreview = false;
-        binding.includeMannequin.textCanvasHint.setText(profile.isAdmin() ? R.string.canvas_hint_admin : R.string.canvas_hint_patient);
+        binding.includeMannequin.textCanvasHint.setText(profile.ehProfissional() ? R.string.canvas_hint_admin : R.string.canvas_hint_patient);
         binding.includeMannequin.buttonOpenPanel.setText(R.string.open_panel);
         activeScreen = "mannequin";
         binding.bannerMannequin.setVisibility(openPatientId.isEmpty() ? View.GONE : View.VISIBLE);
@@ -248,23 +251,23 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPro.getRoot().setVisibility(View.GONE);
         binding.includePanelPaciente.getRoot().setVisibility(View.GONE);
         binding.includeCalendar.getRoot().setVisibility(View.GONE);
-        styleSwitch(true, profile);
+        atualizarAbasPrincipais(true, profile);
     }
 
-    private void showPanel(ClinicSession profile) {
-        if (patientPreview && profile.isAdmin()) selectProTab("joints");
+    private void mostrarPainel(SessaoUsuario profile) {
+        if (patientPreview && profile.ehProfissional()) selecionarAbaProfissional("joints");
         patientPreview = false;
         activeScreen = "panel";
         binding.bannerMannequin.setVisibility(View.GONE);
         binding.includeMannequin.getRoot().setVisibility(View.GONE);
-        binding.includePanelPro.getRoot().setVisibility(profile.isAdmin() ? View.VISIBLE : View.GONE);
-        binding.includePanelPaciente.getRoot().setVisibility(profile.isAdmin() ? View.GONE : View.VISIBLE);
+        binding.includePanelPro.getRoot().setVisibility(profile.ehProfissional() ? View.VISIBLE : View.GONE);
+        binding.includePanelPaciente.getRoot().setVisibility(profile.ehProfissional() ? View.GONE : View.VISIBLE);
         binding.includeCalendar.getRoot().setVisibility(View.GONE);
-        styleSwitch(false, profile);
+        atualizarAbasPrincipais(false, profile);
     }
 
-    private void styleSwitch(boolean mannequin, ClinicSession profile) {
-        markTab(binding.buttonCalendarTab, false);
+    private void atualizarAbasPrincipais(boolean mannequin, SessaoUsuario profile) {
+        marcarAbaAtiva(binding.buttonCalendarTab, false);
         binding.buttonMannequinTab.setSelected(mannequin);
         binding.buttonPanelTab.setSelected(!mannequin);
         binding.buttonMannequinTab.setTextColor(ContextCompat.getColor(
@@ -273,33 +276,33 @@ public class DashboardFragment extends Fragment {
         binding.buttonPanelTab.setTextColor(ContextCompat.getColor(
                 requireContext(), !mannequin ? R.color.white : R.color.maya_text_muted
         ));
-        binding.buttonPanelTab.setText(profile.isAdmin() ? R.string.nav_panel : R.string.nav_my_area);
+        binding.buttonPanelTab.setText(profile.ehProfissional() ? R.string.nav_panel : R.string.nav_my_area);
     }
 
-    private void selectProTab(String tab) {
-        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
+    private void selecionarAbaProfissional(String tab) {
+        if (DadosClinica.current == null || !DadosClinica.current.ehProfissional()) return;
         binding.includePanelPro.contentPacientes.setVisibility("patients".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPro.contentArticulacoes.setVisibility("joints".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPro.contentCadastrar.setVisibility("register".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPro.contentExamesPro.setVisibility("exams".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPro.contentVisao.setVisibility("vision".equals(tab) ? View.VISIBLE : View.GONE);
-        markTab(binding.includePanelPro.tabPacientes, "patients".equals(tab));
-        markTab(binding.includePanelPro.tabArticulacoes, "joints".equals(tab));
-        markTab(binding.includePanelPro.tabCadastrar, "register".equals(tab));
-        markTab(binding.includePanelPro.tabExames, "exams".equals(tab));
-        markTab(binding.includePanelPro.tabVisao, "vision".equals(tab));
+        marcarAbaAtiva(binding.includePanelPro.tabPacientes, "patients".equals(tab));
+        marcarAbaAtiva(binding.includePanelPro.tabArticulacoes, "joints".equals(tab));
+        marcarAbaAtiva(binding.includePanelPro.tabCadastrar, "register".equals(tab));
+        marcarAbaAtiva(binding.includePanelPro.tabExames, "exams".equals(tab));
+        marcarAbaAtiva(binding.includePanelPro.tabVisao, "vision".equals(tab));
     }
 
-    private void selectPatientTab(String tab) {
+    private void selecionarAbaPaciente(String tab) {
         binding.includePanelPaciente.contentFicha.setVisibility("ficha".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPaciente.contentExamesPaciente.setVisibility("exams".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPaciente.contentOrientacoes.setVisibility("guide".equals(tab) ? View.VISIBLE : View.GONE);
-        markTab(binding.includePanelPaciente.tabFicha, "ficha".equals(tab));
-        markTab(binding.includePanelPaciente.tabExamesPaciente, "exams".equals(tab));
-        markTab(binding.includePanelPaciente.tabOrientacoes, "guide".equals(tab));
+        marcarAbaAtiva(binding.includePanelPaciente.tabFicha, "ficha".equals(tab));
+        marcarAbaAtiva(binding.includePanelPaciente.tabExamesPaciente, "exams".equals(tab));
+        marcarAbaAtiva(binding.includePanelPaciente.tabOrientacoes, "guide".equals(tab));
     }
 
-    private void markTab(Button button, boolean active) {
+    private void marcarAbaAtiva(Button button, boolean active) {
         button.setSelected(active);
         button.setTextColor(ContextCompat.getColor(
                 requireContext(),
@@ -307,11 +310,11 @@ public class DashboardFragment extends Fragment {
         ));
     }
 
-    private void populateJoints() {
+    private void atualizarListaDeRegioes() {
         if (binding == null) {
             return;
         }
-        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
+        if (DadosClinica.current == null || !DadosClinica.current.ehProfissional()) return;
         boolean editable = !openPatientId.isEmpty() && !selectedJointId.isEmpty();
         binding.includePanelPro.buttonPatientPreview.setEnabled(!openPatientId.isEmpty());
         binding.includePanelPro.inputYoutube.setEnabled(editable);
@@ -320,46 +323,46 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPro.buttonOpenVideo.setEnabled(editable);
         GridLayout grid = binding.includePanelPro.gridJoints;
         grid.removeAllViews();
-        String ownerId = hotspotOwnerId();
-        for (ClinicalHotspot hotspot : ClinicalHotspot.ALL) {
-            View chip = LayoutInflater.from(requireContext()).inflate(R.layout.item_joint_chip, grid, false);
+        String ownerId = obterIdDoPacienteDoBoneco();
+        for (PontoDor hotspot : PontoDor.ALL) {
+            View chip = LayoutInflater.from(requireContext()).inflate(R.layout.item_regiao_corpo, grid, false);
             TextView title = chip.findViewById(R.id.textJointLabel);
             TextView status = chip.findViewById(R.id.textJointStatus);
             title.setText(hotspot.label);
             chip.setAlpha(hotspot.id.equals(selectedJointId) ? 1f : .8f);
             chip.setContentDescription(hotspot.label + ". " + hotspot.region);
-            status.setText(ClinicStore.hasVideo(ownerId, hotspot.id) ? R.string.with_link : R.string.without_link);
+            status.setText(DadosClinica.temVideoNaRegiao(ownerId, hotspot.id) ? R.string.with_link : R.string.without_link);
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
             params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
             params.width = 0;
             chip.setLayoutParams(params);
-            chip.setOnClickListener(v -> selectJoint(hotspot, false));
+            chip.setOnClickListener(v -> selecionarRegiao(hotspot, false));
             grid.addView(chip);
         }
     }
 
-    private void handleHotspot(ClinicSession profile, ClinicalHotspot hotspot) {
-        if (profile.isAdmin() && !patientPreview) {
+    private void aoTocarNaRegiao(SessaoUsuario profile, PontoDor hotspot) {
+        if (profile.ehProfissional() && !patientPreview) {
             if (openPatientId.isEmpty()) {
-                toast("Abra o boneco de um paciente em Pacientes → Ver boneco.");
+                mostrarMensagem("Abra o boneco de um paciente em Pacientes → Ver boneco.");
                 return;
             }
-            selectJoint(hotspot, true);
+            selecionarRegiao(hotspot, true);
             return;
         }
-        binding.includeMannequin.mannequinView.setSelectedId(hotspot.id);
-        String url = ClinicStore.videoUrl(profile.isAdmin() ? openPatientId : profile.id, hotspot.id);
+        binding.includeMannequin.mannequinView.destacarRegiao(hotspot.id);
+        String url = DadosClinica.obterLinkDaRegiao(profile.ehProfissional() ? openPatientId : profile.id, hotspot.id);
         if (url.isEmpty()) {
-            toast(hotspot.label + ": região selecionada. Ainda sem vídeo cadastrado.");
+            mostrarMensagem(hotspot.label + ": região selecionada. Ainda sem vídeo cadastrado.");
             return;
         }
-        openUrl(url);
+        abrirLink(url);
     }
 
-    private void selectJoint(ClinicalHotspot hotspot, boolean openPanel) {
-        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
+    private void selecionarRegiao(PontoDor hotspot, boolean openPanel) {
+        if (DadosClinica.current == null || !DadosClinica.current.ehProfissional()) return;
         if (openPatientId.isEmpty()) {
-            toast("Escolha um paciente em Pacientes → Ver boneco.");
+            mostrarMensagem("Escolha um paciente em Pacientes → Ver boneco.");
             return;
         }
         selectedJointId = hotspot.id;
@@ -370,87 +373,87 @@ public class DashboardFragment extends Fragment {
                 : hotspot.z < 0 ? "Parte POSTERIOR · costas" : "Parte ANTERIOR · frente";
         binding.includePanelPro.textJointOrientation.setText("Paciente: " + openPatientName + "\n"
                 + hotspot.region + " · " + side + "\n" + getString(R.string.joint_orientation_hint));
-        binding.includePanelPro.inputYoutube.setText(ClinicStore.videoUrl(hotspotOwnerId(), hotspot.id));
-        binding.includeMannequin.mannequinView.setSelectedId(hotspot.id);
-        populateJoints();
+        binding.includePanelPro.inputYoutube.setText(DadosClinica.obterLinkDaRegiao(obterIdDoPacienteDoBoneco(), hotspot.id));
+        binding.includeMannequin.mannequinView.destacarRegiao(hotspot.id);
+        atualizarListaDeRegioes();
         if (openPanel) {
-            selectProTab("joints");
-            showPanel(ClinicStore.current);
+            selecionarAbaProfissional("joints");
+            mostrarPainel(DadosClinica.current);
         }
         binding.includePanelPro.getRoot().post(() -> binding.includePanelPro.getRoot().smoothScrollTo(0, 0));
     }
 
-    private String hotspotOwnerId() {
-        if (ClinicStore.current != null && !ClinicStore.current.isAdmin()) {
-            return ClinicStore.current.id;
+    private String obterIdDoPacienteDoBoneco() {
+        if (DadosClinica.current != null && !DadosClinica.current.ehProfissional()) {
+            return DadosClinica.current.id;
         }
         return openPatientId;
     }
 
-    private void saveJointVideo() {
-        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
+    private void salvarVideoDaRegiao() {
+        if (DadosClinica.current == null || !DadosClinica.current.ehProfissional()) return;
         if (openPatientId.isEmpty() || selectedJointId.isEmpty()) {
-            toast(openPatientId.isEmpty()
+            mostrarMensagem(openPatientId.isEmpty()
                     ? "Abra o boneco de um paciente antes de salvar o vídeo."
                     : getString(R.string.no_joint));
             return;
         }
         String url = String.valueOf(binding.includePanelPro.inputYoutube.getText()).trim();
-        if (!url.isEmpty() && !isYoutube(url)) {
-            toast("Informe uma URL válida do YouTube.");
+        if (!url.isEmpty() && !ehLinkDoYoutube(url)) {
+            mostrarMensagem("Informe uma URL válida do YouTube.");
             return;
         }
-        ClinicStore.setVideoUrl(openPatientId, selectedJointId, url);
-        populateJoints();
-        toast("Vídeo salvo para " + openPatientName + " · " + selectedJoint);
+        DadosClinica.salvarLinkDaRegiao(openPatientId, selectedJointId, url);
+        atualizarListaDeRegioes();
+        mostrarMensagem("Vídeo salvo para " + openPatientName + " · " + selectedJoint);
     }
 
-    private void clearJointVideo() {
-        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
+    private void removerVideoDaRegiao() {
+        if (DadosClinica.current == null || !DadosClinica.current.ehProfissional()) return;
         if (openPatientId.isEmpty() || selectedJointId.isEmpty()) {
-            toast(getString(R.string.no_joint));
+            mostrarMensagem(getString(R.string.no_joint));
             return;
         }
-        ClinicStore.setVideoUrl(openPatientId, selectedJointId, "");
+        DadosClinica.salvarLinkDaRegiao(openPatientId, selectedJointId, "");
         binding.includePanelPro.inputYoutube.setText("");
-        populateJoints();
-        toast("Vídeo apagado.");
+        atualizarListaDeRegioes();
+        mostrarMensagem("Vídeo apagado.");
     }
 
-    private void openSelectedVideo() {
-        if (ClinicStore.current == null || !ClinicStore.current.isAdmin()) return;
+    private void abrirVideoSelecionado() {
+        if (DadosClinica.current == null || !DadosClinica.current.ehProfissional()) return;
         String url = String.valueOf(binding.includePanelPro.inputYoutube.getText()).trim();
         if (url.isEmpty() && !selectedJointId.isEmpty()) {
-            url = ClinicStore.videoUrl(hotspotOwnerId(), selectedJointId);
+            url = DadosClinica.obterLinkDaRegiao(obterIdDoPacienteDoBoneco(), selectedJointId);
         }
         if (url.isEmpty()) {
-            toast("Cole a URL do YouTube e clique em Salvar Alteração.");
+            mostrarMensagem("Cole a URL do YouTube e clique em Salvar Alteração.");
             return;
         }
-        if (!isYoutube(url)) {
-            toast("Informe uma URL válida do YouTube.");
+        if (!ehLinkDoYoutube(url)) {
+            mostrarMensagem("Informe uma URL válida do YouTube.");
             return;
         }
-        openUrl(url);
+        abrirLink(url);
     }
 
-    private void openUrl(String url) {
+    private void abrirLink(String url) {
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
         } catch (Exception ignored) {
-            toast("Não foi possível abrir o vídeo.");
+            mostrarMensagem("Não foi possível abrir o vídeo.");
         }
     }
 
-    private boolean isYoutube(String url) {
-        return ClinicStore.isYoutubeUrl(url);
+    private boolean ehLinkDoYoutube(String url) {
+        return DadosClinica.ehLinkValidoDoYoutube(url);
     }
 
-    private void refreshPatients() {
-        List<ClinicSession> copy = new ArrayList<>(ClinicStore.patients);
-        if (ClinicStore.current != null && ClinicStore.current.isAdmin()) {
+    private void atualizarListaDePacientes() {
+        List<SessaoUsuario> copy = new ArrayList<>(DadosClinica.patients);
+        if (DadosClinica.current != null && DadosClinica.current.ehProfissional()) {
             List<String> names = new ArrayList<>();
-            for (ClinicSession patient : copy) names.add(patient.fullName + " · " + patient.email);
+            for (SessaoUsuario patient : copy) names.add(patient.fullName + " · " + patient.email);
             ArrayAdapter<String> options = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, names);
             options.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             binding.includeCalendar.inputAppointmentPatient.setAdapter(options);
@@ -470,11 +473,11 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPro.textPatientCount.setText(String.valueOf(copy.size()));
         binding.includePanelPro.textMannequinCount.setText(String.valueOf(copy.size()));
         if (adapter != null) {
-            adapter.submit(copy, openPatientId);
+            adapter.atualizarLista(copy, openPatientId);
         }
     }
 
-    private void registerPatient() {
+    private void cadastrarPaciente() {
         String name = String.valueOf(binding.includePanelPro.inputPatientName.getText()).trim();
         String email = String.valueOf(binding.includePanelPro.inputPatientEmail.getText()).trim().toLowerCase(Locale.ROOT);
         String password = String.valueOf(binding.includePanelPro.inputPatientPassword.getText());
@@ -485,7 +488,7 @@ public class DashboardFragment extends Fragment {
             message.setText("Informe nome, e-mail e senha com pelo menos 6 caracteres.");
             return;
         }
-        if (ClinicStore.isProfessionalEmail(email)) {
+        if (DadosClinica.ehEmailProfissional(email)) {
             message.setTextColor(ContextCompat.getColor(requireContext(), R.color.maya_danger));
             message.setText("Este e-mail é da profissional e não pode ser usado por paciente.");
             return;
@@ -496,7 +499,7 @@ public class DashboardFragment extends Fragment {
             return;
         }
         try {
-            ClinicStore.addPatient(name, email, password);
+            DadosClinica.adicionarPaciente(name, email, password);
         } catch (IllegalArgumentException | SecurityException error) {
             message.setTextColor(ContextCompat.getColor(requireContext(), R.color.maya_danger));
             message.setText(error.getMessage());
@@ -507,43 +510,44 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPro.inputPatientPassword.setText("");
         message.setTextColor(ContextCompat.getColor(requireContext(), R.color.maya_success));
         message.setText("Paciente " + email + " cadastrado.");
-        refreshPatients();
+        atualizarListaDePacientes();
     }
 
-    private void addAppointment() {
+    private void agendarConsulta() {
         int index = binding.includeCalendar.inputAppointmentPatient.getSelectedItemPosition();
-        if (index < 0 || index >= ClinicStore.patients.size()) {
-            toast("Cadastre e selecione um paciente primeiro.");
+        if (index < 0 || index >= DadosClinica.patients.size()) {
+            mostrarMensagem("Cadastre e selecione um paciente primeiro.");
             return;
         }
-        ClinicSession patient = ClinicStore.patients.get(index);
+        SessaoUsuario patient = DadosClinica.patients.get(index);
         String time = String.valueOf(binding.includeCalendar.inputAppointmentTime.getText()).trim();
         String notes = String.valueOf(binding.includeCalendar.inputAppointmentNotes.getText()).trim();
         try {
-            ClinicStore.addAppointment(patient.id, patient.fullName, selectedDay, time, notes);
+            DadosClinica.agendarConsulta(patient.id, patient.fullName, selectedDay, time, notes);
         } catch (IllegalArgumentException | SecurityException error) {
-            toast(error.getMessage());
+            mostrarMensagem(error.getMessage());
             return;
         }
         binding.includeCalendar.inputAppointmentTime.setText("");
         binding.includeCalendar.inputAppointmentNotes.setText("");
-        refreshAppointments(true);
-        toast("Horário agendado.");
+        atualizarAgendamentos(true);
+        mostrarMensagem("Horário agendado.");
     }
 
-    private void setupCalendar(ClinicSession profile) {
-        binding.includeCalendar.appointmentForm.setVisibility(profile.isAdmin() ? View.VISIBLE : View.GONE);
-        binding.includeCalendar.textCalendarLead.setText(profile.isAdmin()
+    private void configurarCalendario(SessaoUsuario profile) {
+        if (!profile.ehProfissional()) return;
+        binding.includeCalendar.appointmentForm.setVisibility(profile.ehProfissional() ? View.VISIBLE : View.GONE);
+        binding.includeCalendar.textCalendarLead.setText(profile.ehProfissional()
                 ? R.string.calendar_lead : R.string.calendar_lead_patient);
-        appointmentsAdapter = new AppointmentAdapter(profile.isAdmin() ? visit -> {
+        appointmentsAdapter = new AdaptadorAgendamentos(profile.ehProfissional() ? visit -> {
             new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                     .setTitle(R.string.cancel_appointment)
                     .setMessage(visit.patientName + " · " + visit.time + "\n" + dayFormat.format(new Date(visit.dayMillis)))
                     .setNegativeButton("Voltar", null)
                     .setPositiveButton("Cancelar agendamento", (dialog, which) -> {
-                        ClinicStore.cancelAppointment(visit.id);
-                        refreshAppointments(profile.isAdmin());
-                        toast("Agendamento cancelado.");
+                        DadosClinica.cancelarAgendamento(visit.id);
+                        atualizarAgendamentos(profile.ehProfissional());
+                        mostrarMensagem("Agendamento cancelado.");
                     }).show();
         } : null);
         binding.includeCalendar.listAppointments.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -552,48 +556,49 @@ public class DashboardFragment extends Fragment {
         binding.includeCalendar.calendarView.setOnDateChangeListener((view, year, month, day) -> {
             java.util.Calendar date = java.util.Calendar.getInstance();
             date.set(year, month, day, 0, 0, 0);
-            selectedDay = ClinicStore.startOfDay(date.getTimeInMillis());
-            refreshAppointments(profile.isAdmin());
+            selectedDay = DadosClinica.inicioDoDia(date.getTimeInMillis());
+            atualizarAgendamentos(profile.ehProfissional());
         });
         binding.includeCalendar.buttonToday.setOnClickListener(v -> {
-            selectedDay = ClinicStore.startOfDay(System.currentTimeMillis());
+            selectedDay = DadosClinica.inicioDoDia(System.currentTimeMillis());
             binding.includeCalendar.calendarView.setDate(selectedDay, true, true);
-            refreshAppointments(profile.isAdmin());
+            atualizarAgendamentos(profile.ehProfissional());
         });
-        binding.includeCalendar.buttonAddAppointment.setOnClickListener(v -> addAppointment());
+        binding.includeCalendar.buttonAddAppointment.setOnClickListener(v -> agendarConsulta());
         binding.includeCalendar.inputAppointmentTime.setOnClickListener(v -> {
             java.util.Calendar now = java.util.Calendar.getInstance();
             new android.app.TimePickerDialog(requireContext(), (picker, hour, minute) ->
                     binding.includeCalendar.inputAppointmentTime.setText(String.format(Locale.ROOT, "%02d:%02d", hour, minute)),
                     now.get(java.util.Calendar.HOUR_OF_DAY), now.get(java.util.Calendar.MINUTE), true).show();
         });
-        refreshAppointments(profile.isAdmin());
+        atualizarAgendamentos(profile.ehProfissional());
     }
 
-    private void showCalendar(ClinicSession profile) {
+    private void mostrarCalendario(SessaoUsuario profile) {
+        if (!profile.ehProfissional() || DadosClinica.current == null || !DadosClinica.current.ehProfissional()) return;
         activeScreen = "calendar";
         binding.bannerMannequin.setVisibility(View.GONE);
         binding.includeMannequin.getRoot().setVisibility(View.GONE);
         binding.includePanelPro.getRoot().setVisibility(View.GONE);
         binding.includePanelPaciente.getRoot().setVisibility(View.GONE);
         binding.includeCalendar.getRoot().setVisibility(View.VISIBLE);
-        markTab(binding.buttonMannequinTab, false);
-        markTab(binding.buttonPanelTab, false);
-        markTab(binding.buttonCalendarTab, true);
-        refreshAppointments(profile.isAdmin());
+        marcarAbaAtiva(binding.buttonMannequinTab, false);
+        marcarAbaAtiva(binding.buttonPanelTab, false);
+        marcarAbaAtiva(binding.buttonCalendarTab, true);
+        atualizarAgendamentos(profile.ehProfissional());
     }
 
-    private void refreshAppointments(boolean professional) {
+    private void atualizarAgendamentos(boolean professional) {
         if (appointmentsAdapter == null) return;
-        List<ClinicAppointment> items = ClinicStore.appointmentsForDay(selectedDay,
-                professional ? null : ClinicStore.current.id);
+        List<AgendamentoConsulta> items = DadosClinica.listarAgendamentosDoDia(selectedDay,
+                professional ? null : DadosClinica.current.id);
         binding.includeCalendar.textSelectedDay.setText(getString(R.string.calendar_day_summary,
                 dayFormat.format(new Date(selectedDay)), items.size()));
-        appointmentsAdapter.submit(items);
+        appointmentsAdapter.atualizarLista(items);
         binding.includeCalendar.textAppointmentsEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
-    private void saveCredentials(ClinicSession profile) {
+    private void salvarDadosDeAcesso(SessaoUsuario profile) {
         String nextEmail = String.valueOf(binding.includeCredentials.inputProfileEmail.getText()).trim();
         String password = String.valueOf(binding.includeCredentials.inputProfilePassword.getText());
         String confirm = String.valueOf(binding.includeCredentials.inputProfilePasswordConfirm.getText());
@@ -609,8 +614,8 @@ public class DashboardFragment extends Fragment {
             binding.includeCredentials.textCredentialsError.setVisibility(View.VISIBLE);
             return;
         }
-        List<ClinicSession> accounts = profile.isAdmin() ? ClinicStore.professionals : ClinicStore.patients;
-        for (ClinicSession account : accounts) {
+        List<SessaoUsuario> accounts = profile.ehProfissional() ? DadosClinica.professionals : DadosClinica.patients;
+        for (SessaoUsuario account : accounts) {
             if (!account.id.equals(profile.id) && nextEmail.equals(account.email)) {
                 binding.includeCredentials.textCredentialsError.setText("Este e-mail já está em uso neste perfil.");
                 binding.includeCredentials.textCredentialsError.setVisibility(View.VISIBLE);
@@ -621,13 +626,13 @@ public class DashboardFragment extends Fragment {
         if (!password.isEmpty()) {
             profile.password = password;
         }
-        ClinicStore.persist();
+        DadosClinica.salvarDadosNoAparelho();
         binding.includeTopbar.textProfileEmail.setText(profile.email);
         binding.includeCredentials.getRoot().setVisibility(View.GONE);
-        toast("Dados atualizados.");
+        mostrarMensagem("Dados atualizados.");
     }
 
-    private void toast(String text) {
+    private void mostrarMensagem(String text) {
         binding.textToast.setText(text);
         binding.textToast.setVisibility(View.VISIBLE);
         handler.removeCallbacksAndMessages(null);

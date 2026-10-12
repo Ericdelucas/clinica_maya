@@ -16,15 +16,15 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /** Actual lit 3D geometry with a depth buffer; gestures rotate the entire model. */
-public class WoodenMannequinView extends GLSurfaceView {
-    public interface Listener { void onHotspotSelected(ClinicalHotspot hotspot); }
+public class Boneco3DView extends GLSurfaceView {
+    public interface Listener { void onHotspotSelected(PontoDor hotspot); }
     private final Scene scene = new Scene();
     private Listener listener;
     private float lastX, drag;
     private final int touchSlop;
 
-    public WoodenMannequinView(Context context) { this(context, null); }
-    public WoodenMannequinView(Context context, AttributeSet attrs) {
+    public Boneco3DView(Context context) { this(context, null); }
+    public Boneco3DView(Context context, AttributeSet attrs) {
         super(context, attrs);
         touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         setEGLContextClientVersion(2);
@@ -34,12 +34,12 @@ public class WoodenMannequinView extends GLSurfaceView {
         setRenderMode(RENDERMODE_WHEN_DIRTY);
         setContentDescription("Manequim clínico 3D. Arraste para girar e toque nos pontos de dor.");
     }
-    public void setListener(Listener value) { listener = value; }
-    public void showSide(boolean back) {
+    public void definirAoSelecionarRegiao(Listener value) { listener = value; }
+    public void mostrarLadoDoCorpo(boolean back) {
         queueEvent(() -> scene.yaw = back ? 180 : 0);
         requestRender();
     }
-    public void setSelectedId(String value) {
+    public void destacarRegiao(String value) {
         queueEvent(() -> scene.selected = value == null ? "" : value);
         requestRender();
     }
@@ -63,7 +63,7 @@ public class WoodenMannequinView extends GLSurfaceView {
                 float x = event.getX(), y = event.getY();
                 float radius = 28 * getResources().getDisplayMetrics().density;
                 queueEvent(() -> {
-                    ClinicalHotspot hit = scene.pick(x, y, radius);
+                    PontoDor hit = scene.pick(x, y, radius);
                     if (hit != null) {
                         scene.selected = hit.id;
                         post(() -> { performClick(); if (listener != null) listener.onHotspotSelected(hit); });
@@ -174,12 +174,12 @@ public class WoodenMannequinView extends GLSurfaceView {
             GLES20.glVertexAttribPointer(normal,3,GLES20.GL_FLOAT,false,0,sphere);
             GLES20.glEnableVertexAttribArray(position); GLES20.glEnableVertexAttribArray(normal);
             for(Shape shape:body) draw(shape,.77f,.63f,.46f);
-            for(ClinicalHotspot h:ClinicalHotspot.ALL) {
+            for(PontoDor h:PontoDor.ALL) {
                 float z=markerZ(h), radius=h.id.equals(selected)?.065f:.047f;
                 draw(new Shape(h.x,h.y,z,radius,radius,radius,0),.91f,h.id.equals(selected)?.25f:.06f,.08f);
             }
         }
-        private static float markerZ(ClinicalHotspot h) {
+        private static float markerZ(PontoDor h) {
             if(h.z<0) return h.z-.055f;
             if(h.z>0) return h.z+.05f;
             return .085f;
@@ -198,10 +198,10 @@ public class WoodenMannequinView extends GLSurfaceView {
             GLES20.glUniformMatrix4fv(modelView,1,false,mv,0);
             GLES20.glUniform3f(color,r,g,b); GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,count);
         }
-        ClinicalHotspot pick(float x,float y,float radius) {
+        PontoDor pick(float x,float y,float radius) {
             transforms(); float[] transform=mvp.clone();
-            ClinicalHotspot best=null; float distance=radius*radius;
-            for(ClinicalHotspot h:ClinicalHotspot.ALL) {
+            PontoDor best=null; float distance=radius*radius;
+            for(PontoDor h:PontoDor.ALL) {
                 float z=markerZ(h);
                 double radians=Math.toRadians(yaw);
                 // Reject points on the far side of the body.

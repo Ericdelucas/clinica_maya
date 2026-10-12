@@ -1,6 +1,6 @@
 package com.example.appdamaya;
 
-public final class ClinicAppointment {
+public final class AgendamentoConsulta {
     public final String id;
     public final String patientName;
     public final String patientId;
@@ -8,7 +8,7 @@ public final class ClinicAppointment {
     public final String time;
     public final String notes;
 
-    public ClinicAppointment(
+    public AgendamentoConsulta(
             String id,
             String patientId,
             String patientName,

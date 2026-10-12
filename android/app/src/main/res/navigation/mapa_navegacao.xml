@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mapa_navegacao"
+    app:startDestination="@id/tela_login">
+
+    <fragment
+        android:id="@+id/tela_login"
+        android:name="com.example.appdamaya.TelaLoginFragment"
+        android:label="@string/login_title"
+        tools:layout="@layout/tela_login">
+        <action
+            android:id="@+id/acao_login_para_painel"
+            app:destination="@id/tela_painel"
+            app:popUpTo="@id/tela_login"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/tela_painel"
+        android:name="com.example.appdamaya.TelaPainelFragment"
+        android:label="@string/app_name"
+        tools:layout="@layout/tela_painel">
+        <action
+            android:id="@+id/acao_painel_para_login"
+            app:destination="@id/tela_login"
+            app:popUpTo="@id/tela_painel"
+            app:popUpToInclusive="true" />
+    </fragment>
+</navigation>

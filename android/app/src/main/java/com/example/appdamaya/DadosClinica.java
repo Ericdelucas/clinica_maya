@@ -12,29 +12,29 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
-public final class ClinicStore {
-    public static ClinicSession current;
+public final class DadosClinica {
+    public static SessaoUsuario current;
     private static SharedPreferences preferences;
 
-    public static final List<ClinicSession> professionals = new ArrayList<>();
-    public static final List<ClinicSession> patients = new ArrayList<>();
-    public static final List<ClinicAppointment> appointments = new ArrayList<>();
+    public static final List<SessaoUsuario> professionals = new ArrayList<>();
+    public static final List<SessaoUsuario> patients = new ArrayList<>();
+    public static final List<AgendamentoConsulta> appointments = new ArrayList<>();
     private static final Map<String, Map<String, String>> jointVideos = new HashMap<>();
 
     static {
-        professionals.add(ClinicSession.professional(
+        professionals.add(SessaoUsuario.professional(
                 "professional-maya",
                 "mayayyamamoto@gmail.com",
                 "Maya Yamamoto",
                 "123"
         ));
-        professionals.add(ClinicSession.professional(
+        professionals.add(SessaoUsuario.professional(
                 "professional-eric",
                 "ericdelucass@gmail.com",
                 "Eric",
                 "1234"
         ));
-        patients.add(ClinicSession.patient(
+        patients.add(SessaoUsuario.patient(
                 "patient-eric",
                 "ericdelucass@gmail.com",
                 "Eric",
@@ -42,18 +42,18 @@ public final class ClinicStore {
         ));
     }
 
-    private ClinicStore() {}
+    private DadosClinica() {}
 
     // Local prototype: accounts are stored only in this app's private storage.
-    public static void initialize(Context context) {
+    public static void inicializar(Context context) {
         if (preferences != null) return;
         preferences = context.getApplicationContext().getSharedPreferences("clinic_store", Context.MODE_PRIVATE);
         String saved = preferences.getString("accounts_and_videos", null);
-        if (saved == null) { seedExamplePatients(); return; }
+        if (saved == null) { criarPacientesDeExemplo(); return; }
         try {
             JSONObject root = new JSONObject(saved);
-            List<ClinicSession> loadedProfessionals = decodeAccounts(root.getJSONArray("professionals"), true);
-            List<ClinicSession> loadedPatients = decodeAccounts(root.getJSONArray("patients"), false);
+            List<SessaoUsuario> loadedProfessionals = lerContasSalvas(root.getJSONArray("professionals"), true);
+            List<SessaoUsuario> loadedPatients = lerContasSalvas(root.getJSONArray("patients"), false);
             Map<String, Map<String, String>> loadedVideos = new HashMap<>();
             JSONObject videos = root.getJSONObject("videos");
             java.util.Iterator<String> owners = videos.keys();
@@ -68,11 +68,11 @@ public final class ClinicStore {
                 }
                 loadedVideos.put(owner, links);
             }
-            List<ClinicAppointment> loadedAppointments = new ArrayList<>();
+            List<AgendamentoConsulta> loadedAppointments = new ArrayList<>();
             JSONArray savedAppointments = root.optJSONArray("appointments");
             if (savedAppointments != null) for (int i = 0; i < savedAppointments.length(); i++) {
                 JSONObject row = savedAppointments.getJSONObject(i);
-                loadedAppointments.add(new ClinicAppointment(row.getString("id"), row.getString("patientId"),
+                loadedAppointments.add(new AgendamentoConsulta(row.getString("id"), row.getString("patientId"),
                         row.getString("patientName"), row.getLong("day"), row.getString("time"), row.optString("notes")));
             }
             appointments.clear();
@@ -86,40 +86,40 @@ public final class ClinicStore {
         } catch (JSONException ignored) {
             // Keep the initial accounts if the saved snapshot is invalid.
         }
-        seedExamplePatients();
+        criarPacientesDeExemplo();
     }
 
-    public static void seedExamplePatients() {
-        seedExamplePatient("example-ana", "ana.souza@example.com", "Ana Souza (exemplo)",
+    public static void criarPacientesDeExemplo() {
+        criarPacienteDeExemplo("example-ana", "ana.souza@example.com", "Ana Souza (exemplo)",
                 "https://www.youtube.com/watch?v=aqz-KE-bpKQ", "https://www.youtube.com/watch?v=OHOpb2fS-cM");
-        seedExamplePatient("example-bruno", "bruno.lima@example.com", "Bruno Lima (exemplo)",
+        criarPacienteDeExemplo("example-bruno", "bruno.lima@example.com", "Bruno Lima (exemplo)",
                 "https://www.youtube.com/watch?v=OHOpb2fS-cM", "https://www.youtube.com/watch?v=aqz-KE-bpKQ");
-        persist();
+        salvarDadosNoAparelho();
     }
 
-    private static void seedExamplePatient(String id, String email, String name, String cervical, String shoulder) {
-        for (ClinicSession patient : patients) if (id.equals(patient.id)) return;
-        patients.add(ClinicSession.patient(id, email, name, ""));
+    private static void criarPacienteDeExemplo(String id, String email, String name, String cervical, String shoulder) {
+        for (SessaoUsuario patient : patients) if (id.equals(patient.id)) return;
+        patients.add(SessaoUsuario.patient(id, email, name, ""));
         Map<String, String> videos = new HashMap<>();
         videos.put("coluna_cervical", cervical);
         videos.put("ombro_d", shoulder);
         jointVideos.put(id, videos);
     }
 
-    private static List<ClinicSession> decodeAccounts(JSONArray rows, boolean professional) throws JSONException {
-        List<ClinicSession> accounts = new ArrayList<>();
+    private static List<SessaoUsuario> lerContasSalvas(JSONArray rows, boolean professional) throws JSONException {
+        List<SessaoUsuario> accounts = new ArrayList<>();
         for (int i = 0; i < rows.length(); i++) {
             JSONObject row = rows.getJSONObject(i);
             accounts.add(professional
-                    ? ClinicSession.professional(row.getString("id"), row.getString("email"), row.getString("name"), row.getString("password"))
-                    : ClinicSession.patient(row.getString("id"), row.getString("email"), row.getString("name"), row.getString("password")));
+                    ? SessaoUsuario.professional(row.getString("id"), row.getString("email"), row.getString("name"), row.getString("password"))
+                    : SessaoUsuario.patient(row.getString("id"), row.getString("email"), row.getString("name"), row.getString("password")));
         }
         return accounts;
     }
 
-    private static JSONArray encodeAccounts(List<ClinicSession> accounts) throws JSONException {
+    private static JSONArray converterContasParaSalvar(List<SessaoUsuario> accounts) throws JSONException {
         JSONArray rows = new JSONArray();
-        for (ClinicSession account : accounts) {
+        for (SessaoUsuario account : accounts) {
             JSONObject row = new JSONObject();
             row.put("id", account.id);
             row.put("email", account.email);
@@ -130,19 +130,19 @@ public final class ClinicStore {
         return rows;
     }
 
-    public static void persist() {
+    public static void salvarDadosNoAparelho() {
         if (preferences == null) return;
         try {
             JSONObject root = new JSONObject();
-            root.put("professionals", encodeAccounts(professionals));
-            root.put("patients", encodeAccounts(patients));
+            root.put("professionals", converterContasParaSalvar(professionals));
+            root.put("patients", converterContasParaSalvar(patients));
             JSONObject videos = new JSONObject();
             for (Map.Entry<String, Map<String, String>> entry : jointVideos.entrySet()) {
                 videos.put(entry.getKey(), new JSONObject(entry.getValue()));
             }
             root.put("videos", videos);
             JSONArray visits = new JSONArray();
-            for (ClinicAppointment visit : appointments) {
+            for (AgendamentoConsulta visit : appointments) {
                 JSONObject row = new JSONObject();
                 row.put("id", visit.id); row.put("patientId", visit.patientId);
                 row.put("patientName", visit.patientName); row.put("day", visit.dayMillis);
@@ -156,14 +156,14 @@ public final class ClinicStore {
         }
     }
 
-    public static ClinicSession authenticate(String email, String password, String role) {
+    public static SessaoUsuario autenticar(String email, String password, String role) {
         String normalized = String.valueOf(email).trim().toLowerCase(Locale.ROOT);
         String entered = String.valueOf(password);
-        List<ClinicSession> accounts;
+        List<SessaoUsuario> accounts;
         if ("admin".equals(role)) accounts = professionals;
         else if ("patient".equals(role)) accounts = patients;
         else return null;
-        for (ClinicSession account : accounts) {
+        for (SessaoUsuario account : accounts) {
             if (normalized.equals(account.email) && entered.equals(account.password)) {
                 return account;
             }
@@ -172,34 +172,34 @@ public final class ClinicStore {
     }
 
     /** Temporary local access for exploring the app without credentials. */
-    public static ClinicSession testProfile(String role) {
+    public static SessaoUsuario obterPerfilTeste(String role) {
         if (!"admin".equals(role) && !"patient".equals(role)) {
             throw new IllegalArgumentException("Perfil de teste inválido.");
         }
         boolean professional = "admin".equals(role);
-        if (professional) testProfile("patient");
+        if (professional) obterPerfilTeste("patient");
         String id = professional ? "test-professional" : "test-patient";
-        List<ClinicSession> accounts = professional ? professionals : patients;
-        for (ClinicSession account : accounts) {
+        List<SessaoUsuario> accounts = professional ? professionals : patients;
+        for (SessaoUsuario account : accounts) {
             if (id.equals(account.id)) return account;
         }
-        ClinicSession profile = professional
-                ? ClinicSession.professional(id, "teste@example.com", "Teste", "")
-                : ClinicSession.patient(id, "teste@example.com", "Teste", "");
+        SessaoUsuario profile = professional
+                ? SessaoUsuario.professional(id, "teste@example.com", "Teste", "")
+                : SessaoUsuario.patient(id, "teste@example.com", "Teste", "");
         accounts.add(profile);
-        persist();
+        salvarDadosNoAparelho();
         return profile;
     }
 
-    private static void requireProfessional() {
-        if (current == null || !current.isAdmin()) {
+    private static void exigirProfissional() {
+        if (current == null || !current.ehProfissional()) {
             throw new SecurityException("Apenas a profissional pode realizar esta alteração.");
         }
     }
 
-    public static boolean isProfessionalEmail(String email) {
+    public static boolean ehEmailProfissional(String email) {
         String normalized = String.valueOf(email).trim().toLowerCase(Locale.ROOT);
-        for (ClinicSession account : professionals) {
+        for (SessaoUsuario account : professionals) {
             if (normalized.equals(account.email)) {
                 return true;
             }
@@ -207,46 +207,46 @@ public final class ClinicStore {
         return false;
     }
 
-    public static ClinicSession addPatient(String name, String email, String password) {
-        requireProfessional();
+    public static SessaoUsuario adicionarPaciente(String name, String email, String password) {
+        exigirProfissional();
         String normalized = email.trim().toLowerCase(Locale.ROOT);
-        for (ClinicSession existing : patients) {
+        for (SessaoUsuario existing : patients) {
             if (normalized.equals(existing.email)) {
                 throw new IllegalArgumentException("Já existe um paciente com este e-mail.");
             }
         }
-        ClinicSession patient = ClinicSession.patient(
+        SessaoUsuario patient = SessaoUsuario.patient(
                 UUID.randomUUID().toString(),
                 email.trim().toLowerCase(Locale.ROOT),
                 name.trim(),
                 password
         );
         patients.add(0, patient);
-        persist();
+        salvarDadosNoAparelho();
         return patient;
     }
 
-    public static ClinicAppointment addAppointment(
+    public static AgendamentoConsulta agendarConsulta(
             String patientId,
             String patientName,
             long dayMillis,
             String time,
             String notes
     ) {
-        requireProfessional();
-        ClinicSession patient = null;
-        for (ClinicSession account : patients) if (account.id.equals(patientId)) patient = account;
+        exigirProfissional();
+        SessaoUsuario patient = null;
+        for (SessaoUsuario account : patients) if (account.id.equals(patientId)) patient = account;
         if (patient == null) throw new IllegalArgumentException("Selecione um paciente cadastrado.");
         if (time == null || !time.matches("(?:[01][0-9]|2[0-3]):[0-5][0-9]")) {
             throw new IllegalArgumentException("Informe um horário válido no formato HH:mm.");
         }
-        long day = startOfDay(dayMillis);
-        for (ClinicAppointment visit : appointments) {
+        long day = inicioDoDia(dayMillis);
+        for (AgendamentoConsulta visit : appointments) {
             if (visit.dayMillis == day && visit.time.equals(time)) {
                 throw new IllegalArgumentException("Este horário já está agendado.");
             }
         }
-        ClinicAppointment item = new ClinicAppointment(
+        AgendamentoConsulta item = new AgendamentoConsulta(
                 UUID.randomUUID().toString(),
                 patientId,
                 patient.fullName,
@@ -255,20 +255,20 @@ public final class ClinicStore {
                 notes
         );
         appointments.add(0, item);
-        persist();
+        salvarDadosNoAparelho();
         return item;
     }
 
-    public static void cancelAppointment(String appointmentId) {
-        requireProfessional();
+    public static void cancelarAgendamento(String appointmentId) {
+        exigirProfissional();
         appointments.removeIf(visit -> visit.id.equals(appointmentId));
-        persist();
+        salvarDadosNoAparelho();
     }
 
-    public static List<ClinicAppointment> appointmentsForDay(long dayMillis, String patientId) {
-        long day = startOfDay(dayMillis);
-        List<ClinicAppointment> result = new ArrayList<>();
-        for (ClinicAppointment item : appointments) {
+    public static List<AgendamentoConsulta> listarAgendamentosDoDia(long dayMillis, String patientId) {
+        long day = inicioDoDia(dayMillis);
+        List<AgendamentoConsulta> result = new ArrayList<>();
+        for (AgendamentoConsulta item : appointments) {
             if (item.dayMillis != day) {
                 continue;
             }
@@ -281,7 +281,7 @@ public final class ClinicStore {
         return result;
     }
 
-    public static long startOfDay(long millis) {
+    public static long inicioDoDia(long millis) {
         java.util.Calendar calendar = java.util.Calendar.getInstance();
         calendar.setTimeInMillis(millis);
         calendar.set(java.util.Calendar.HOUR_OF_DAY, 0);
@@ -291,8 +291,8 @@ public final class ClinicStore {
         return calendar.getTimeInMillis();
     }
 
-    public static String videoUrl(String patientId, String jointId) {
-        if (current != null && !current.isAdmin() && !current.id.equals(patientId)) return "";
+    public static String obterLinkDaRegiao(String patientId, String jointId) {
+        if (current != null && !current.ehProfissional() && !current.id.equals(patientId)) return "";
         if (patientId == null || jointId == null) {
             return "";
         }
@@ -304,8 +304,8 @@ public final class ClinicStore {
         return url == null ? "" : url;
     }
 
-    public static void setVideoUrl(String patientId, String jointId, String url) {
-        requireProfessional();
+    public static void salvarLinkDaRegiao(String patientId, String jointId, String url) {
+        exigirProfissional();
         if (patientId == null || jointId == null) {
             return;
         }
@@ -315,19 +315,19 @@ public final class ClinicStore {
             jointVideos.put(patientId, map);
         }
         String trimmed = url == null ? "" : url.trim();
-        if (!trimmed.isEmpty() && !isYoutubeUrl(trimmed)) {
+        if (!trimmed.isEmpty() && !ehLinkValidoDoYoutube(trimmed)) {
             throw new IllegalArgumentException("Informe um link HTTPS válido do YouTube.");
         }
         if (trimmed.isEmpty()) {
             map.remove(jointId);
-            persist();
+            salvarDadosNoAparelho();
             return;
         }
         map.put(jointId, trimmed);
-        persist();
+        salvarDadosNoAparelho();
     }
 
-    public static boolean isYoutubeUrl(String url) {
+    public static boolean ehLinkValidoDoYoutube(String url) {
         try {
             java.net.URI parsed = new java.net.URI(url);
             String host = parsed.getHost();
@@ -340,7 +340,7 @@ public final class ClinicStore {
         }
     }
 
-    public static boolean hasVideo(String patientId, String jointId) {
-        return !videoUrl(patientId, jointId).isEmpty();
+    public static boolean temVideoNaRegiao(String patientId, String jointId) {
+        return !obterLinkDaRegiao(patientId, jointId).isEmpty();
     }
 }

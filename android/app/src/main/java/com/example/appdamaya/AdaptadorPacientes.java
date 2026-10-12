@@ -12,20 +12,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PatientCardAdapter extends RecyclerView.Adapter<PatientCardAdapter.Holder> {
+public class AdaptadorPacientes extends RecyclerView.Adapter<AdaptadorPacientes.Holder> {
     public interface Listener {
-        void onOpenMannequin(ClinicSession patient);
+        void onOpenMannequin(SessaoUsuario patient);
     }
 
-    private final List<ClinicSession> items = new ArrayList<>();
+    private final List<SessaoUsuario> items = new ArrayList<>();
     private final Listener listener;
     private String openPatientId = "";
 
-    public PatientCardAdapter(Listener listener) {
+    public AdaptadorPacientes(Listener listener) {
         this.listener = listener;
     }
 
-    public void submit(List<ClinicSession> next, String openId) {
+    public void atualizarLista(List<SessaoUsuario> next, String openId) {
         items.clear();
         items.addAll(next);
         openPatientId = openId == null ? "" : openId;
@@ -36,13 +36,13 @@ public class PatientCardAdapter extends RecyclerView.Adapter<PatientCardAdapter.
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_patient_card, parent, false);
+                .inflate(R.layout.item_paciente, parent, false);
         return new Holder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        ClinicSession patient = items.get(position);
+        SessaoUsuario patient = items.get(position);
         holder.name.setText(patient.fullName);
         holder.email.setText(patient.email);
         boolean open = patient.id.equals(openPatientId);

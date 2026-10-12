@@ -1,18 +1,18 @@
 package com.example.appdamaya;
 
-public final class ClinicSession {
+public final class SessaoUsuario {
     public String id;
     public String email;
     public String fullName;
     public String role;
     public String password;
 
-    public boolean isAdmin() {
+    public boolean ehProfissional() {
         return "admin".equals(role);
     }
 
-    public static ClinicSession professional(String id, String email, String fullName, String password) {
-        ClinicSession session = new ClinicSession();
+    public static SessaoUsuario professional(String id, String email, String fullName, String password) {
+        SessaoUsuario session = new SessaoUsuario();
         session.id = id;
         session.email = email;
         session.fullName = fullName;
@@ -21,8 +21,8 @@ public final class ClinicSession {
         return session;
     }
 
-    public static ClinicSession patient(String id, String email, String fullName, String password) {
-        ClinicSession session = new ClinicSession();
+    public static SessaoUsuario patient(String id, String email, String fullName, String password) {
+        SessaoUsuario session = new SessaoUsuario();
         session.id = id;
         session.email = email;
         session.fullName = fullName;
