@@ -3,21 +3,21 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="maya_bg">#F3F7F8</color>
+    <color name="maya_bg">#F4F7F9</color>
     <color name="maya_bg_elevated">#FFFFFF</color>
     <color name="maya_bg_panel">#EEF6F8</color>
     <color name="maya_bg_input">#EEF3F5</color>
     <color name="maya_border">#CFE0E6</color>
-    <color name="maya_text">#2C3A42</color>
-    <color name="maya_text_muted">#6B7F88</color>
+    <color name="maya_text">#18333D</color>
+    <color name="maya_text_muted">#566C76</color>
     <color name="maya_accent">#7BB9C8</color>
-    <color name="maya_accent_strong">#4F9AAB</color>
-    <color name="maya_accent_deep">#3A7F8F</color>
+    <color name="maya_accent_strong">#177D8D</color>
+    <color name="maya_accent_deep">#125C6A</color>
     <color name="maya_accent_soft">#D9EEF3</color>
     <color name="maya_danger">#E25B5B</color>
     <color name="maya_success">#059669</color>
     <color name="maya_wood">#C9975C</color>
     <color name="maya_hero_start">#8EC6D3</color>
-    <color name="maya_hero_end">#4F9AAB</color>
+    <color name="maya_hero_end">#177D8D</color>
     <color name="maya_hotspot">#E25B5B</color>
 </resources>

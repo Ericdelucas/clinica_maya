@@ -1,17 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/white"
-    android:fillViewport="true">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
-
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/white" android:fillViewport="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -19,7 +8,6 @@
             android:textColor="@color/maya_accent_deep"
             android:textSize="22sp"
             android:textStyle="bold" />
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -27,85 +15,65 @@
             android:text="@string/panel_pro_lead"
             android:textColor="@color/maya_text_muted"
             android:textSize="13sp" />
-
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scrollbars="none">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
+        <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:scrollbars="none">
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
                 <Button
                     android:id="@+id/tabPacientes"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
+                    android:layout_height="48dp"
                     android:background="@drawable/bg_tab"
                     android:text="@string/tab_patients"
                     android:textAllCaps="false"
-                    android:textColor="@color/white" />
-
+                    android:textColor="@color/white"
+                    android:backgroundTint="@null"
+                    app:backgroundTint="@null" />
                 <Button
                     android:id="@+id/tabArticulacoes"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
+                    android:layout_height="48dp"
                     android:layout_marginStart="6dp"
                     android:background="@drawable/bg_tab"
                     android:text="@string/tab_joints"
                     android:textAllCaps="false"
-                    android:textColor="@color/maya_text_muted" />
-
+                    android:textColor="@color/maya_text_muted"
+                    android:backgroundTint="@null"
+                    app:backgroundTint="@null" />
                 <Button
                     android:id="@+id/tabCadastrar"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
+                    android:layout_height="48dp"
                     android:layout_marginStart="6dp"
                     android:background="@drawable/bg_tab"
                     android:text="@string/tab_register"
                     android:textAllCaps="false"
-                    android:textColor="@color/maya_text_muted" />
-
+                    android:textColor="@color/maya_text_muted"
+                    android:backgroundTint="@null"
+                    app:backgroundTint="@null" />
                 <Button
                     android:id="@+id/tabExames"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
+                    android:layout_height="48dp"
                     android:layout_marginStart="6dp"
                     android:background="@drawable/bg_tab"
                     android:text="@string/tab_exams"
                     android:textAllCaps="false"
-                    android:textColor="@color/maya_text_muted" />
-
+                    android:textColor="@color/maya_text_muted"
+                    android:backgroundTint="@null"
+                    app:backgroundTint="@null" />
                 <Button
                     android:id="@+id/tabVisao"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
+                    android:layout_height="48dp"
                     android:layout_marginStart="6dp"
                     android:background="@drawable/bg_tab"
                     android:text="@string/tab_vision"
                     android:textAllCaps="false"
-                    android:textColor="@color/maya_text_muted" />
-
-                <Button
-                    android:id="@+id/tabCalendario"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="6dp"
-                    android:background="@drawable/bg_tab"
-                    android:text="@string/tab_calendar"
-                    android:textAllCaps="false"
-                    android:textColor="@color/maya_text_muted" />
+                    android:textColor="@color/maya_text_muted"
+                    android:backgroundTint="@null"
+                    app:backgroundTint="@null" />
             </LinearLayout>
         </HorizontalScrollView>
-
-        <LinearLayout
-            android:id="@+id/contentPacientes"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical">
-
+        <LinearLayout android:id="@+id/contentPacientes" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="vertical">
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -113,28 +81,13 @@
                 android:textColor="@color/maya_text"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_stat"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:orientation="horizontal">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:background="@drawable/bg_stat" android:orientation="vertical" android:padding="12dp">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/stat_patients"
                         android:textColor="@color/maya_text_muted" />
-
                     <TextView
                         android:id="@+id/textPatientCount"
                         android:layout_width="wrap_content"
@@ -144,21 +97,12 @@
                         android:textSize="22sp"
                         android:textStyle="bold" />
                 </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_stat"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:background="@drawable/bg_stat" android:orientation="vertical" android:padding="12dp">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/stat_mannequins"
                         android:textColor="@color/maya_text_muted" />
-
                     <TextView
                         android:id="@+id/textMannequinCount"
                         android:layout_width="wrap_content"
@@ -169,7 +113,6 @@
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -177,7 +120,6 @@
                 android:text="@string/patients_hint"
                 android:textColor="@color/maya_text_muted"
                 android:textSize="13sp" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -185,7 +127,6 @@
                 android:text="@string/label_search"
                 android:textColor="@color/maya_text_muted"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/inputSearch"
                 android:layout_width="match_parent"
@@ -196,7 +137,6 @@
                 android:inputType="text"
                 android:minHeight="48dp"
                 android:paddingHorizontal="14dp" />
-
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/listPatients"
                 android:layout_width="match_parent"
@@ -206,15 +146,7 @@
                 tools:itemCount="2"
                 tools:listitem="@layout/item_patient_card" />
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/contentArticulacoes"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
+        <LinearLayout android:id="@+id/contentArticulacoes" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="vertical" android:visibility="gone">
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -222,7 +154,6 @@
                 android:textColor="@color/maya_text"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-
             <TextView
                 android:id="@+id/textVideosHint"
                 android:layout_width="match_parent"
@@ -230,14 +161,12 @@
                 android:layout_marginTop="6dp"
                 android:text="@string/videos_empty"
                 android:textColor="@color/maya_danger" />
-
             <GridLayout
                 android:id="@+id/gridJoints"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:columnCount="2" />
-
             <TextView
                 android:id="@+id/textSelectedJoint"
                 android:layout_width="match_parent"
@@ -245,7 +174,6 @@
                 android:layout_marginTop="12dp"
                 android:text="@string/no_joint"
                 android:textColor="@color/maya_text_muted" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -253,7 +181,6 @@
                 android:text="@string/label_youtube"
                 android:textColor="@color/maya_text_muted"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/inputYoutube"
                 android:layout_width="match_parent"
@@ -264,13 +191,7 @@
                 android:inputType="textUri"
                 android:minHeight="48dp"
                 android:paddingHorizontal="14dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="vertical">
-
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="vertical">
                 <Button
                     android:id="@+id/buttonOpenVideo"
                     android:layout_width="match_parent"
@@ -278,8 +199,9 @@
                     android:background="@drawable/bg_btn_ghost"
                     android:text="@string/action_open_video"
                     android:textAllCaps="false"
-                    android:textColor="@color/maya_accent_deep" />
-
+                    android:textColor="@color/maya_accent_deep"
+                    android:backgroundTint="@null"
+                    app:backgroundTint="@null" />
                 <Button
                     android:id="@+id/buttonClearVideo"
                     android:layout_width="match_parent"
@@ -288,8 +210,9 @@
                     android:background="@drawable/bg_btn_ghost"
                     android:text="@string/action_clear_video"
                     android:textAllCaps="false"
-                    android:textColor="@color/maya_accent_deep" />
-
+                    android:textColor="@color/maya_accent_deep"
+                    android:backgroundTint="@null"
+                    app:backgroundTint="@null" />
                 <Button
                     android:id="@+id/buttonSaveVideo"
                     android:layout_width="match_parent"
@@ -298,18 +221,12 @@
                     android:background="@drawable/bg_btn_primary"
                     android:text="@string/action_save_video"
                     android:textAllCaps="false"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/white"
+                    android:backgroundTint="@null"
+                    app:backgroundTint="@null" />
             </LinearLayout>
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/contentCadastrar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
+        <LinearLayout android:id="@+id/contentCadastrar" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="vertical" android:visibility="gone">
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -317,14 +234,12 @@
                 android:textColor="@color/maya_text"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="@string/register_lead"
                 android:textColor="@color/maya_text_muted" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -332,7 +247,6 @@
                 android:text="@string/label_name"
                 android:textColor="@color/maya_text_muted"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/inputPatientName"
                 android:layout_width="match_parent"
@@ -341,7 +255,6 @@
                 android:inputType="textPersonName"
                 android:minHeight="48dp"
                 android:paddingHorizontal="14dp" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -349,7 +262,6 @@
                 android:text="@string/label_email"
                 android:textColor="@color/maya_text_muted"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/inputPatientEmail"
                 android:layout_width="match_parent"
@@ -358,7 +270,6 @@
                 android:inputType="textEmailAddress"
                 android:minHeight="48dp"
                 android:paddingHorizontal="14dp" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -366,7 +277,6 @@
                 android:text="@string/label_temp_password"
                 android:textColor="@color/maya_text_muted"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/inputPatientPassword"
                 android:layout_width="match_parent"
@@ -375,14 +285,12 @@
                 android:inputType="text"
                 android:minHeight="48dp"
                 android:paddingHorizontal="14dp" />
-
             <TextView
                 android:id="@+id/textRegisterMessage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:visibility="gone" />
-
             <Button
                 android:id="@+id/buttonRegisterPatient"
                 android:layout_width="match_parent"
@@ -391,17 +299,11 @@
                 android:background="@drawable/bg_btn_primary"
                 android:text="@string/action_register"
                 android:textAllCaps="false"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                android:backgroundTint="@null"
+                app:backgroundTint="@null" />
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/contentExamesPro"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
+        <LinearLayout android:id="@+id/contentExamesPro" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="vertical" android:visibility="gone">
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -409,14 +311,12 @@
                 android:textColor="@color/maya_text"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="@string/exams_pro_lead"
                 android:textColor="@color/maya_text_muted" />
-
             <TextView
                 android:id="@+id/textExamsEmpty"
                 android:layout_width="match_parent"
@@ -425,15 +325,7 @@
                 android:text="@string/exams_empty"
                 android:textColor="@color/maya_text_muted" />
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/contentVisao"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
+        <LinearLayout android:id="@+id/contentVisao" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="vertical" android:visibility="gone">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -443,7 +335,6 @@
                 android:text="@string/vision_badge"
                 android:textColor="@color/white"
                 android:textSize="12sp" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -452,35 +343,30 @@
                 android:textColor="@color/maya_text"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="@string/vision_lead"
                 android:textColor="@color/maya_text_muted" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="@string/vision_tip_1"
                 android:textColor="@color/maya_text" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="@string/vision_tip_2"
                 android:textColor="@color/maya_text" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="@string/vision_tip_3"
                 android:textColor="@color/maya_text" />
-
             <Button
                 android:id="@+id/buttonCloseVision"
                 android:layout_width="match_parent"
@@ -489,124 +375,9 @@
                 android:background="@drawable/bg_btn_ghost"
                 android:text="@string/vision_close"
                 android:textAllCaps="false"
-                android:textColor="@color/maya_accent_deep" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/contentCalendario"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/calendar_title"
-                android:textColor="@color/maya_text"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/calendar_lead"
-                android:textColor="@color/maya_text_muted" />
-
-            <CalendarView
-                android:id="@+id/calendarView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/textSelectedDay"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
                 android:textColor="@color/maya_accent_deep"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="@string/label_patient_name"
-                android:textColor="@color/maya_text_muted"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/inputAppointmentPatient"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_input"
-                android:hint="@string/hint_appointment_patient"
-                android:inputType="textPersonName"
-                android:minHeight="48dp"
-                android:paddingHorizontal="14dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/label_time"
-                android:textColor="@color/maya_text_muted"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/inputAppointmentTime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_input"
-                android:hint="@string/hint_time"
-                android:inputType="time"
-                android:minHeight="48dp"
-                android:paddingHorizontal="14dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/label_notes"
-                android:textColor="@color/maya_text_muted"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/inputAppointmentNotes"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_input"
-                android:hint="@string/hint_appointment_notes"
-                android:inputType="text"
-                android:minHeight="48dp"
-                android:paddingHorizontal="14dp" />
-
-            <Button
-                android:id="@+id/buttonAddAppointment"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_btn_primary"
-                android:text="@string/action_schedule"
-                android:textAllCaps="false"
-                android:textColor="@color/white" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/listAppointments"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:nestedScrollingEnabled="false" />
-
-            <TextView
-                android:id="@+id/textAppointmentsEmpty"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/calendar_empty"
-                android:textColor="@color/maya_text_muted" />
+                android:backgroundTint="@null"
+                app:backgroundTint="@null" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

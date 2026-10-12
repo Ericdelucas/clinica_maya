@@ -1,421 +1,213 @@
 package com.example.appdamaya;
 
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.LinearGradient;
-import android.graphics.Paint;
-import android.graphics.RadialGradient;
-import android.graphics.RectF;
-import android.graphics.Shader;
-import android.graphics.Typeface;
+import android.opengl.GLES20;
+import android.opengl.GLSurfaceView;
+import android.opengl.Matrix;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewConfiguration;
-
-import androidx.annotation.Nullable;
-
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
-/**
- * Manequim clínico girável — mesmas âncoras do WoodenMannequin do site.
- * Arraste na horizontal para girar; toque na bolinha vermelha para selecionar.
- */
-public class WoodenMannequinView extends View {
-    public interface Listener {
-        void onHotspotSelected(ClinicalHotspot hotspot);
-    }
-
-    private static final int SKIN = 0xFFD7A16B;
-    private static final int SKIN_LIGHT = 0xFFE2B886;
-    private static final int SKIN_SHADOW = 0xFFA96A35;
-    private static final int WOOD = 0xFFBD7F3F;
-    private static final int JOINT_WOOD = 0xFFD0A069;
-    private static final int DARK_WOOD = 0xFF8F592C;
-    private static final int WAIST = 0xFFC68B55;
-    private static final int THIGH = 0xFFC98850;
-    private static final int HOTSPOT = 0xFFE53935;
-    private static final int HOTSPOT_ON = 0xFFFF6B6B;
-    private static final int TAG = 0xFF4F9AAB;
-
-    private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final RectF oval = new RectF();
-    private final List<Part> parts = new ArrayList<>();
-
+/** Actual lit 3D geometry with a depth buffer; gestures rotate the entire model. */
+public class WoodenMannequinView extends GLSurfaceView {
+    public interface Listener { void onHotspotSelected(ClinicalHotspot hotspot); }
+    private final Scene scene = new Scene();
     private Listener listener;
-    private String selectedId = "";
-    private float yaw;
-    private float lastX;
-    private float totalDrag;
-    private boolean dragging;
+    private float lastX, drag;
     private final int touchSlop;
 
-    public WoodenMannequinView(Context context) {
-        this(context, null);
-    }
-
-    public WoodenMannequinView(Context context, @Nullable AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
-    public WoodenMannequinView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+    public WoodenMannequinView(Context context) { this(context, null); }
+    public WoodenMannequinView(Context context, AttributeSet attrs) {
+        super(context, attrs);
         touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
-        textPaint.setColor(Color.WHITE);
-        textPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        textPaint.setTextAlign(Paint.Align.CENTER);
-        setClickable(true);
+        setEGLContextClientVersion(2);
+        setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        setPreserveEGLContextOnPause(true);
+        setRenderer(scene);
+        setRenderMode(RENDERMODE_WHEN_DIRTY);
+        setContentDescription("Manequim clínico 3D. Arraste para girar e toque nos pontos de dor.");
     }
-
-    public void setListener(Listener listener) {
-        this.listener = listener;
+    public void setListener(Listener value) { listener = value; }
+    public void setSelectedId(String value) {
+        queueEvent(() -> scene.selected = value == null ? "" : value);
+        requestRender();
     }
-
-    public void setSelectedId(String id) {
-        selectedId = id == null ? "" : id;
-        invalidate();
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        float cx = getWidth() / 2f;
-        float cy = getHeight() * 0.48f;
-        float scale = Math.min(getWidth() / 2.15f, getHeight() / 3.55f);
-
-        parts.clear();
-        addBody(parts);
-        addHotspots(parts);
-        Collections.sort(parts, Comparator.comparingDouble(part -> part.z));
-
-        for (Part part : parts) {
-            drawPart(canvas, part, cx, cy, scale);
+    @Override public boolean onTouchEvent(MotionEvent event) {
+        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+            lastX = event.getX(); drag = 0;
+            getParent().requestDisallowInterceptTouchEvent(true);
+            return true;
         }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:
-                lastX = event.getX();
-                totalDrag = 0f;
-                dragging = false;
-                getParent().requestDisallowInterceptTouchEvent(true);
-                return true;
-            case MotionEvent.ACTION_MOVE: {
-                float dx = event.getX() - lastX;
-                totalDrag += Math.abs(dx);
-                if (totalDrag > touchSlop) {
-                    dragging = true;
-                    yaw += dx / getWidth() * 3.2f;
-                    invalidate();
-                }
-                lastX = event.getX();
-                return true;
+        if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+            float dx = event.getX() - lastX; lastX = event.getX(); drag += Math.abs(dx);
+            if (drag > touchSlop) {
+                queueEvent(() -> scene.yaw += dx * 180f / Math.max(1, getWidth()));
+                requestRender();
             }
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                getParent().requestDisallowInterceptTouchEvent(false);
-                if (!dragging) {
-                    ClinicalHotspot hit = hitTest(event.getX(), event.getY());
+            return true;
+        }
+        if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+            getParent().requestDisallowInterceptTouchEvent(false);
+            if (drag <= touchSlop) {
+                float x = event.getX(), y = event.getY();
+                float radius = 28 * getResources().getDisplayMetrics().density;
+                queueEvent(() -> {
+                    ClinicalHotspot hit = scene.pick(x, y, radius);
                     if (hit != null) {
-                        selectedId = hit.id;
-                        invalidate();
-                        if (listener != null) {
-                            listener.onHotspotSelected(hit);
-                        }
-                        performClick();
+                        scene.selected = hit.id;
+                        post(() -> { performClick(); if (listener != null) listener.onHotspotSelected(hit); });
+                        requestRender();
                     }
-                }
-                dragging = false;
-                return true;
-            default:
-                return super.onTouchEvent(event);
-        }
-    }
-
-    @Override
-    public boolean performClick() {
-        return super.performClick();
-    }
-
-    private ClinicalHotspot hitTest(float px, float py) {
-        float cx = getWidth() / 2f;
-        float cy = getHeight() * 0.48f;
-        float scale = Math.min(getWidth() / 2.15f, getHeight() / 3.55f);
-        float max = dp(28) * dp(28);
-        ClinicalHotspot best = null;
-        float bestDist = max;
-        for (ClinicalHotspot hotspot : ClinicalHotspot.ALL) {
-            float[] p = project(hotspot.x, hotspot.y, hotspot.z, cx, cy, scale);
-            if (p[2] < -0.02f) {
-                continue;
+                });
             }
-            float dx = px - p[0];
-            float dy = py - p[1];
-            float dist = dx * dx + dy * dy;
-            if (dist < bestDist) {
-                bestDist = dist;
-                best = hotspot;
+            return true;
+        }
+        if (event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+            getParent().requestDisallowInterceptTouchEvent(false); return true;
+        }
+        return super.onTouchEvent(event);
+    }
+    @Override public boolean performClick() { return super.performClick(); }
+
+    private static class Shape {
+        final float x, y, z, sx, sy, sz, angle;
+        Shape(float x, float y, float z, float sx, float sy, float sz, float angle) {
+            this.x=x; this.y=y; this.z=z; this.sx=sx; this.sy=sy; this.sz=sz; this.angle=angle;
+        }
+    }
+    private static class Scene implements Renderer {
+        private final float[] projection=new float[16], view=new float[16], rotation=new float[16];
+        private final float[] model=new float[16], mv=new float[16], mvp=new float[16], vp=new float[16];
+        private final List<Shape> body=new ArrayList<>();
+        private FloatBuffer sphere;
+        private int count, program, position, normal, matrix, modelView, normalUniform, color;
+        private int width, height;
+        private float yaw=-12;
+        private String selected="";
+        Scene() {
+            // Clinical mannequin: oval head, neck, rib cage, pelvis and connected limbs.
+            add(0,1.77f,0,.145f,.205f,.145f);
+            add(0,1.53f,0,.065f,.095f,.065f);
+            add(0,1.22f,0,.285f,.29f,.15f);
+            add(0,.88f,0,.18f,.20f,.115f);
+            add(0,.57f,0,.245f,.17f,.15f);
+            add(0,1.76f,.143f,.038f,.055f,.035f); // Nose establishes front direction.
+            for (int side : new int[]{-1,1}) {
+                limb(side*.34f,1.39f,side*.58f,1.02f,.064f);
+                limb(side*.58f,1.02f,side*.66f,.62f,.047f);
+                limb(side*.18f,.48f,side*.23f,-.08f,.087f);
+                limb(side*.23f,-.08f,side*.24f,-.72f,.061f);
+                add(side*.69f,.54f,.01f,.045f,.087f,.037f);
+                add(side*.24f,-.78f,.075f,.067f,.05f,.14f);
+                add(side*.34f,1.39f,0,.073f,.073f,.073f);
+                add(side*.58f,1.02f,0,.055f,.055f,.055f);
+                add(side*.23f,-.08f,0,.065f,.065f,.065f);
             }
         }
-        return best;
-    }
-
-    private void addBody(List<Part> list) {
-        list.add(limb(-0.34f, 1.39f, 0f, -0.58f, 1.02f, 0f, 0.07f, 0.052f, SKIN));
-        list.add(limb(0.34f, 1.39f, 0f, 0.58f, 1.02f, 0f, 0.07f, 0.052f, SKIN));
-        list.add(limb(-0.58f, 1.02f, 0f, -0.66f, 0.62f, 0f, 0.048f, 0.038f, SKIN_LIGHT));
-        list.add(limb(0.58f, 1.02f, 0f, 0.66f, 0.62f, 0f, 0.048f, 0.038f, SKIN_LIGHT));
-        list.add(limb(-0.18f, 0.48f, 0f, -0.23f, -0.08f, 0f, 0.085f, 0.065f, THIGH));
-        list.add(limb(0.18f, 0.48f, 0f, 0.23f, -0.08f, 0f, 0.085f, 0.065f, THIGH));
-        list.add(limb(-0.23f, -0.08f, 0f, -0.24f, -0.72f, 0f, 0.06f, 0.043f, SKIN_LIGHT));
-        list.add(limb(0.23f, -0.08f, 0f, 0.24f, -0.72f, 0f, 0.06f, 0.043f, SKIN_LIGHT));
-
-        list.add(body(0f, 1.17f, 0f, 0.56f, 0.28f, 0.17f, 0.58f, SKIN));
-        list.add(body(0f, 0.79f, 0.015f, 0.28f, 0.15f, 0.13f, 0.48f, WAIST));
-        list.add(body(0f, 0.52f, 0f, 0.20f, 0.18f, 0.24f, 0.55f, SKIN_SHADOW));
-
-        list.add(ellipsoid(0f, 1.78f, 0.035f, 0.145f, 0.195f, 0.13f, SKIN_LIGHT));
-        list.add(ellipsoid(0f, 1.78f, 0.16f, 0.055f, 0.075f, 0.032f, DARK_WOOD));
-        list.add(ellipsoid(-0.69f, 0.55f, 0.04f, 0.045f, 0.075f, 0.035f, SKIN_LIGHT));
-        list.add(ellipsoid(0.69f, 0.55f, 0.04f, 0.045f, 0.075f, 0.035f, SKIN_LIGHT));
-        list.add(ellipsoid(-0.25f, -0.78f, 0.10f, 0.065f, 0.035f, 0.14f, SKIN_LIGHT));
-        list.add(ellipsoid(0.25f, -0.78f, 0.10f, 0.065f, 0.035f, 0.14f, SKIN_LIGHT));
-
-        list.add(sphere(0f, 1.55f, 0f, 0.055f, JOINT_WOOD, false, null));
-        list.add(sphere(-0.34f, 1.39f, 0f, 0.075f, JOINT_WOOD, false, null));
-        list.add(sphere(0.34f, 1.39f, 0f, 0.075f, JOINT_WOOD, false, null));
-        list.add(sphere(-0.58f, 1.02f, 0f, 0.055f, JOINT_WOOD, false, null));
-        list.add(sphere(0.58f, 1.02f, 0f, 0.055f, JOINT_WOOD, false, null));
-        list.add(sphere(-0.66f, 0.62f, 0f, 0.044f, JOINT_WOOD, false, null));
-        list.add(sphere(0.66f, 0.62f, 0f, 0.044f, JOINT_WOOD, false, null));
-        list.add(sphere(-0.18f, 0.48f, 0f, 0.065f, JOINT_WOOD, false, null));
-        list.add(sphere(0.18f, 0.48f, 0f, 0.065f, JOINT_WOOD, false, null));
-        list.add(sphere(-0.23f, -0.08f, 0f, 0.06f, JOINT_WOOD, false, null));
-        list.add(sphere(0.23f, -0.08f, 0f, 0.06f, JOINT_WOOD, false, null));
-        list.add(sphere(-0.24f, -0.72f, 0f, 0.048f, JOINT_WOOD, false, null));
-        list.add(sphere(0.24f, -0.72f, 0f, 0.048f, JOINT_WOOD, false, null));
-
-        list.add(tag(-0.52f, 1.52f, 0f, "D"));
-        list.add(tag(0.52f, 1.52f, 0f, "E"));
-    }
-
-    private void addHotspots(List<Part> list) {
-        for (ClinicalHotspot hotspot : ClinicalHotspot.ALL) {
-            boolean selected = hotspot.id.equals(selectedId);
-            float radius = hotspot.region.equals("Coluna") || hotspot.id.equals("epigastrio") ? 0.07f : 0.078f;
-            list.add(sphere(
-                    hotspot.x,
-                    hotspot.y,
-                    hotspot.z,
-                    radius,
-                    selected ? HOTSPOT_ON : HOTSPOT,
-                    true,
-                    hotspot.id
-            ));
+        private void add(float x,float y,float z,float sx,float sy,float sz) { body.add(new Shape(x,y,z,sx,sy,sz,0)); }
+        private void limb(float x1,float y1,float x2,float y2,float radius) {
+            float length=(float)Math.hypot(x2-x1,y2-y1);
+            float angle=(float)Math.toDegrees(Math.atan2(-(x2-x1),y2-y1));
+            body.add(new Shape((x1+x2)/2,(y1+y2)/2,0,radius,length/2+radius*.4f,radius,angle));
         }
-    }
-
-    private void drawPart(Canvas canvas, Part part, float cx, float cy, float scale) {
-        if (part.kind == Part.LIMB) {
-            float[] a = project(part.x, part.y, part.z, cx, cy, scale);
-            float[] b = project(part.x2, part.y2, part.z2, cx, cy, scale);
-            drawCapsule(canvas, a[0], a[1], b[0], b[1], part.r1 * scale, part.r2 * scale, shade(part.color, (a[2] + b[2]) / 2f));
-            return;
-        }
-        float[] p = project(part.x, part.y, part.z, cx, cy, scale);
-        if (part.kind == Part.TAG) {
-            if (p[2] < -0.05f) {
-                return;
+        @Override public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+            GLES20.glClearColor(.93f,.96f,.97f,1);
+            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+            String vertex="attribute vec3 aPosition; attribute vec3 aNormal; uniform mat4 uMvp; uniform mat4 uMv; uniform mat4 uNormal; varying vec3 vNormal; varying vec3 vPosition; void main(){ gl_Position=uMvp*vec4(aPosition,1.0); vPosition=(uMv*vec4(aPosition,1.0)).xyz; vNormal=mat3(uNormal)*aNormal; }";
+            String fragment="precision mediump float; uniform vec3 uColor; varying vec3 vNormal; varying vec3 vPosition; void main(){ vec3 n=normalize(vNormal); vec3 l=normalize(vec3(-2.0,4.0,5.0)-vPosition); float d=max(dot(n,l),0.0); vec3 h=normalize(l+normalize(-vPosition)); float s=pow(max(dot(n,h),0.0),32.0); gl_FragColor=vec4(uColor*(0.38+0.62*d)+vec3(0.18*s),1.0); }";
+            program=GLES20.glCreateProgram();
+            GLES20.glAttachShader(program,shader(GLES20.GL_VERTEX_SHADER,vertex));
+            GLES20.glAttachShader(program,shader(GLES20.GL_FRAGMENT_SHADER,fragment));
+            GLES20.glLinkProgram(program);
+            int[] ok=new int[1]; GLES20.glGetProgramiv(program,GLES20.GL_LINK_STATUS,ok,0);
+            if(ok[0]==0) throw new IllegalStateException(GLES20.glGetProgramInfoLog(program));
+            position=GLES20.glGetAttribLocation(program,"aPosition"); normal=GLES20.glGetAttribLocation(program,"aNormal");
+            matrix=GLES20.glGetUniformLocation(program,"uMvp"); modelView=GLES20.glGetUniformLocation(program,"uMv"); color=GLES20.glGetUniformLocation(program,"uColor"); normalUniform=GLES20.glGetUniformLocation(program,"uNormal");
+            List<Float> vertices=new ArrayList<>();
+            int rows=24, cols=36;
+            for(int r=0;r<rows;r++) for(int c=0;c<cols;c++) {
+                point(vertices,r,c,rows,cols); point(vertices,r+1,c,rows,cols); point(vertices,r,c+1,rows,cols);
+                point(vertices,r,c+1,rows,cols); point(vertices,r+1,c,rows,cols); point(vertices,r+1,c+1,rows,cols);
             }
-            float r = dp(16);
-            fill.setShader(null);
-            fill.setColor(TAG);
-            canvas.drawCircle(p[0], p[1], r, fill);
-            textPaint.setTextSize(dp(13));
-            canvas.drawText(part.label, p[0], p[1] + dp(4.5f), textPaint);
-            return;
+            count=vertices.size()/3;
+            sphere=ByteBuffer.allocateDirect(vertices.size()*4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            for(float v:vertices) sphere.put(v); sphere.position(0);
         }
-        if (part.kind == Part.BODY) {
-            float w = (part.r1 + part.r2) * 0.92f * scale;
-            float h = part.height * scale;
-            oval.set(p[0] - w, p[1] - h / 2f, p[0] + w, p[1] + h / 2f);
-            fill.setShader(new LinearGradient(
-                    p[0] - w * 0.3f, p[1] - h / 2f, p[0] + w, p[1] + h / 2f,
-                    lighter(part.color), shade(part.color, p[2]), Shader.TileMode.CLAMP
-            ));
-            canvas.drawRoundRect(oval, w, w, fill);
-            fill.setShader(null);
-            return;
+        private static void point(List<Float> out,int r,int c,int rows,int cols) {
+            double a=Math.PI*r/rows, b=2*Math.PI*c/cols;
+            out.add((float)(Math.sin(a)*Math.cos(b))); out.add((float)Math.cos(a)); out.add((float)(Math.sin(a)*Math.sin(b)));
         }
-        if (part.kind == Part.ELLIPSOID) {
-            float rx = part.r1 * scale;
-            float ry = part.height * scale;
-            if (part.label != null && "face".equals(part.label) && p[2] < 0.04f) {
-                return;
+        private static int shader(int type,String source) {
+            int result=GLES20.glCreateShader(type); GLES20.glShaderSource(result,source); GLES20.glCompileShader(result);
+            int[] ok=new int[1]; GLES20.glGetShaderiv(result,GLES20.GL_COMPILE_STATUS,ok,0);
+            if(ok[0]==0) throw new IllegalStateException(GLES20.glGetShaderInfoLog(result));
+            return result;
+        }
+        @Override public void onSurfaceChanged(GL10 gl,int w,int h) {
+            width=w; height=h; GLES20.glViewport(0,0,w,h);
+            float aspect=(float)w/Math.max(h,1);
+            // Fit full body from feet (-.83) to crown (1.98), including narrow screens.
+            float halfY=Math.max(1.65f, .94f/aspect);
+            Matrix.orthoM(projection,0,-halfY*aspect,halfY*aspect,-halfY,halfY,1,12);
+            Matrix.setLookAtM(view,0,0,.57f,5,0,.57f,0,0,1,0);
+        }
+        private void transforms() {
+            Matrix.setRotateM(rotation,0,yaw,0,1,0);
+            Matrix.multiplyMM(vp,0,projection,0,view,0);
+            Matrix.multiplyMM(mvp,0,vp,0,rotation,0);
+        }
+        @Override public void onDrawFrame(GL10 gl) {
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT|GLES20.GL_DEPTH_BUFFER_BIT);
+            transforms(); GLES20.glUseProgram(program);
+            sphere.position(0); GLES20.glVertexAttribPointer(position,3,GLES20.GL_FLOAT,false,0,sphere);
+            GLES20.glVertexAttribPointer(normal,3,GLES20.GL_FLOAT,false,0,sphere);
+            GLES20.glEnableVertexAttribArray(position); GLES20.glEnableVertexAttribArray(normal);
+            for(Shape shape:body) draw(shape,.77f,.63f,.46f);
+            for(ClinicalHotspot h:ClinicalHotspot.ALL) {
+                float z=markerZ(h), radius=h.id.equals(selected)?.065f:.047f;
+                draw(new Shape(h.x,h.y,z,radius,radius,radius,0),.91f,h.id.equals(selected)?.25f:.06f,.08f);
             }
-            oval.set(p[0] - rx, p[1] - ry, p[0] + rx, p[1] + ry);
-            fill.setShader(new RadialGradient(
-                    p[0] - rx * 0.25f, p[1] - ry * 0.28f, Math.max(rx, ry) * 1.35f,
-                    lighter(part.color), shade(part.color, p[2]), Shader.TileMode.CLAMP
-            ));
-            canvas.drawOval(oval, fill);
-            fill.setShader(null);
-            return;
         }
-        float r = part.r1 * scale;
-        fill.setShader(new RadialGradient(
-                p[0] - r * 0.28f, p[1] - r * 0.32f, r * 1.25f,
-                lighter(part.color), part.color, Shader.TileMode.CLAMP
-        ));
-        canvas.drawCircle(p[0], p[1], r, fill);
-        fill.setShader(null);
-    }
-
-    private void drawCapsule(Canvas canvas, float x1, float y1, float x2, float y2, float r1, float r2, int color) {
-        float dx = x2 - x1;
-        float dy = y2 - y1;
-        float len = (float) Math.hypot(dx, dy);
-        if (len < 1f) {
-            return;
+        private static float markerZ(ClinicalHotspot h) {
+            if(h.z<0) return h.z-.055f;
+            if(h.z>0) return h.z+.05f;
+            return .085f;
         }
-        float angle = (float) Math.toDegrees(Math.atan2(dy, dx));
-        float r = (r1 + r2) / 2f;
-        canvas.save();
-        canvas.translate((x1 + x2) / 2f, (y1 + y2) / 2f);
-        canvas.rotate(angle);
-        oval.set(-len / 2f, -r, len / 2f, r);
-        fill.setShader(new LinearGradient(
-                -len / 2f, -r, len / 2f, r, lighter(color), color, Shader.TileMode.CLAMP
-        ));
-        canvas.drawRoundRect(oval, r, r, fill);
-        fill.setShader(null);
-        canvas.restore();
-    }
-
-    private float[] project(float x, float y, float z, float cx, float cy, float scale) {
-        double c = Math.cos(yaw);
-        double s = Math.sin(yaw);
-        float xr = (float) (x * c - z * s);
-        float zr = (float) (x * s + z * c);
-        y += 0.12f;
-        xr *= 1.08f;
-        y *= 1.08f;
-        zr *= 1.08f;
-        return new float[]{cx + xr * scale, cy - y * scale, zr};
-    }
-
-    private Part limb(float x1, float y1, float z1, float x2, float y2, float z2, float r1, float r2, int color) {
-        Part part = new Part();
-        part.kind = Part.LIMB;
-        part.x = x1;
-        part.y = y1;
-        part.z = (z1 + z2) / 2f;
-        part.x2 = x2;
-        part.y2 = y2;
-        part.z2 = z2;
-        part.r1 = r1;
-        part.r2 = r2;
-        part.color = color;
-        return part;
-    }
-
-    private Part body(float x, float y, float z, float height, float top, float bottom, float depth, int color) {
-        Part part = new Part();
-        part.kind = Part.BODY;
-        part.x = x;
-        part.y = y;
-        part.z = z;
-        part.height = height;
-        part.r1 = top;
-        part.r2 = bottom;
-        part.color = color;
-        return part;
-    }
-
-    private Part ellipsoid(float x, float y, float z, float sx, float sy, float sz, int color) {
-        Part part = new Part();
-        part.kind = Part.ELLIPSOID;
-        part.x = x;
-        part.y = y;
-        part.z = z;
-        part.r1 = sx;
-        part.height = sy;
-        part.r2 = sz;
-        part.color = color;
-        if (z > 0.12f) {
-            part.label = "face";
+        private void draw(Shape shape,float r,float g,float b) {
+            System.arraycopy(rotation,0,model,0,16);
+            Matrix.translateM(model,0,shape.x,shape.y,shape.z);
+            Matrix.rotateM(model,0,shape.angle,0,0,1);
+            Matrix.scaleM(model,0,shape.sx,shape.sy,shape.sz);
+            Matrix.multiplyMM(mv,0,view,0,model,0); Matrix.multiplyMM(mvp,0,projection,0,mv,0);
+            GLES20.glUniformMatrix4fv(matrix,1,false,mvp,0);
+            // Inverse transpose gives correct lighting for stretched ellipsoids.
+            float[] normalMatrix=new float[16], inverse=new float[16];
+            Matrix.invertM(inverse,0,mv,0); Matrix.transposeM(normalMatrix,0,inverse,0);
+            GLES20.glUniformMatrix4fv(normalUniform,1,false,normalMatrix,0);
+            GLES20.glUniformMatrix4fv(modelView,1,false,mv,0);
+            GLES20.glUniform3f(color,r,g,b); GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,count);
         }
-        return part;
-    }
-
-    private Part sphere(float x, float y, float z, float r, int color, boolean hotspot, String id) {
-        Part part = new Part();
-        part.kind = Part.SPHERE;
-        part.x = x;
-        part.y = y;
-        part.z = z + (hotspot ? 0.02f : 0f);
-        part.r1 = r;
-        part.color = color;
-        part.label = id;
-        return part;
-    }
-
-    private Part tag(float x, float y, float z, String label) {
-        Part part = new Part();
-        part.kind = Part.TAG;
-        part.x = x;
-        part.y = y;
-        part.z = z + 0.03f;
-        part.label = label;
-        part.color = TAG;
-        return part;
-    }
-
-    private int shade(int color, float z) {
-        float t = Math.max(0f, Math.min(1f, (z + 0.25f) / 0.5f));
-        return Color.rgb(
-                (int) (Color.red(color) * (0.72f + 0.28f * t)),
-                (int) (Color.green(color) * (0.72f + 0.28f * t)),
-                (int) (Color.blue(color) * (0.72f + 0.28f * t))
-        );
-    }
-
-    private int lighter(int color) {
-        return Color.rgb(
-                Math.min(255, Color.red(color) + 38),
-                Math.min(255, Color.green(color) + 28),
-                Math.min(255, Color.blue(color) + 18)
-        );
-    }
-
-    private float dp(float value) {
-        return value * getResources().getDisplayMetrics().density;
-    }
-
-    private static final class Part {
-        static final int LIMB = 1;
-        static final int BODY = 2;
-        static final int ELLIPSOID = 3;
-        static final int SPHERE = 4;
-        static final int TAG = 5;
-        int kind;
-        float x;
-        float y;
-        float z;
-        float x2;
-        float y2;
-        float z2;
-        float r1;
-        float r2;
-        float height;
-        int color;
-        String label;
+        ClinicalHotspot pick(float x,float y,float radius) {
+            transforms(); float[] transform=mvp.clone();
+            ClinicalHotspot best=null; float distance=radius*radius;
+            for(ClinicalHotspot h:ClinicalHotspot.ALL) {
+                float z=markerZ(h);
+                double radians=Math.toRadians(yaw);
+                // Reject points on the far side of the body.
+                if(-h.x*Math.sin(radians)+z*Math.cos(radians)<-.025f) continue;
+                float[] p=new float[4]; Matrix.multiplyMV(p,0,transform,0,new float[]{h.x,h.y,z,1},0);
+                float px=(p[0]/p[3]+1)*width/2, py=(1-p[1]/p[3])*height/2;
+                float d=(x-px)*(x-px)+(y-py)*(y-py);
+                if(d<distance) { distance=d; best=h; }
+            }
+            return best;
+        }
     }
 }

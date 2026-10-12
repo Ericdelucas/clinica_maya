@@ -4,14 +4,14 @@
     <string name="login_hero">RPG.Mayêutica — fisioterapia com acompanhamento visual</string>
     <string name="action_settings">Configurações</string>
     <string name="login_title">Entrar</string>
-    <string name="login_lead">Acesso restrito. Use o e-mail e a senha cadastrados. A área profissional é exclusiva da fisioterapeuta e só abre depois do login.</string>
+    <string name="login_lead">Modo de teste: escolha Paciente ou Profissional e toque em Entrar. E-mail e senha são opcionais e não são verificados nesta etapa.</string>
     <string name="label_email">E-mail</string>
     <string name="label_password">Senha</string>
-    <string name="hint_email">seu e-mail</string>
-    <string name="hint_password">sua senha</string>
+    <string name="hint_email">Opcional no modo de teste</string>
+    <string name="hint_password">Opcional no modo de teste</string>
     <string name="action_enter">Entrar</string>
     <string name="action_entering">Entrando…</string>
-    <string name="error_not_registered">E-mail não cadastrado. Peça à fisioterapeuta para criar sua conta e sincronizar na nuvem.</string>
+    <string name="error_not_registered">Conta não encontrada neste tipo de acesso. Confira o e-mail, a senha e o perfil selecionado.</string>
     <string name="error_login">E-mail ou senha inválidos.</string>
     <string name="brand_orb">RPG</string>
     <string name="area_profissional">Área profissional</string>
@@ -133,4 +133,8 @@
         <item>Não</item>
         <item>Sim</item>
     </string-array>
+    <string name="calendar_today">Hoje</string>
+    <string name="cancel_appointment">Cancelar agendamento</string>
+    <string name="calendar_day_summary">%1$s · %2$d agendamento(s)</string>
+    <string name="new_appointment">Novo agendamento</string>
 </resources>

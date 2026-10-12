@@ -1,29 +1,24 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    android:background="@drawable/bg_card"
-    android:orientation="vertical"
-    android:padding="12dp">
-
-    <TextView
-        android:id="@+id/textAppointmentTime"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/maya_accent_deep"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/textAppointmentPatient"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/maya_text" />
-
+<?xml version='1.0' encoding='utf-8'?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" android:background="@drawable/bg_card" android:orientation="vertical" android:padding="16dp">
+    <TextView android:textSize="22sp"
+        android:id="@+id/textAppointmentTime" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/maya_accent_deep" android:textStyle="bold" />
+    <TextView android:textSize="16sp"
+        android:layout_marginTop="4dp"
+        android:id="@+id/textAppointmentPatient" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/maya_text" />
     <TextView
         android:id="@+id/textAppointmentNotes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/maya_text_muted"
         android:textSize="13sp" />
+    <Button
+        android:id="@+id/buttonCancelAppointment"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/cancel_appointment"
+        android:textAllCaps="false"
+        android:textColor="@color/maya_danger"
+        android:background="@drawable/bg_btn_ghost"
+        android:backgroundTint="@null" />
 </LinearLayout>

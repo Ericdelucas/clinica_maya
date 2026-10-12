@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="@color/maya_bg">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="visible" android:padding="20dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/tab_calendar"
+            android:textColor="@color/maya_text"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/calendar_lead"
+            android:textColor="@color/maya_text_muted"
+            android:id="@+id/textCalendarLead" />
+        <Button
+            android:id="@+id/buttonToday"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="@string/calendar_today"
+            android:textAllCaps="false"
+            android:background="@drawable/bg_btn_ghost"
+            android:textColor="@color/maya_accent_deep"
+            android:backgroundTint="@null"
+            app:backgroundTint="@null" />
+        <CalendarView
+            android:id="@+id/calendarView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_card"
+            android:firstDayOfWeek="2" />
+        <TextView
+            android:id="@+id/textSelectedDay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/maya_accent_deep"
+            android:textStyle="bold"
+            android:textSize="18sp" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/listAppointments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:nestedScrollingEnabled="false" />
+        <TextView
+            android:id="@+id/textAppointmentsEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/calendar_empty"
+            android:textColor="@color/maya_text_muted" />
+        <LinearLayout android:id="@+id/appointmentForm" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="16dp" android:background="@drawable/bg_card">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/new_appointment"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/maya_text" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/label_patient_name"
+                android:textColor="@color/maya_text_muted"
+                android:textStyle="bold" />
+            <Spinner
+                android:id="@+id/inputAppointmentPatient"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_input"
+                android:minHeight="48dp"
+                android:paddingHorizontal="14dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/label_time"
+                android:textColor="@color/maya_text_muted"
+                android:textStyle="bold" />
+            <EditText
+                android:id="@+id/inputAppointmentTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_input"
+                android:hint="@string/hint_time"
+                android:inputType="none"
+                android:focusable="false"
+                android:clickable="true"
+                android:minHeight="48dp"
+                android:paddingHorizontal="14dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/label_notes"
+                android:textColor="@color/maya_text_muted"
+                android:textStyle="bold" />
+            <EditText
+                android:id="@+id/inputAppointmentNotes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_input"
+                android:hint="@string/hint_appointment_notes"
+                android:inputType="text"
+                android:minHeight="48dp"
+                android:paddingHorizontal="14dp" />
+            <Button
+                android:id="@+id/buttonAddAppointment"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_btn_primary"
+                android:text="@string/action_schedule"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:backgroundTint="@null"
+                app:backgroundTint="@null" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

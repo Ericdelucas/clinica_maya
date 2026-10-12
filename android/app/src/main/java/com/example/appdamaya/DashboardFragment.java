@@ -31,12 +31,12 @@ public class DashboardFragment extends Fragment {
 
     private FragmentDashboardBinding binding;
     private PatientCardAdapter adapter;
-    private AppointmentAdapter proAppointments;
-    private AppointmentAdapter patientAppointments;
+    private AppointmentAdapter appointmentsAdapter;
     private String openPatientId = "";
     private String openPatientName = "";
     private String selectedJointId = "";
     private String selectedJoint = "";
+    private String activeScreen = "mannequin";
     private long selectedDay = System.currentTimeMillis();
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final SimpleDateFormat dayFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
@@ -60,11 +60,20 @@ public class DashboardFragment extends Fragment {
             return;
         }
 
+        if (savedInstanceState != null) {
+            selectedDay = savedInstanceState.getLong("selectedDay", selectedDay);
+            activeScreen = savedInstanceState.getString("activeScreen", "mannequin");
+        }
+        String restoredScreen = activeScreen;
         bindProfile(profile);
         setupNavigation(profile);
         setupProfessionalPanel(profile);
         setupPatientPanel(profile);
-        showMannequin(profile);
+        setupCalendar(profile);
+        binding.buttonCalendarTab.setOnClickListener(v -> showCalendar(profile));
+        if ("calendar".equals(restoredScreen)) showCalendar(profile);
+        else if ("panel".equals(restoredScreen)) showPanel(profile);
+        else showMannequin(profile);
         populateJoints();
         refreshPatients();
     }
@@ -144,7 +153,6 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPro.tabCadastrar.setOnClickListener(v -> selectProTab("register"));
         binding.includePanelPro.tabExames.setOnClickListener(v -> selectProTab("exams"));
         binding.includePanelPro.tabVisao.setOnClickListener(v -> selectProTab("vision"));
-        binding.includePanelPro.tabCalendario.setOnClickListener(v -> selectProTab("calendar"));
         binding.includePanelPro.buttonCloseVision.setOnClickListener(v -> selectProTab("patients"));
         binding.includePanelPro.buttonRegisterPatient.setBackgroundResource(R.drawable.bg_btn_primary);
         binding.includePanelPro.buttonRegisterPatient.setOnClickListener(v -> registerPatient());
@@ -152,19 +160,6 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPro.buttonSaveVideo.setOnClickListener(v -> saveJointVideo());
         binding.includePanelPro.buttonOpenVideo.setOnClickListener(v -> openSelectedVideo());
         binding.includePanelPro.buttonClearVideo.setOnClickListener(v -> clearJointVideo());
-        binding.includePanelPro.buttonAddAppointment.setBackgroundResource(R.drawable.bg_btn_primary);
-        binding.includePanelPro.buttonAddAppointment.setOnClickListener(v -> addAppointment());
-        binding.includePanelPro.calendarView.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
-            java.util.Calendar calendar = java.util.Calendar.getInstance();
-            calendar.set(year, month, dayOfMonth, 0, 0, 0);
-            calendar.set(java.util.Calendar.MILLISECOND, 0);
-            selectedDay = calendar.getTimeInMillis();
-            refreshAppointments(true);
-        });
-        proAppointments = new AppointmentAdapter();
-        binding.includePanelPro.listAppointments.setLayoutManager(new LinearLayoutManager(requireContext()));
-        binding.includePanelPro.listAppointments.setAdapter(proAppointments);
-        refreshAppointments(true);
         selectProTab("patients");
     }
 
@@ -182,7 +177,6 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPaciente.tabFicha.setOnClickListener(v -> selectPatientTab("ficha"));
         binding.includePanelPaciente.tabExamesPaciente.setOnClickListener(v -> selectPatientTab("exams"));
         binding.includePanelPaciente.tabOrientacoes.setOnClickListener(v -> selectPatientTab("guide"));
-        binding.includePanelPaciente.tabAgenda.setOnClickListener(v -> selectPatientTab("calendar"));
         binding.includePanelPaciente.includeFicha.buttonSaveFicha.setBackgroundResource(R.drawable.bg_btn_primary);
         binding.includePanelPaciente.buttonSendExam.setBackgroundResource(R.drawable.bg_btn_primary);
         binding.includePanelPaciente.includeFicha.buttonSaveFicha.setOnClickListener(v ->
@@ -194,35 +188,31 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPaciente.buttonSendExam.setOnClickListener(v ->
                 toast(getString(R.string.action_send_exam))
         );
-        patientAppointments = new AppointmentAdapter();
-        binding.includePanelPaciente.listAppointmentsPatient.setLayoutManager(new LinearLayoutManager(requireContext()));
-        binding.includePanelPaciente.listAppointmentsPatient.setAdapter(patientAppointments);
-        binding.includePanelPaciente.calendarViewPatient.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
-            java.util.Calendar calendar = java.util.Calendar.getInstance();
-            calendar.set(year, month, dayOfMonth, 0, 0, 0);
-            calendar.set(java.util.Calendar.MILLISECOND, 0);
-            selectedDay = calendar.getTimeInMillis();
-            refreshAppointments(false);
-        });
-        refreshAppointments(false);
         selectPatientTab("ficha");
     }
 
     private void showMannequin(ClinicSession profile) {
+        activeScreen = "mannequin";
+        binding.bannerMannequin.setVisibility(openPatientId.isEmpty() ? View.GONE : View.VISIBLE);
         binding.includeMannequin.getRoot().setVisibility(View.VISIBLE);
         binding.includePanelPro.getRoot().setVisibility(View.GONE);
         binding.includePanelPaciente.getRoot().setVisibility(View.GONE);
+        binding.includeCalendar.getRoot().setVisibility(View.GONE);
         styleSwitch(true, profile);
     }
 
     private void showPanel(ClinicSession profile) {
+        activeScreen = "panel";
+        binding.bannerMannequin.setVisibility(View.GONE);
         binding.includeMannequin.getRoot().setVisibility(View.GONE);
         binding.includePanelPro.getRoot().setVisibility(profile.isAdmin() ? View.VISIBLE : View.GONE);
         binding.includePanelPaciente.getRoot().setVisibility(profile.isAdmin() ? View.GONE : View.VISIBLE);
+        binding.includeCalendar.getRoot().setVisibility(View.GONE);
         styleSwitch(false, profile);
     }
 
     private void styleSwitch(boolean mannequin, ClinicSession profile) {
+        markTab(binding.buttonCalendarTab, false);
         binding.buttonMannequinTab.setSelected(mannequin);
         binding.buttonPanelTab.setSelected(!mannequin);
         binding.buttonMannequinTab.setTextColor(ContextCompat.getColor(
@@ -240,24 +230,20 @@ public class DashboardFragment extends Fragment {
         binding.includePanelPro.contentCadastrar.setVisibility("register".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPro.contentExamesPro.setVisibility("exams".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPro.contentVisao.setVisibility("vision".equals(tab) ? View.VISIBLE : View.GONE);
-        binding.includePanelPro.contentCalendario.setVisibility("calendar".equals(tab) ? View.VISIBLE : View.GONE);
         markTab(binding.includePanelPro.tabPacientes, "patients".equals(tab));
         markTab(binding.includePanelPro.tabArticulacoes, "joints".equals(tab));
         markTab(binding.includePanelPro.tabCadastrar, "register".equals(tab));
         markTab(binding.includePanelPro.tabExames, "exams".equals(tab));
         markTab(binding.includePanelPro.tabVisao, "vision".equals(tab));
-        markTab(binding.includePanelPro.tabCalendario, "calendar".equals(tab));
     }
 
     private void selectPatientTab(String tab) {
         binding.includePanelPaciente.contentFicha.setVisibility("ficha".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPaciente.contentExamesPaciente.setVisibility("exams".equals(tab) ? View.VISIBLE : View.GONE);
         binding.includePanelPaciente.contentOrientacoes.setVisibility("guide".equals(tab) ? View.VISIBLE : View.GONE);
-        binding.includePanelPaciente.contentAgenda.setVisibility("calendar".equals(tab) ? View.VISIBLE : View.GONE);
         markTab(binding.includePanelPaciente.tabFicha, "ficha".equals(tab));
         markTab(binding.includePanelPaciente.tabExamesPaciente, "exams".equals(tab));
         markTab(binding.includePanelPaciente.tabOrientacoes, "guide".equals(tab));
-        markTab(binding.includePanelPaciente.tabAgenda, "calendar".equals(tab));
     }
 
     private void markTab(Button button, boolean active) {
@@ -299,9 +285,10 @@ public class DashboardFragment extends Fragment {
             selectJoint(hotspot, true);
             return;
         }
+        binding.includeMannequin.mannequinView.setSelectedId(hotspot.id);
         String url = ClinicStore.videoUrl(profile.id, hotspot.id);
         if (url.isEmpty()) {
-            toast("Ainda não há vídeo cadastrado para esta articulação.");
+            toast(hotspot.label + ": região selecionada. Ainda sem vídeo cadastrado.");
             return;
         }
         openUrl(url);
@@ -379,13 +366,19 @@ public class DashboardFragment extends Fragment {
     }
 
     private boolean isYoutube(String url) {
-        String value = url.toLowerCase(Locale.ROOT);
-        return (value.contains("youtube.com") || value.contains("youtu.be"))
-                && (value.startsWith("http://") || value.startsWith("https://"));
+        return ClinicStore.isYoutubeUrl(url);
     }
 
     private void refreshPatients() {
         List<ClinicSession> copy = new ArrayList<>(ClinicStore.patients);
+        if (ClinicStore.current != null && ClinicStore.current.isAdmin()) {
+            List<String> names = new ArrayList<>();
+            for (ClinicSession patient : copy) names.add(patient.fullName + " · " + patient.email);
+            ArrayAdapter<String> options = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, names);
+            options.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            binding.includeCalendar.inputAppointmentPatient.setAdapter(options);
+            binding.includeCalendar.buttonAddAppointment.setEnabled(!copy.isEmpty());
+        }
         binding.includePanelPro.textPatientCount.setText(String.valueOf(copy.size()));
         binding.includePanelPro.textMannequinCount.setText(String.valueOf(copy.size()));
         if (adapter != null) {
@@ -409,7 +402,18 @@ public class DashboardFragment extends Fragment {
             message.setText("Este e-mail é da profissional e não pode ser usado por paciente.");
             return;
         }
-        ClinicStore.addPatient(name, email, password);
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            message.setTextColor(ContextCompat.getColor(requireContext(), R.color.maya_danger));
+            message.setText("Informe um e-mail válido.");
+            return;
+        }
+        try {
+            ClinicStore.addPatient(name, email, password);
+        } catch (IllegalArgumentException | SecurityException error) {
+            message.setTextColor(ContextCompat.getColor(requireContext(), R.color.maya_danger));
+            message.setText(error.getMessage());
+            return;
+        }
         binding.includePanelPro.inputPatientName.setText("");
         binding.includePanelPro.inputPatientEmail.setText("");
         binding.includePanelPro.inputPatientPassword.setText("");
@@ -419,38 +423,86 @@ public class DashboardFragment extends Fragment {
     }
 
     private void addAppointment() {
-        String name = String.valueOf(binding.includePanelPro.inputAppointmentPatient.getText()).trim();
-        String time = String.valueOf(binding.includePanelPro.inputAppointmentTime.getText()).trim();
-        String notes = String.valueOf(binding.includePanelPro.inputAppointmentNotes.getText()).trim();
-        if (name.isEmpty() || time.isEmpty()) {
-            toast("Informe paciente e horário.");
+        int index = binding.includeCalendar.inputAppointmentPatient.getSelectedItemPosition();
+        if (index < 0 || index >= ClinicStore.patients.size()) {
+            toast("Cadastre e selecione um paciente primeiro.");
             return;
         }
-        String patientId = openPatientId.isEmpty() ? name : openPatientId;
-        ClinicStore.addAppointment(patientId, name, selectedDay, time, notes);
-        binding.includePanelPro.inputAppointmentPatient.setText("");
-        binding.includePanelPro.inputAppointmentTime.setText("");
-        binding.includePanelPro.inputAppointmentNotes.setText("");
+        ClinicSession patient = ClinicStore.patients.get(index);
+        String time = String.valueOf(binding.includeCalendar.inputAppointmentTime.getText()).trim();
+        String notes = String.valueOf(binding.includeCalendar.inputAppointmentNotes.getText()).trim();
+        try {
+            ClinicStore.addAppointment(patient.id, patient.fullName, selectedDay, time, notes);
+        } catch (IllegalArgumentException | SecurityException error) {
+            toast(error.getMessage());
+            return;
+        }
+        binding.includeCalendar.inputAppointmentTime.setText("");
+        binding.includeCalendar.inputAppointmentNotes.setText("");
         refreshAppointments(true);
         toast("Horário agendado.");
     }
 
+    private void setupCalendar(ClinicSession profile) {
+        binding.includeCalendar.appointmentForm.setVisibility(profile.isAdmin() ? View.VISIBLE : View.GONE);
+        binding.includeCalendar.textCalendarLead.setText(profile.isAdmin()
+                ? R.string.calendar_lead : R.string.calendar_lead_patient);
+        appointmentsAdapter = new AppointmentAdapter(profile.isAdmin() ? visit -> {
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.cancel_appointment)
+                    .setMessage(visit.patientName + " · " + visit.time + "\n" + dayFormat.format(new Date(visit.dayMillis)))
+                    .setNegativeButton("Voltar", null)
+                    .setPositiveButton("Cancelar agendamento", (dialog, which) -> {
+                        ClinicStore.cancelAppointment(visit.id);
+                        refreshAppointments(profile.isAdmin());
+                        toast("Agendamento cancelado.");
+                    }).show();
+        } : null);
+        binding.includeCalendar.listAppointments.setLayoutManager(new LinearLayoutManager(requireContext()));
+        binding.includeCalendar.listAppointments.setAdapter(appointmentsAdapter);
+        binding.includeCalendar.calendarView.setDate(selectedDay);
+        binding.includeCalendar.calendarView.setOnDateChangeListener((view, year, month, day) -> {
+            java.util.Calendar date = java.util.Calendar.getInstance();
+            date.set(year, month, day, 0, 0, 0);
+            selectedDay = ClinicStore.startOfDay(date.getTimeInMillis());
+            refreshAppointments(profile.isAdmin());
+        });
+        binding.includeCalendar.buttonToday.setOnClickListener(v -> {
+            selectedDay = ClinicStore.startOfDay(System.currentTimeMillis());
+            binding.includeCalendar.calendarView.setDate(selectedDay, true, true);
+            refreshAppointments(profile.isAdmin());
+        });
+        binding.includeCalendar.buttonAddAppointment.setOnClickListener(v -> addAppointment());
+        binding.includeCalendar.inputAppointmentTime.setOnClickListener(v -> {
+            java.util.Calendar now = java.util.Calendar.getInstance();
+            new android.app.TimePickerDialog(requireContext(), (picker, hour, minute) ->
+                    binding.includeCalendar.inputAppointmentTime.setText(String.format(Locale.ROOT, "%02d:%02d", hour, minute)),
+                    now.get(java.util.Calendar.HOUR_OF_DAY), now.get(java.util.Calendar.MINUTE), true).show();
+        });
+        refreshAppointments(profile.isAdmin());
+    }
+
+    private void showCalendar(ClinicSession profile) {
+        activeScreen = "calendar";
+        binding.bannerMannequin.setVisibility(View.GONE);
+        binding.includeMannequin.getRoot().setVisibility(View.GONE);
+        binding.includePanelPro.getRoot().setVisibility(View.GONE);
+        binding.includePanelPaciente.getRoot().setVisibility(View.GONE);
+        binding.includeCalendar.getRoot().setVisibility(View.VISIBLE);
+        markTab(binding.buttonMannequinTab, false);
+        markTab(binding.buttonPanelTab, false);
+        markTab(binding.buttonCalendarTab, true);
+        refreshAppointments(profile.isAdmin());
+    }
+
     private void refreshAppointments(boolean professional) {
-        List<ClinicAppointment> items = ClinicStore.appointmentsForDay(
-                selectedDay,
-                professional ? null : (ClinicStore.current == null ? null : ClinicStore.current.id)
-        );
-        if (professional && proAppointments != null) {
-            binding.includePanelPro.textSelectedDay.setText(dayFormat.format(new Date(selectedDay)));
-            proAppointments.submit(items);
-            binding.includePanelPro.textAppointmentsEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
-        }
-        if (!professional && patientAppointments != null) {
-            patientAppointments.submit(items);
-            binding.includePanelPaciente.textAppointmentsEmptyPatient.setVisibility(
-                    items.isEmpty() ? View.VISIBLE : View.GONE
-            );
-        }
+        if (appointmentsAdapter == null) return;
+        List<ClinicAppointment> items = ClinicStore.appointmentsForDay(selectedDay,
+                professional ? null : ClinicStore.current.id);
+        binding.includeCalendar.textSelectedDay.setText(getString(R.string.calendar_day_summary,
+                dayFormat.format(new Date(selectedDay)), items.size()));
+        appointmentsAdapter.submit(items);
+        binding.includeCalendar.textAppointmentsEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
     private void saveCredentials(ClinicSession profile) {
@@ -462,10 +514,26 @@ public class DashboardFragment extends Fragment {
             binding.includeCredentials.textCredentialsError.setVisibility(View.VISIBLE);
             return;
         }
+        nextEmail = nextEmail.toLowerCase(Locale.ROOT);
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(nextEmail).matches()
+                || (!password.isEmpty() && password.length() < 6)) {
+            binding.includeCredentials.textCredentialsError.setText("Informe e-mail válido e senha com pelo menos 6 caracteres.");
+            binding.includeCredentials.textCredentialsError.setVisibility(View.VISIBLE);
+            return;
+        }
+        List<ClinicSession> accounts = profile.isAdmin() ? ClinicStore.professionals : ClinicStore.patients;
+        for (ClinicSession account : accounts) {
+            if (!account.id.equals(profile.id) && nextEmail.equals(account.email)) {
+                binding.includeCredentials.textCredentialsError.setText("Este e-mail já está em uso neste perfil.");
+                binding.includeCredentials.textCredentialsError.setVisibility(View.VISIBLE);
+                return;
+            }
+        }
         profile.email = nextEmail;
         if (!password.isEmpty()) {
             profile.password = password;
         }
+        ClinicStore.persist();
         binding.includeTopbar.textProfileEmail.setText(profile.email);
         binding.includeCredentials.getRoot().setVisibility(View.GONE);
         toast("Dados atualizados.");
@@ -480,6 +548,25 @@ public class DashboardFragment extends Fragment {
                 binding.textToast.setVisibility(View.GONE);
             }
         }, 2800);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putLong("selectedDay", selectedDay);
+        outState.putString("activeScreen", activeScreen);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (binding != null) binding.includeMannequin.mannequinView.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        if (binding != null) binding.includeMannequin.mannequinView.onPause();
+        super.onPause();
     }
 
     @Override

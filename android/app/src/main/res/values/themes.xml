@@ -10,7 +10,7 @@
         <item name="android:colorBackground">@color/maya_bg</item>
         <item name="colorSurface">@color/maya_bg_elevated</item>
         <item name="colorOnSurface">@color/maya_text</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">sans-serif</item>
     </style>
 
     <style name="Theme.AppDaMaya" parent="Base.Theme.AppDaMaya" />

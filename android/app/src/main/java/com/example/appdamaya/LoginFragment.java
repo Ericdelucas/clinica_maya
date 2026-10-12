@@ -32,23 +32,9 @@ public class LoginFragment extends Fragment {
     }
 
     private void attemptLogin() {
-        String email = String.valueOf(binding.inputEmail.getText()).trim();
-        String password = String.valueOf(binding.inputPassword.getText());
         binding.textError.setVisibility(View.GONE);
-        binding.buttonLogin.setText(R.string.action_entering);
-
-        ClinicSession profile = ClinicStore.authenticate(email, password);
-        if (profile == null) {
-            if (ClinicStore.isProfessionalEmail(email)) {
-                binding.textError.setText(R.string.error_login);
-            } else {
-                binding.textError.setText(R.string.error_not_registered);
-            }
-            binding.textError.setVisibility(View.VISIBLE);
-            binding.buttonLogin.setText(R.string.action_enter);
-            return;
-        }
-
+        ClinicSession profile = ClinicStore.testProfile(
+                binding.loginRole.getCheckedRadioButtonId() == R.id.roleProfessional ? "admin" : "patient");
         ClinicStore.current = profile;
         NavHostFragment.findNavController(this).navigate(R.id.action_login_to_dashboard);
     }

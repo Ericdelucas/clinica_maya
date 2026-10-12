@@ -1,9 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
-
+<?xml version='1.0' encoding='utf-8'?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -11,7 +7,6 @@
         android:textColor="@color/maya_text"
         android:textSize="18sp"
         android:textStyle="bold" />
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,14 +14,12 @@
         android:layout_marginBottom="12dp"
         android:text="@string/ficha_lead"
         android:textColor="@color/maya_text_muted" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/label_full_name"
         android:textColor="@color/maya_text_muted"
         android:textStyle="bold" />
-
     <EditText
         android:id="@+id/inputFullName"
         android:layout_width="match_parent"
@@ -36,27 +29,14 @@
         android:inputType="textPersonName"
         android:minHeight="48dp"
         android:paddingHorizontal="14dp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:orientation="vertical">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/label_birth"
                 android:textColor="@color/maya_text_muted"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/inputBirth"
                 android:layout_width="match_parent"
@@ -67,20 +47,13 @@
                 android:minHeight="48dp"
                 android:paddingHorizontal="10dp" />
         </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/label_phone"
                 android:textColor="@color/maya_text_muted"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/inputPhone"
                 android:layout_width="match_parent"
@@ -92,7 +65,6 @@
                 android:paddingHorizontal="10dp" />
         </LinearLayout>
     </LinearLayout>
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -100,14 +72,12 @@
         android:text="@string/label_psychotherapy"
         android:textColor="@color/maya_text_muted"
         android:textStyle="bold" />
-
     <Spinner
         android:id="@+id/spinnerPsychotherapy"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:background="@drawable/bg_input"
         android:paddingHorizontal="8dp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -115,7 +85,6 @@
         android:text="@string/label_activity"
         android:textColor="@color/maya_text_muted"
         android:textStyle="bold" />
-
     <EditText
         android:id="@+id/inputActivity"
         android:layout_width="match_parent"
@@ -124,7 +93,6 @@
         android:hint="@string/hint_activity"
         android:minHeight="48dp"
         android:paddingHorizontal="14dp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -132,7 +100,6 @@
         android:text="@string/label_health"
         android:textColor="@color/maya_text_muted"
         android:textStyle="bold" />
-
     <EditText
         android:id="@+id/inputHealth"
         android:layout_width="match_parent"
@@ -143,7 +110,6 @@
         android:inputType="textMultiLine"
         android:minHeight="80dp"
         android:padding="14dp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -151,7 +117,6 @@
         android:text="@string/label_meds"
         android:textColor="@color/maya_text_muted"
         android:textStyle="bold" />
-
     <EditText
         android:id="@+id/inputMeds"
         android:layout_width="match_parent"
@@ -162,7 +127,6 @@
         android:inputType="textMultiLine"
         android:minHeight="80dp"
         android:padding="14dp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -170,7 +134,6 @@
         android:text="@string/label_surgeries"
         android:textColor="@color/maya_text_muted"
         android:textStyle="bold" />
-
     <EditText
         android:id="@+id/inputSurgeries"
         android:layout_width="match_parent"
@@ -181,7 +144,6 @@
         android:inputType="textMultiLine"
         android:minHeight="80dp"
         android:padding="14dp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -189,7 +151,6 @@
         android:text="@string/label_pain"
         android:textColor="@color/maya_text_muted"
         android:textStyle="bold" />
-
     <EditText
         android:id="@+id/inputPain"
         android:layout_width="match_parent"
@@ -200,7 +161,6 @@
         android:inputType="textMultiLine"
         android:minHeight="80dp"
         android:padding="14dp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -208,7 +168,6 @@
         android:text="@string/label_complaint"
         android:textColor="@color/maya_text_muted"
         android:textStyle="bold" />
-
     <EditText
         android:id="@+id/inputComplaint"
         android:layout_width="match_parent"
@@ -219,7 +178,6 @@
         android:inputType="textMultiLine"
         android:minHeight="80dp"
         android:padding="14dp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -227,7 +185,6 @@
         android:text="@string/label_notes"
         android:textColor="@color/maya_text_muted"
         android:textStyle="bold" />
-
     <EditText
         android:id="@+id/inputFichaNotes"
         android:layout_width="match_parent"
@@ -238,7 +195,6 @@
         android:inputType="textMultiLine"
         android:minHeight="80dp"
         android:padding="14dp" />
-
     <Button
         android:id="@+id/buttonSaveFicha"
         android:layout_width="match_parent"
@@ -247,5 +203,7 @@
         android:background="@drawable/bg_btn_primary"
         android:text="@string/action_save_ficha"
         android:textAllCaps="false"
-        android:textColor="@color/white" />
+        android:textColor="@color/white"
+        android:backgroundTint="@null"
+        app:backgroundTint="@null" />
 </LinearLayout>

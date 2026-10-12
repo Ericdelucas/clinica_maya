@@ -1,34 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/maya_bg"
-    android:fillViewport="true"
-    tools:context=".LoginFragment">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="20dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_login_shell"
-            android:elevation="8dp"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_login_hero"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="28dp">
-
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/maya_bg" android:fillViewport="true" tools:context=".LoginFragment">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="20dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_login_shell" android:elevation="8dp" android:orientation="vertical">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_login_hero" android:gravity="center" android:orientation="vertical" android:padding="28dp">
                 <TextView
                     android:id="@+id/brandOrb"
                     android:layout_width="88dp"
@@ -39,7 +13,6 @@
                     android:textColor="@color/white"
                     android:textSize="22sp"
                     android:textStyle="bold" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -50,13 +23,7 @@
                     android:textSize="15sp"
                     android:textStyle="bold" />
             </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="22dp">
-
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="22dp">
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -65,7 +32,6 @@
                     android:textColor="@color/maya_accent_deep"
                     android:textSize="28sp"
                     android:textStyle="bold" />
-
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -75,7 +41,6 @@
                     android:text="@string/login_lead"
                     android:textColor="@color/maya_text_muted"
                     android:textSize="14sp" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -83,7 +48,18 @@
                     android:textColor="@color/maya_text_muted"
                     android:textSize="13sp"
                     android:textStyle="bold" />
-
+                <RadioGroup android:id="@+id/loginRole" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:checkedButton="@id/rolePatient">
+                    <RadioButton
+                        android:id="@+id/rolePatient"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:text="@string/role_paciente" />
+                    <RadioButton
+                        android:id="@+id/roleProfessional"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:text="@string/role_profissional" />
+                </RadioGroup>
                 <EditText
                     android:id="@+id/inputEmail"
                     android:layout_width="match_parent"
@@ -97,7 +73,6 @@
                     android:paddingHorizontal="16dp"
                     android:textColor="@color/maya_text"
                     android:textColorHint="@color/maya_text_muted" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -106,7 +81,6 @@
                     android:textColor="@color/maya_text_muted"
                     android:textSize="13sp"
                     android:textStyle="bold" />
-
                 <EditText
                     android:id="@+id/inputPassword"
                     android:layout_width="match_parent"
@@ -120,7 +94,6 @@
                     android:paddingHorizontal="16dp"
                     android:textColor="@color/maya_text"
                     android:textColorHint="@color/maya_text_muted" />
-
                 <TextView
                     android:id="@+id/textError"
                     android:layout_width="match_parent"
@@ -131,7 +104,6 @@
                     android:visibility="gone"
                     tools:text="@string/error_not_registered"
                     tools:visibility="visible" />
-
                 <Button
                     android:id="@+id/buttonLogin"
                     android:layout_width="match_parent"
@@ -141,7 +113,9 @@
                     android:text="@string/action_enter"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:backgroundTint="@null"
+                    app:backgroundTint="@null" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
